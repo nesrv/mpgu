@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление разработкой ПО - Лекция 1</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/black.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/monokai.min.css">
+    <style>
+        .reveal {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 32px;
+        }
+        .reveal .slides section {
+            font-size: 0.9em;
+        }
+        .reveal h1 {
+            font-size: 2.2em;
+        }
+        .reveal h2 {
+            font-size: 1.8em;
+        }
+        .reveal h3 {
+            font-size: 1.4em;
+        }
+        .reveal p, .reveal ul, .reveal ol {
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+        .reveal h1, .reveal h2, .reveal h3 {
+            color: #ff6b6b;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .reveal .slides section {
+            text-align: left;
+        }
+        .reveal .title-slide {
+            text-align: center;
+        }
+        .emoji {
+            font-size: 1.5em;
+        }
+        .highlight {
+            background: linear-gradient(120deg, #a8e6cf 0%, #dcedc1 100%);
+            color: #2c3e50;
+            padding: 0.2em 0.5em;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .stats {
+            background: rgba(255, 107, 107, 0.1);
+            border-left: 5px solid #ff6b6b;
+            padding: 1em;
+            margin: 1em 0;
+        }
+        .case-study {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 5px solid #3498db;
+            padding: 1em;
+            margin: 1em 0;
+        }
+        .warning {
+            background: rgba(241, 196, 15, 0.1);
+            border-left: 5px solid #f1c40f;
+            padding: 1em;
+            margin: 1em 0;
+        }
+        .success {
+            background: rgba(46, 204, 113, 0.1);
+            border-left: 5px solid #2ecc71;
+            padding: 1em;
+            margin: 1em 0;
+        }
+        .fragment.fade-in-then-semi-out {
+            opacity: 0;
+        }
+        .fragment.fade-in-then-semi-out.visible {
+            opacity: 1;
+        }
+        .fragment.fade-in-then-semi-out.visible.current-fragment {
+            opacity: 1;
+        }
+        .fragment.fade-in-then-semi-out.visible:not(.current-fragment) {
+            opacity: 0.3;
+        }
+        .code-snippet {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 1em;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 1em 0;
+        }
+        .progress-bar {
+            height: 6px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1);
+        }
+        .slide-number {
+            color: #ff6b6b !important;
+            font-weight: bold;
+            font-size: 1.5em !important;
+            top: 20px !important;
+            right: 20px !important;
+            bottom: auto !important;
+        }
+        .navigation {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+        .nav-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: rgba(255, 107, 107, 0.3);
+            border: 1px solid #ff6b6b;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7px;
+            color: #fff;
+            font-weight: bold;
+        }
+        .nav-dot:hover {
+            background: rgba(255, 107, 107, 0.7);
+        }
+        .nav-dot.active {
+            background: #ff6b6b;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            
+            <!-- Слайд 1/44: Титульный -->
+            <section class="title-slide" data-background-gradient="linear-gradient(45deg, #667eea 0%, #764ba2 100%)">
+                <h1>🚀 Управление разработкой ПО</h1>
+                <h2>Лекция 1: Введение</h2>
+                <p><strong>От стартапов до единорогов</strong></p>
+                <p><small>Преподаватель: Серов Н.Е.<br>
+                МПГУ, 2025</small></p>
+            </section>
+
+            <!-- Слайд 2/44: Вопрос для размышления -->
+            <section data-background-color="#2c3e50">
+                <h2>🤔 Вопрос на миллион</h2>
+                <div class="fragment">
+                    <p style="font-size: 1.5em; text-align: center;">
+                        Почему одни IT-проекты становятся <span class="highlight">единорогами</span>, 
+                        а другие превращаются в <span style="color: #e74c3c;">failed projects</span>?
+                    </p>
+                </div>
+                <div class="fragment">
+                    <div style="display: flex; justify-content: space-around; margin-top: 2em;">
+                        <div style="text-align: center;">
+                            <h3 style="color: #2ecc71;">✅ Успех</h3>
+                            <p>WhatsApp<br>Instagram<br>Zoom</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <h3 style="color: #e74c3c;">❌ Неудача</h3>
+                            <p>Google+<br>Windows Phone<br>Quibi</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 3/44: Жестокая статистика -->
+            <section data-background-color="#34495e">
+                <h2>📊 Жестокая статистика IT-проектов</h2>
+                <div class="stats">
+                    <div class="fragment">
+                        <h3 style="color: #2ecc71;">🟢 29% - Успешные проекты</h3>
+                        <p>В срок, в бюджете, с полным функционалом</p>
+                    </div>
+                    <div class="fragment">
+                        <h3 style="color: #f39c12;">🟡 52% - Проблемные проекты</h3>
+                        <p>Задержки, превышение бюджета, урезанный функционал</p>
+                    </div>
+                    <div class="fragment">
+                        <h3 style="color: #e74c3c;">🔴 19% - Провальные проекты</h3>
+                        <p>Отменены или не используются</p>
+                    </div>
+                </div>
+                <div class="fragment">
+                    <p style="text-align: center; font-size: 1.2em; color: #ff6b6b;">
+                        💰 <strong>Потери:</strong> $50+ млрд в год только в США
+                    </p>
+                </div>
+            </section>
+
+        </div>
+        
+        <div class="navigation">
+            <div class="nav-dot" onclick="Reveal.slide(0)">1</div>
+            <div class="nav-dot" onclick="Reveal.slide(1)">2</div>
+            <div class="nav-dot" onclick="Reveal.slide(2)">3</div>
+            <div class="nav-dot" onclick="Reveal.slide(3)">4</div>
+            <div class="nav-dot" onclick="Reveal.slide(4)">5</div>
+            <div class="nav-dot" onclick="Reveal.slide(5)">6</div>
+            <div class="nav-dot" onclick="Reveal.slide(6)">7</div>
+            <div class="nav-dot" onclick="Reveal.slide(7)">8</div>
+            <div class="nav-dot" onclick="Reveal.slide(8)">9</div>
+            <div class="nav-dot" onclick="Reveal.slide(9)">10</div>
+            <div class="nav-dot" onclick="Reveal.slide(10)">11</div>
+            <div class="nav-dot" onclick="Reveal.slide(11)">12</div>
+            <div class="nav-dot" onclick="Reveal.slide(12)">13</div>
+            <div class="nav-dot" onclick="Reveal.slide(13)">14</div>
+            <div class="nav-dot" onclick="Reveal.slide(14)">15</div>
+            <div class="nav-dot" onclick="Reveal.slide(15)">16</div>
+            <div class="nav-dot" onclick="Reveal.slide(16)">17</div>
+            <div class="nav-dot" onclick="Reveal.slide(17)">18</div>
+            <div class="nav-dot" onclick="Reveal.slide(18)">19</div>
+            <div class="nav-dot" onclick="Reveal.slide(19)">20</div>
+            <div class="nav-dot" onclick="Reveal.slide(20)">21</div>
+            <div class="nav-dot" onclick="Reveal.slide(21)">22</div>
+            <div class="nav-dot" onclick="Reveal.slide(22)">23</div>
+            <div class="nav-dot" onclick="Reveal.slide(23)">24</div>
+            <div class="nav-dot" onclick="Reveal.slide(24)">25</div>
+            <div class="nav-dot" onclick="Reveal.slide(25)">26</div>
+            <div class="nav-dot" onclick="Reveal.slide(26)">27</div>
+            <div class="nav-dot" onclick="Reveal.slide(27)">28</div>
+            <div class="nav-dot" onclick="Reveal.slide(28)">29</div>
+            <div class="nav-dot" onclick="Reveal.slide(29)">30</div>
+            <div class="nav-dot" onclick="Reveal.slide(30)">31</div>
+            <div class="nav-dot" onclick="Reveal.slide(31)">32</div>
+            <div class="nav-dot" onclick="Reveal.slide(32)">33</div>
+            <div class="nav-dot" onclick="Reveal.slide(33)">34</div>
+            <div class="nav-dot" onclick="Reveal.slide(34)">35</div>
+            <div class="nav-dot" onclick="Reveal.slide(35)">36</div>
+            <div class="nav-dot" onclick="Reveal.slide(36)">37</div>
+            <div class="nav-dot" onclick="Reveal.slide(37)">38</div>
+            <div class="nav-dot" onclick="Reveal.slide(38)">39</div>
+            <div class="nav-dot" onclick="Reveal.slide(39)">40</div>
+            <div class="nav-dot" onclick="Reveal.slide(40)">41</div>
+            <div class="nav-dot" onclick="Reveal.slide(41)">42</div>
+            <div class="nav-dot" onclick="Reveal.slide(42)">43</div>
+            <div class="nav-dot" onclick="Reveal.slide(43)">44</div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/notes/notes.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/markdown/markdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/highlight.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            transition: 'slide',
+            transitionSpeed: 'default',
+            backgroundTransition: 'fade',
+            controls: true,
+            progress: true,
+            slideNumber: 'c/t',
+            center: true,
+            touch: true,
+            loop: false,
+            rtl: false,
+            navigationMode: 'default',
+            shuffle: false,
+            fragments: true,
+            fragmentInURL: false,
+            embedded: false,
+            help: true,
+            showNotes: false,
+            autoPlayMedia: null,
+            preloadIframes: null,
+            autoSlide: 0,
+            autoSlideStoppable: true,
+            autoSlideMethod: 'default',
+            defaultTiming: null,
+            mouseWheel: false,
+            hideInactiveCursor: true,
+            hideCursorTime: 5000,
+            previewLinks: false,
+            postMessage: true,
+            postMessageEvents: false,
+            focusBodyOnPageVisibilityChange: true,
+            plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+        });
+
+        // Обновляем навигацию
+        Reveal.on('slidechanged', event => {
+            const dots = document.querySelectorAll('.nav-dot');
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            const currentSlide = event.indexh;
+            if (dots[currentSlide]) {
+                dots[currentSlide].classList.add('active');
+            }
+        });
+
+        // Добавляем поддержку клавиш
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'b' || event.key === 'B') {
+                // Черный экран по нажатию B
+                document.body.style.backgroundColor = document.body.style.backgroundColor === 'black' ? '' : 'black';
+            }
+        });
+        
+        // Инициализация навигации
+        Reveal.on('ready', () => {
+            document.querySelector('.nav-dot').classList.add('active');
+        });
+    </script>
+</body>
+</html>
