@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wildberries Style Slide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #cb11ab 0%, #481173 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .slide-container {
+            max-width: 1200px;
+            width: 90%;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .wb-logo {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #fff, #f0f0f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .main-title {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.3em;
+            font-weight: 400;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+        
+        .feature-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .feature-desc {
+            font-size: 0.9em;
+            opacity: 0.8;
+            line-height: 1.4;
+        }
+        
+        .cta-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 40px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="wb-logo">Wildberries</div>
+        
+        <h1 class="main-title">🔄 Процессы разработки ПО</h1>
+        <p class="subtitle">От хаоса к порядку: как создать единорога в IT</p>
+        
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">📋</div>
+                <div class="feature-title">Agile подход</div>
+                <div class="feature-desc">Быстрые итерации и адаптация к изменениям рынка</div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🚀</div>
+                <div class="feature-title">Масштабирование</div>
+                <div class="feature-desc">От стартапа до миллионов пользователей</div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">💎</div>
+                <div class="feature-title">Качество</div>
+                <div class="feature-desc">Процессы обеспечивают стабильность продукта</div>
+            </div>
+        </div>
+        
+        <button class="cta-button">Начать изучение</button>
+    </div>
+</body>
+</html>

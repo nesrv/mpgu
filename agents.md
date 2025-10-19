@@ -1,4 +1,38 @@
+для "Управление разработкой программного обеспечения  (44+72)\тематический_план_58_занятий.md" 
+замени на русский с переводом в скобках
+Prototyping
+Evolutionary Development
+Use Case
+User Stories
+User Story
+Wireframes
+
+добавь перевод
+
+- - **S** - Single Responsibility Principle
+  - **O** - Open/Closed Principle
+  - **L** - Liskov Substitution Principle
+  - **I** - Interface Segregation Principle
+  - **D** - Dependency Inversion Principle
+- **DRY** - Don't Repeat Yourself
+- **KISS** - Keep It Simple, Stupid
+- **YAGNI** - You Aren't Gonna Need It
+
+
+
+создай 
+### Занятие 2. Процессы разработки ПО
+**Лекция (2 ч):** Классификация процессов: анализ требований, проектирование, кодирование, тестирование
+
+длительностью 2 часа
+
+
+Управление разработкой программного обеспечения  (44+72)\2\1.md
+
+
 на основе
+
+
 
 Разработка высоконагруженных систем  (44+72)\program.md разработай тематический план на 58 занятий
 

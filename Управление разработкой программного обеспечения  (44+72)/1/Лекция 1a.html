@@ -4,155 +4,82 @@
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Управление разработкой ПО - Лекция 1</title>
-    <link rel="stylesheet" href="./Управление разработкой ПО - Лекция 1a_files/reveal.min.css">
-    <link rel="stylesheet" href="./Управление разработкой ПО - Лекция 1a_files/black.min.css">
-    <link rel="stylesheet" href="./Управление разработкой ПО - Лекция 1a_files/monokai.min.css">
-    <style>
-        .reveal {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 32px;
-        }
-        .reveal .slides section {
-            font-size: 0.9em;
-        }
-        .reveal h1 {
-            font-size: 2.2em;
-        }
-        .reveal h2 {
-            font-size: 1.8em;
-        }
-        .reveal h3 {
-            font-size: 1.4em;
-        }
-        .reveal p, .reveal ul, .reveal ol {
-            font-size: 0.85em;
-            line-height: 1.4;
-        }
-        .reveal h1, .reveal h2, .reveal h3 {
-            color: #ff6b6b;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        .reveal .slides section {
-            text-align: left;
-        }
-        .reveal .title-slide {
-            text-align: center;
-        }
-        .emoji {
-            font-size: 1.5em;
-        }
-        .highlight {
-            background: linear-gradient(120deg, #a8e6cf 0%, #dcedc1 100%);
-            color: #2c3e50;
-            padding: 0.2em 0.5em;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-        .stats {
-            background: rgba(255, 107, 107, 0.1);
-            border-left: 5px solid #ff6b6b;
-            padding: 1em;
-            margin: 1em 0;
-        }
-        .case-study {
-            background: rgba(52, 152, 219, 0.1);
-            border-left: 5px solid #3498db;
-            padding: 1em;
-            margin: 1em 0;
-        }
-        .warning {
-            background: rgba(241, 196, 15, 0.1);
-            border-left: 5px solid #f1c40f;
-            padding: 1em;
-            margin: 1em 0;
-        }
-        .success {
-            background: rgba(46, 204, 113, 0.1);
-            border-left: 5px solid #2ecc71;
-            padding: 1em;
-            margin: 1em 0;
-        }
-        .fragment.fade-in-then-semi-out {
-            opacity: 0;
-        }
-        .fragment.fade-in-then-semi-out.visible {
-            opacity: 1;
-        }
-        .fragment.fade-in-then-semi-out.visible.current-fragment {
-            opacity: 1;
-        }
-        .fragment.fade-in-then-semi-out.visible:not(.current-fragment) {
-            opacity: 0.3;
-        }
-        .code-snippet {
-            background: #2c3e50;
-            color: #ecf0f1;
-            padding: 1em;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            margin: 1em 0;
-        }
-        .progress-bar {
-            height: 6px;
-            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1);
-        }
-        .slide-number {
-            color: #ff6b6b !important;
-            font-weight: bold;
-            font-size: 1.2em !important;
-            top: 20px !important;
-            right: 20px !important;
-            bottom: auto !important;
-            z-index: 100 !important;
-            background: rgba(0,0,0,0.3);
-            padding: 5px 10px;
-            border-radius: 5px;
-        }
-        .navigation {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 2px;
-            z-index: 1000;
-            max-width: 300px;
-        }
-        .nav-dot {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: rgba(255, 107, 107, 0.3);
-            border: 1px solid #ff6b6b;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 7px;
-            color: #fff;
-            font-weight: bold;
-        }
-        .nav-dot:hover {
-            background: rgba(255, 107, 107, 0.7);
-        }
-        .nav-dot.active {
-            background: #ff6b6b;
-        }
-    </style>
-<style type="text/css">.hljs-ln{border-collapse:collapse}.hljs-ln td{padding:0}.hljs-ln-n:before{content:attr(data-line-number)}</style></head>
+    <link rel="stylesheet" href="css/reveal.min.css">
+    <link rel="stylesheet" href="css/black.min.css">
+    <link rel="stylesheet" href="css/monokai.min.css">
+    <link rel="stylesheet" href="css/presentation.css">
+    <link rel="stylesheet" href="css/vk.css">
+</head>
 <body class="reveal-viewport" style="--slide-width: 960px; --slide-height: 700px;">
     <div class="reveal slide center focused has-horizontal-slides ready" role="application" data-transition-speed="default" data-background-transition="fade" style="">
         <div class="slides" style="width: 960px; height: 700px; zoom: 1.28914;">
             
             <!-- Слайд 1/44: Титульный -->
-            <section class="title-slide present" data-background-gradient="linear-gradient(45deg, #667eea 0%, #764ba2 100%)" style="top: 168px; display: block;">
+            <section class="title-slide present vk-style" style="top: 168px; display: block;">
                 <canvas id="particleCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;"></canvas>
-                <h1 style="position: relative; z-index: 10;">🚀 Управление разработкой ПО</h1>
-                <h2 style="position: relative; z-index: 10;">Лекция 1: Введение</h2>
-                <p style="position: relative; z-index: 10;"><strong>От стартапов до единорогов</strong></p>
-                <p style="position: relative; z-index: 10;"><small>Преподаватель: Серов Н.Е.<br>
-                МПГУ, 2025</small></p>
+                
+                <!-- VK Header -->
+                <div class="vk-header" style="position: absolute; top: 0; left: 0; right: 0; height: 50px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); z-index: 15; display: flex; align-items: center; justify-content: space-between; padding: 0 20px;">
+                    <div style="display: flex; align-items: center;">
+                        <img src="img/VK Logo.png" alt="VK" style="height: 30px; margin-right: 20px;">
+                        <div style="color: white; font-weight: bold;">ВКонверте</div>
+                    </div>
+                    <img src="img/Serov_Nikolai_Evgenevich.jpg" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.3);">
+                </div>
+                
+                <!-- VK Menu -->
+                <div class="vk-menu" style="position: absolute; left: 0; top: 50px; width: 200px; height: calc(100% - 50px); background: rgba(255,255,255,0.05); backdrop-filter: blur(5px); z-index: 12; padding: 20px 0;">
+                    <div style="color: white; padding: 8px 20px; font-size: 14px; border-left: 3px solid #4A90E2;">Профиль</div>
+                    <div style="color: #BBDEFB; padding: 8px 20px; font-size: 14px;">Лента</div>
+                    <div style="color: #BBDEFB; padding: 8px 20px; font-size: 14px; display: flex; justify-content: space-between;">Мессенджер <span style="background: #e74c3c; border-radius: 10px; padding: 2px 6px; font-size: 12px;">23</span></div>
+                    <div style="color: #BBDEFB; padding: 8px 20px; font-size: 14px;">Звонки</div>
+                    <div style="color: #BBDEFB; padding: 8px 20px; font-size: 14px;">Друзья</div>
+                    <div style="color: #BBDEFB; padding: 8px 20px; font-size: 14px;">Сообщества</div>
+                    <div style="color: #BBDEFB; padding: 8px 20px; font-size: 14px;">Фото</div>
+                    <div style="color: #BBDEFB; padding: 8px 20px; font-size: 14px;">Видео</div>
+                    <div style="color: #BBDEFB; padding: 8px 20px; font-size: 14px;">Клипы</div>
+                    <div style="color: #BBDEFB; padding: 8px 20px; font-size: 14px;">Игры</div>
+                    <div style="color: #BBDEFB; padding: 8px 20px; font-size: 14px;">Стикеры</div>
+                    <div style="color: #BBDEFB; padding: 8px 20px; font-size: 14px;">Маркет</div>
+                </div>
+                
+                <!-- Main Content -->
+                <div style="position: absolute; left: 220px; top: 120px; right: 20px; text-align: center; z-index: 15;">
+                    <h1 style="color: white; font-size: 2.5em; margin-bottom: 0.5em; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">🚀 Управление разработкой ПО</h1>
+                    <h2 style="color: #E3F2FD; font-size: 1.8em; margin-bottom: 1em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Лекция 1: Введение</h2>
+                    <p style="color: white; font-size: 1.3em; font-weight: bold; margin-bottom: 2em;"><strong>От стартапов до единорогов</strong></p>
+                </div>
+                
+                <!-- VK Feed -->
+                <div class="vk-feed" style="position: absolute; left: 220px; top: 320px; right: 20px; bottom: 60px; background: rgba(255,255,255,0.05); backdrop-filter: blur(5px); border-radius: 10px; z-index: 12; padding: 20px; overflow: hidden;">
+                    <div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <div style="width: 40px; height: 40px; background: #4A90E2; border-radius: 50%; margin-right: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">МП</div>
+                            <div>
+                                <div style="color: white; font-weight: bold; font-size: 14px;">МПГУ Программирование</div>
+                                <div style="color: #BBDEFB; font-size: 12px;">2 часа назад</div>
+                            </div>
+                        </div>
+                        <div style="color: white; font-size: 16px; line-height: 1.4;">🚀 <strong>Управление разработкой ПО</strong><br>Лекция 1: Введение<br><br>От стартапов до единорогов</div>
+                        <div style="margin-top: 10px; color: #BBDEFB; font-size: 12px;">👍 42 💬 8 📤 3</div>
+                    </div>
+                    
+                    <div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 15px;">
+                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <div style="width: 40px; height: 40px; background: #2ecc71; border-radius: 50%; margin-right: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">СН</div>
+                            <div>
+                                <div style="color: white; font-weight: bold; font-size: 14px;">Серов Н.Е.</div>
+                                <div style="color: #BBDEFB; font-size: 12px;">вчера в 18:30</div>
+                            </div>
+                        </div>
+                        <div style="color: white; font-size: 14px; line-height: 1.4;">Готовимся к новому семестру! 📚<br>Будем изучать современные подходы к управлению IT-проектами</div>
+                        <div style="margin-top: 10px; color: #BBDEFB; font-size: 12px;">👍 15 💬 3</div>
+                    </div>
+                </div>
+                
+                <div style="position: absolute; bottom: 20px; right: 20px; color: #BBDEFB; font-size: 12px; z-index: 15;">
+                    Преподаватель: Серов Н.Е. | МПГУ, 2025
+                </div>
             </section>
 
             <!-- Слайд 2/44: Вопрос для размышления -->
