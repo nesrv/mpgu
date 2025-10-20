@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ru" class="reveal-full-page"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Основы высоконагруженных систем - Лекция 1-2</title>
+    <link rel="stylesheet" href="css/reveal.min.css">
+    <link rel="stylesheet" href="css/black.min.css">
+    <link rel="stylesheet" href="css/monokai.min.css">
+    <link rel="stylesheet" href="css/presentation.css">
+    <style>
+        .reveal {
+            font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        }
+    </style>
+</head>
+<body class="reveal-viewport" style="--slide-width: 960px; --slide-height: 700px;">
+    <div class="reveal slide center focused has-horizontal-slides ready" role="application" data-transition-speed="default" data-background-transition="fade" style="">
+        <div class="slides" style="width: 960px; height: 700px; zoom: 1.28914;">
+            
+            <!-- Слайд 1/34: Титульный -->
+            <section class="title-slide present" data-background-gradient="linear-gradient(45deg, #667eea 0%, #764ba2 100%)" style="top: 168px; display: block;">
+                <canvas id="particleCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;"></canvas>
+                <h1 style="position: relative; z-index: 10;">⚡ Основы высоконагруженных систем</h1>
+                <h2 style="position: relative; z-index: 10;">Лекция 1-2: "Когда твой сервер начинает плакать от нагрузки" 😭</h2>
+                <p style="position: relative; z-index: 10;"><strong>От простых сайтов до монстров нагрузки</strong></p>
+                <p style="position: relative; z-index: 10;"><small>Преподаватель: Серов Н.Е.<br>МПГУ, 2025</small></p>
+            </section>
+
+            <!-- Слайд 2: Что такое высоконагруженная система -->
+            <section data-background-color="#2c3e50">
+                <h2>🤔 Что такое высоконагруженная система?</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <p><strong>Простыми словами:</strong></p>
+                    <p>Это когда твой сервер обрабатывает столько запросов, что начинает "тормозить" как Windows 95 на современном софте.</p>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <p><strong>Технически:</strong></p>
+                    <p>Система, которая должна держать большое количество одновременных запросов, не "падая" и не превращаясь в "тыкву".</p>
+                </div>
+            </section>
+
+            <!-- Слайд 3: Критерии высокой нагрузки -->
+            <section data-background-color="#34495e">
+                <h2>📊 Критерии "высокой нагрузки"</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <ul>
+                        <li><strong>RPS > 1000</strong> - когда твой сервер получает больше 1000 запросов в секунду</li>
+                        <li><strong>10K+ пользователей онлайн</strong> - когда твоя база начинает "плакать"</li>
+                        <li><strong>1TB+ данных</strong> - когда SELECT * FROM начинает выполняться до обеда</li>
+                        <li><strong>99.9% uptime</strong> - когда простой на 8 часов в год = увольнение</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 4: Яндекс.Поиск -->
+            <section>
+                <h2>🔍 Яндекс.Поиск - российский монстр</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <ul>
+                        <li><strong>100+ млн запросов/день</strong> (это ~1200 RPS круглосуточно!)</li>
+                        <li><strong>Проблема:</strong> Каждый россиянин гуглит в Яндексе</li>
+                        <li><strong>Решение:</strong> Тысячи серверов + магия алгоритмов</li>
+                        <li><strong>Фишка:</strong> Поиск работает даже когда половина дата-центра "лежит"</li>
+                    </ul>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <p><em>У Яндекса есть свои дата-центры в Москве, СПб, Новосибирске. Каждый может обработать полную нагрузку.</em></p>
+                </div>
+            </section>
+
+            <!-- Слайд 5: ВКонтакте -->
+            <section>
+                <h2>📱 ВКонтакте - социальная сеть-гигант</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <ul>
+                        <li><strong>97 млн активных пользователей/месяц</strong></li>
+                        <li><strong>Проблема:</strong> Все сидят в ВК одновременно, особенно вечером</li>
+                        <li><strong>Решение:</strong> Микросервисы + кеширование всего что можно</li>
+                        <li><strong>Боль разработчиков:</strong> "Опять музыка упала, пользователи бунтуют!"</li>
+                    </ul>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <p><strong>Интересный факт:</strong> В пиковые часы (20:00-22:00) одновременно онлайн до 15 млн человек</p>
+                    <p><strong>Архитектура:</strong> Около 200 микросервисов, каждый отвечает за свою функцию</p>
+                </div>
+            </section>
+
+            <!-- Слайд 6: Wildberries -->
+            <section>
+                <h2>🛍️ Wildberries - от одной женщины до единорога</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <ul>
+                        <li><strong>50+ млн заказов/месяц</strong> (в пик до 2 млн заказов/день!)</li>
+                        <li><strong>Проблема:</strong> Черная пятница = сервера "горят"</li>
+                        <li><strong>Решение:</strong> Очереди, кеши, молитвы к богу нагрузки</li>
+                        <li><strong>Мем:</strong> "Сайт лежит, но заказы принимаются"</li>
+                    </ul>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <p><strong>Реальная история:</strong> В Черную пятницу 2022 нагрузка выросла в 50 раз. Команда девопсов не спала 3 дня</p>
+                    <p><strong>Технологии:</strong> Микросервисы на Go, Kafka для очередей, Redis для кеша</p>
+                </div>
+            </section>
+
+            <!-- Слайд 7: Сбербанк Онлайн -->
+            <section>
+                <h2>💳 Сбербанк Онлайн - банковская надежность</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <ul>
+                        <li><strong>70+ млн пользователей</strong> (90% всех клиентов банка!)</li>
+                        <li><strong>Проблема:</strong> Все получают зарплату в одно время</li>
+                        <li><strong>Решение:</strong> Банковская надежность + IT-магия</li>
+                        <li><strong>Страх разработчиков:</strong> "Если упадет - вся страна без денег"</li>
+                    </ul>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <p><strong>Пиковая нагрузка:</strong> 10-15 число каждого месяца (зарплатные дни)</p>
+                    <p><strong>SLA:</strong> 99.95% - один из самых высоких показателей в мире</p>
+                </div>
+            </section>
+
+            <!-- Слайд 8: Что происходит когда система не тянет -->
+            <section data-background-color="#c0392b">
+                <h2>💥 Что происходит, когда система "не тянет"</h2>
+                <h3 style="text-align: center;">Технические "грабли"</h3>
+            </section>
+
+            <!-- Слайд 9: Технические проблемы -->
+            <section>
+                <h2>🔧 Технические "грабли"</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <ul>
+                        <li><strong>"Тормоза"</strong> - latency растет как курс доллара</li>
+                        <li><strong>"Падения"</strong> - сервер уходит в отпуск без предупреждения</li>
+                        <li><strong>"Потеря данных"</strong> - когда база "забывает" что было вчера</li>
+                        <li><strong>"Рассинхрон"</strong> - когда левая рука не знает что делает правая</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 10: Бизнес последствия -->
+            <section>
+                <h2>💰 Бизнес-последствия</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <h3>Потеря пользователей:</h3>
+                    <ul>
+                        <li><strong>1 секунда задержки = -7% конверсии</strong> (Google исследование)</li>
+                        <li><strong>3 секунды = 40% пользователей уходят</strong> (Amazon статистика)</li>
+                        <li><strong>10 секунд = пользователь ушел к конкурентам</strong></li>
+                    </ul>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <h3>Финансовые потери:</h3>
+                    <ul>
+                        <li><strong>Amazon:</strong> $1.6 млрд за час простоя</li>
+                        <li><strong>Google:</strong> $545,000 за 5 минут простоя</li>
+                        <li><strong>Wildberries в ЧП:</strong> ~100 млн рублей за каждый час простоя</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 11: RPS - главная метрика -->
+            <section data-background-color="#27ae60">
+                <h2>📈 RPS - "Сколько запросов твой сервер может переварить"</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <h3>Градация по "болевым ощущениям":</h3>
+                    <ul>
+                        <li><strong>10-100 RPS:</strong> "Детский сад" - обычный сайт-визитка</li>
+                        <li><strong>1K-10K RPS:</strong> "Средняк" - нормальный веб-сервис</li>
+                        <li><strong>100K+ RPS:</strong> "Хардкор" - тут нужны настоящие инженеры</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 12: Пример RPS ВК -->
+            <section>
+                <h2>📊 Пример из жизни: Обычный день в ВК</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <pre><code>
+Утром: 50K RPS (все проснулись, читают новости)
+Днем: 30K RPS (работают, меньше сидят в соцсетях)
+Вечером: 80K RPS (пик активности, все дома)
+Ночью: 10K RPS (только совы и геймеры)
+                    </code></pre>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <p><strong>Формула для джунов:</strong> RPS = Количество запросов / Время в секундах</p>
+                </div>
+            </section>
+
+            <!-- Слайд 13: Latency -->
+            <section>
+                <h2>⏱️ Latency - "Как долго пользователь ждет ответа"</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <h3>Типы задержек:</h3>
+                    <ul>
+                        <li><strong>Network Latency:</strong> "Пакеты едут по интернету"</li>
+                        <li><strong>Processing Latency:</strong> "Сервер думает"</li>
+                        <li><strong>Database Latency:</strong> "База данных копается в индексах"</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 14: Что считается нормальным -->
+            <section>
+                <h2>🚦 Что считается нормальным</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <ul>
+                        <li><strong>< 100ms:</strong> "Мгновенно" - пользователь счастлив 😊</li>
+                        <li><strong>100-300ms:</strong> "Быстро" - еще терпимо 😐</li>
+                        <li><strong>300ms-1s:</strong> "Медленно" - пользователь начинает нервничать 😤</li>
+                        <li><strong>> 1s:</strong> "Тормоза" - пользователь уходит к конкурентам 😡</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 15: Percentiles -->
+            <section>
+                <h2>📊 Percentiles - "Статистика для взрослых"</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <h3>Почему средняя latency - это ложь:</h3>
+                    <ul>
+                        <li>Средняя latency: 100ms (выглядит отлично!)</li>
+                        <li>Но 5% пользователей ждут 5 секунд (они уже ушли)</li>
+                    </ul>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <h3>Percentiles объясняют правду:</h3>
+                    <ul>
+                        <li><strong>P50 (медиана):</strong> 50% запросов быстрее этого времени</li>
+                        <li><strong>P95:</strong> 95% запросов быстрее (важная метрика!)</li>
+                        <li><strong>P99:</strong> 99% запросов быстрее (для перфекционистов)</li>
+                        <li><strong>P99.9:</strong> 99.9% запросов быстрее (для параноиков)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 16: Availability -->
+            <section>
+                <h2>⏰ Availability - "Сколько времени система работает"</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <h3>SLA уровни:</h3>
+                    <ul>
+                        <li><strong>99%</strong> = 3.65 дня простоя в год ("Так себе")</li>
+                        <li><strong>99.9%</strong> = 8.76 часов простоя в год ("Нормально")</li>
+                        <li><strong>99.99%</strong> = 52 минуты простоя в год ("Хорошо")</li>
+                        <li><strong>99.999%</strong> = 5 минут простоя в год ("Космос")</li>
+                    </ul>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <h3>Реальность российского IT:</h3>
+                    <ul>
+                        <li>Госуслуги: стремятся к 99.9% (иногда получается)</li>
+                        <li>Банки: требуют 99.99% (деньги не шутят)</li>
+                        <li>Стартапы: "Работает - уже хорошо" (~95%)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 17: CAP-теорема -->            
+            <section data-background-color="#8e44ad">
+                <h2>⚖️ CAP-теорема - "Нельзя получить все и сразу"</h2>
+                <h3 style="text-align: center;">В распределенной системе можно гарантировать только 2 из 3 свойств</h3>
+            </section>
+
+            <!-- Слайд 18: CAP - Consistency -->
+            <section>
+                <h2>🔄 C - Consistency (Согласованность)</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <p><strong>"Все видят одинаковые данные одновременно"</strong></p>
+                    <p><strong>Пример:</strong> Обновил статус в ВК - все друзья видят новый статус сразу</p>
+                    <p><strong>Проблема:</strong> Медленно, особенно при большой нагрузке</p>
+                </div>
+            </section>
+
+            <!-- Слайд 19: CAP - Availability -->
+            <section>
+                <h2>🟢 A - Availability (Доступность)</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <p><strong>"Система всегда отвечает на запросы"</strong></p>
+                    <p><strong>Пример:</strong> Сайт работает даже если половина серверов "упала"</p>
+                    <p><strong>Проблема:</strong> Может показать устаревшие данные</p>
+                </div>
+            </section>
+
+            <!-- Слайд 20: CAP - Partition Tolerance -->
+            <section>
+                <h2>🌐 P - Partition Tolerance (Устойчивость к разделению)</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <p><strong>"Система работает даже при потере связи между узлами"</strong></p>
+                    <p><strong>Пример:</strong> Связь Москва-СПб пропала, но оба дата-центра работают</p>
+                    <p><strong>Реальность:</strong> В интернете сеть всегда может "упасть"</p>
+                </div>
+            </section>
+
+            <!-- Слайд 21: Практические компромиссы CAP -->
+            <section>
+                <h2>🤝 Практические компромиссы российских систем</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <h3>CP системы (жертвуют доступностью):</h3>
+                    <ul>
+                        <li><strong>Сбербанк:</strong> Лучше недоступность, чем неправильный баланс</li>
+                        <li><strong>1С:</strong> Консистентность данных важнее скорости</li>
+                    </ul>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <h3>AP системы (жертвуют согласованностью):</h3>
+                    <ul>
+                        <li><strong>ВКонтакте:</strong> Лучше показать старые посты, чем не показать ничего</li>
+                        <li><strong>Авито:</strong> Объявление может появиться не сразу на всех серверах</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 22: ACID vs BASE -->
+            <section data-background-color="#2980b9">
+                <h2>⚔️ ACID vs BASE - "Банковский подход vs Стартап подход"</h2>
+            </section>
+
+            <!-- Слайд 23: ACID - Банковская надежность -->
+            <section>
+                <h2>🏦 ACID - "Банковская надежность"</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <h3>A - Atomicity (Атомарность)</h3>
+                    <p><strong>"Либо все, либо ничего"</strong></p>
+                    <p><strong>Пример:</strong> Перевод денег - либо списали И зачислили, либо ничего не произошло</p>
+                    <p><strong>Сленг:</strong> "Транзакция не может быть наполовину беременной"</p>
+                </div>
+            </section>
+
+            <!-- Слайд 24: ACID - Consistency -->
+            <section>
+                <h2>🔄 C - Consistency (Согласованность)</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <p><strong>"База всегда в корректном состоянии"</strong></p>
+                    <p><strong>Пример:</strong> Сумма всех счетов не изменяется при переводе</p>
+                    <p><strong>Проблема:</strong> Медленно при высоких нагрузках</p>
+                </div>
+            </section>
+
+            <!-- Слайд 25: BASE - Стартап философия -->
+            <section>
+                <h2>🚀 BASE - "Стартап философия"</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <h3>BA - Basically Available</h3>
+                    <p><strong>"В основном доступно"</strong></p>
+                    <p><strong>Пример:</strong> Instagram может показать не все фото, но работает</p>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <h3>E - Eventual consistency</h3>
+                    <p><strong>"Согласованность со временем"</strong></p>
+                    <p><strong>Пример:</strong> Лайк в ВК появится у всех, но не сразу</p>
+                    <p><strong>Сленг:</strong> "Eventually consistent = когда-нибудь будет правильно"</p>
+                </div>
+            </section>
+
+            <!-- Слайд 26: Пример из Яндекс.Маркета -->
+            <section>
+                <h2>📊 Пример из Яндекс.Маркета</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <pre><code>
+P50 = 150ms  (половина пользователей довольна)
+P95 = 800ms  (5% пользователей немного ждут)
+P99 = 2s     (1% пользователей сильно ждет)
+P99.9 = 10s  (0.1% пользователей очень злые)
+                    </code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 27: Исторические примеры падений -->
+            <section data-background-color="#e74c3c">
+                <h2>📉 Исторические примеры крупных падений</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <ul>
+                        <li><strong>2008 год:</strong> Падение Gmail на 2.5 часа - потеря $5 млн</li>
+                        <li><strong>2017 год:</strong> Падение AWS S3 - половина интернета не работала</li>
+                        <li><strong>2021 год:</strong> Падение Facebook/Instagram на 6 часов - потеря $60 млн</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 28: Главные истины -->
+            <section data-background-color="#27ae60">
+                <h2>💫 Главные истины высоких нагрузок</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <ul>
+                        <li><strong>"Нет серебряной пули"</strong> - универсального решения не существует</li>
+                        <li><strong>"Измеряй все"</strong> - без метрик ты слепой котенок</li>
+                        <li><strong>"CAP-теорема реальна"</strong> - нельзя получить все и сразу</li>
+                        <li><strong>"Пользователи нетерпеливы"</strong> - каждая миллисекунда важна</li>
+                        <li><strong>"Планируй на отказы"</strong> - все сломается, вопрос только когда</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 29: Что дальше -->
+            <section>
+                <h2>🗺️ Что нас ждет дальше</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <ul>
+                        <li>📊 Масштабирование систем</li>
+                        <li>💾 Базы данных для высоких нагрузок</li>
+                        <li>📊 Кеширование и CDN</li>
+                        <li>🔄 Очереди сообщений</li>
+                        <li>🔍 Мониторинг и обсервабилити</li>
+                        <li>🚫 Обеспечение отказоустойчивости</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 30: Домашнее задание -->
+            <section data-background-color="#f39c12">
+                <h2>📚 Домашнее задание</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <h3>Задача: Анализ производительности реального сервиса</h3>
+                    <ol>
+                        <li><strong>Выберите публичный API</strong> (например, JSONPlaceholder, GitHub API)</li>
+                        <li><strong>Проведите нагрузочное тестирование</strong></li>
+                        <li><strong>Постройте график</strong> зависимости latency от нагрузки</li>
+                        <li><strong>Предложите улучшения</strong></li>
+                    </ol>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <p><strong>Формат отчета:</strong> 3-4 страницы с графиками и выводами</p>
+                    <p><strong>Срок сдачи:</strong> К следующему занятию</p>
+                </div>
+            </section>
+
+            <!-- Слайд 31: Мотивационная цитата -->
+            <section data-background-color="#9b59b6">
+                <h2 style="text-align: center;">💬 Мудрость дня</h2>
+                <blockquote style="text-align: center; font-size: 1.5em; font-style: italic;">
+                    "Высоконагруженные системы - это не только технологии, 
+                    но и искусство компромиссов. 
+                    Искусство делать системы, которые работают 
+                    даже когда все идет не по плану."
+                </blockquote>
+                <p style="text-align: center; margin-top: 2em;">
+                    <small>— Неизвестный мудрый архитектор</small>
+                </p>
+            </section>
+
+            <!-- Слайд 32: Контакты -->
+            <section>
+                <h2>📞 Контакты</h2>
+                <div style="text-align: center;">
+                    <p><strong>Email:</strong> [ваш email]</p>
+                    <p><strong>Консультации:</strong> [время и место]</p>
+                    <p><strong>Telegram:</strong> [ваш telegram]</p>
+                </div>
+                <div class="fragment" style="margin-top: 2em;" data-fragment-index="0">
+                    <h3>Следующая лекция:</h3>
+                    <p style="color: #ff6b6b; font-size: 1.2em;">
+                        "Масштабирование систем: вертикальное vs горизонтальное"
+                    </p>
+                </div>
+            </section>
+
+            <!-- Слайд 33: Вопросы и ответы -->
+            <section data-background-color="#34495e">
+                <h2 style="text-align: center;">❓ Вопросы и обсуждение</h2>
+                <div style="text-align: center; margin-top: 3em;">
+                    <p style="font-size: 2em;">🤔💭</p>
+                    <p style="font-size: 1.3em;">Есть вопросы?</p>
+                </div>
+            </section>
+
+            <!-- Слайд 34: Спасибо за внимание -->
+            <section class="title-slide" data-background-gradient="linear-gradient(45deg, #667eea 0%, #764ba2 100%)">
+                <h1>🎉 Спасибо за внимание!</h1>
+                <div class="fragment" data-fragment-index="0">
+                    <p style="font-size: 1.5em;">Удачи в мире, где каждая миллисекунда на счету! 👋</p>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <p style="font-size: 3em;">⚡💻📈</p>
+                </div>
+            </section>
+
+        </div>
+        
+        <div class="navigation">
+            <div class="nav-dot active" onclick="goToSlide(0)">1</div>
+            <div class="nav-dot" onclick="goToSlide(1)">2</div>
+            <div class="nav-dot" onclick="goToSlide(2)">3</div>
+            <div class="nav-dot" onclick="goToSlide(3)">4</div>
+            <div class="nav-dot" onclick="goToSlide(4)">5</div>
+            <div class="nav-dot" onclick="goToSlide(5)">6</div>
+            <div class="nav-dot" onclick="goToSlide(6)">7</div>
+            <div class="nav-dot" onclick="goToSlide(7)">8</div>
+            <div class="nav-dot" onclick="goToSlide(8)">9</div>
+            <div class="nav-dot" onclick="goToSlide(9)">10</div>
+            <div class="nav-dot" onclick="goToSlide(10)">11</div>
+            <div class="nav-dot" onclick="goToSlide(11)">12</div>
+            <div class="nav-dot" onclick="goToSlide(12)">13</div>
+            <div class="nav-dot" onclick="goToSlide(13)">14</div>
+            <div class="nav-dot" onclick="goToSlide(14)">15</div>
+            <div class="nav-dot" onclick="goToSlide(15)">16</div>
+            <div class="nav-dot" onclick="goToSlide(16)">17</div>
+            <div class="nav-dot" onclick="goToSlide(17)">18</div>
+            <div class="nav-dot" onclick="goToSlide(18)">19</div>
+            <div class="nav-dot" onclick="goToSlide(19)">20</div>
+            <div class="nav-dot" onclick="goToSlide(20)">21</div>
+            <div class="nav-dot" onclick="goToSlide(21)">22</div>
+            <div class="nav-dot" onclick="goToSlide(22)">23</div>
+            <div class="nav-dot" onclick="goToSlide(23)">24</div>
+            <div class="nav-dot" onclick="goToSlide(24)">25</div>
+            <div class="nav-dot" onclick="goToSlide(25)">26</div>
+            <div class="nav-dot" onclick="goToSlide(26)">27</div>
+            <div class="nav-dot" onclick="goToSlide(27)">28</div>
+            <div class="nav-dot" onclick="goToSlide(28)">29</div>
+            <div class="nav-dot" onclick="goToSlide(29)">30</div>
+            <div class="nav-dot" onclick="goToSlide(30)">31</div>
+            <div class="nav-dot" onclick="goToSlide(31)">32</div>
+            <div class="nav-dot" onclick="goToSlide(32)">33</div>
+            <div class="nav-dot" onclick="goToSlide(33)">34</div>
+        </div>
+    <div class="backgrounds"></div><div class="slide-number" style="display: block;"><a href="#/">
+					<span class="slide-number-a">1</span>
+					<span class="slide-number-delimiter">/</span>
+					<span class="slide-number-b">34</span>
+					</a></div><aside class="controls" data-controls-layout="bottom-right" data-controls-back-arrows="faded" style="display: block;"><button class="navigate-left" aria-label="previous slide" disabled="disabled"><div class="controls-arrow"></div></button>
+			<button class="navigate-right enabled" aria-label="next slide"><div class="controls-arrow"></div></button>
+			<button class="navigate-up" aria-label="above slide" disabled="disabled"><div class="controls-arrow"></div></button>
+			<button class="navigate-down" aria-label="below slide" disabled="disabled"><div class="controls-arrow"></div></button></aside><div class="progress" style="display: block;"><span style="transform: scaleX(0);"></span></div><div class="speaker-notes" data-prevent-swipe="" tabindex="0"></div><div class="pause-overlay"><button class="resume-button">Resume presentation</button></div><div class="aria-status" aria-live="polite" aria-atomic="true" style="position: absolute; height: 1px; width: 1px; overflow: hidden; clip: rect(1px, 1px, 1px, 1px);"></div></div>
+
+    <script src="js/reveal.min.js"></script>
+    <script src="js/notes.min.js"></script>
+    <script src="js/markdown.min.js"></script>
+    <script src="js/highlight.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            transition: 'slide',
+            transitionSpeed: 'default',
+            backgroundTransition: 'fade',
+            controls: true,
+            progress: true,
+            slideNumber: 'c/t',
+            center: true,
+            touch: true,
+            loop: false,
+            rtl: false,
+            navigationMode: 'default',
+            shuffle: false,
+            fragments: true,
+            fragmentInURL: false,
+            embedded: false,
+            help: true,
+            showNotes: false,
+            autoPlayMedia: null,
+            preloadIframes: null,
+            autoSlide: 0,
+            autoSlideStoppable: true,
+            autoSlideMethod: 'default',
+            defaultTiming: null,
+            mouseWheel: false,
+            hideInactiveCursor: true,
+            hideCursorTime: 5000,
+            previewLinks: false,
+            postMessage: true,
+            postMessageEvents: false,
+            focusBodyOnPageVisibilityChange: true,
+            plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+        });
+
+        // Обновляем навигацию
+        Reveal.on('slidechanged', event => {
+            const dots = document.querySelectorAll('.nav-dot');
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            const currentSlide = event.indexh;
+            if (dots[currentSlide]) {
+                dots[currentSlide].classList.add('active');
+            }
+        });
+
+        // Добавляем поддержку клавиш
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'b' || event.key === 'B') {
+                // Черный экран по нажатию B
+                document.body.style.backgroundColor = document.body.style.backgroundColor === 'black' ? '' : 'black';
+            }
+        });
+        
+        // Инициализация навигации
+        Reveal.on('ready', () => {
+            document.querySelector('.nav-dot').classList.add('active');
+            initParticles();
+        });
+
+        // Функция навигации
+        function goToSlide(slideIndex) {
+            Reveal.slide(slideIndex, 0);
+        }
+
+        // Анимация частиц
+        function initParticles() {
+            const canvas = document.getElementById('particleCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            const particles = [];
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.5,
+                    vy: (Math.random() - 0.5) * 0.5,
+                    size: Math.random() * 3 + 1
+                });
+            }
+            
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    
+                    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+                    
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                    ctx.fill();
+                });
+                
+                // Линии связи
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (dist < 100) {
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 - dist / 300})`;
+                            ctx.stroke();
+                        }
+                    }
+                }
+                
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+    </script>
+
+</body></html>
