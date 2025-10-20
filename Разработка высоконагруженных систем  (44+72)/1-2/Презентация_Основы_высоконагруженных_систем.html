@@ -21,7 +21,7 @@
             <section class="title-slide present" data-background-gradient="linear-gradient(45deg, #667eea 0%, #764ba2 100%)" style="top: 168px; display: block;">
                 <canvas id="particleCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;"></canvas>
                 <h1 style="position: relative; z-index: 10;">⚡ Основы высоконагруженных систем</h1>
-                <h2 style="position: relative; z-index: 10;">Лекция 1-2: "Когда твой сервер начинает плакать от нагрузки" 😭</h2>
+                <h2 style="position: relative; z-index: 10;">Занятие 1: "Когда твой сервер начинает плакать от нагрузки" 😭</h2>
                 <p style="position: relative; z-index: 10;"><strong>От простых сайтов до монстров нагрузки</strong></p>
                 <p style="position: relative; z-index: 10;"><small>Преподаватель: Серов Н.Е.<br>МПГУ, 2025</small></p>
             </section>
@@ -48,6 +48,15 @@
                         <li><strong>10K+ пользователей онлайн</strong> - когда твоя база начинает "плакать"</li>
                         <li><strong>1TB+ данных</strong> - когда SELECT * FROM начинает выполняться до обеда</li>
                         <li><strong>99.9% uptime</strong> - когда простой на 8 часов в год = увольнение</li>
+                    </ul>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <h3>Дополнительные критерии (для продвинутых):</h3>
+                    <ul style="font-size: 0.9em;">
+                        <li><strong>Concurrent connections > 100K</strong> - когда сетевой стек ОС начинает "потеть"</li>
+                        <li><strong>Memory usage > 100GB</strong> - когда RAM стоит дороже автомобиля</li>
+                        <li><strong>Network traffic > 10Gbps</strong> - когда интернет-канал толще водопроводной трубы</li>
+                        <li><strong>Database size > 10TB</strong> - когда бэкап делается неделю</li>
                     </ul>
                 </div>
             </section>
@@ -263,7 +272,62 @@
                 <h3 style="text-align: center;">В распределенной системе можно гарантировать только 2 из 3 свойств</h3>
             </section>
 
-            <!-- Слайд 18: CAP - Consistency -->
+            <!-- Слайд 18: Аналогия из жизни -->
+            <section data-background-color="#9b59b6">
+                <h2>🌟 Аналогия из жизни</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <p><strong>"В распределённой системе можно гарантировать только 2 из 3 свойств одновременно"</strong></p>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <h3>Представьте команду из 3 разработчиков:</h3>
+                    <ul>
+                        <li>✅ <strong>Консистентность</strong> - все всегда имеют одинаковую информацию</li>
+                        <li>✅ <strong>Доступность</strong> - любой может ответить на вопрос сразу</li>
+                        <li>✅ <strong>Устойчивость</strong> - работа продолжается даже если кто-то недоступен</li>
+                    </ul>
+                </div>
+                <div class="fragment" data-fragment-index="2">
+                    <p style="color: #ff6b6b; font-size: 1.3em;"><strong>Невозможно иметь все три свойства идеально!</strong></p>
+                </div>
+            </section>
+
+            <!-- Слайд 19: Примеры в реальном мире -->
+            <section data-background-color="#8e44ad">
+                <h2>🏗️ Примеры в реальном мире</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <h3>Банкоматы (CP):</h3>
+                    <ul>
+                        <li>✅ Консистентность - баланс всегда точный</li>
+                        <li>❌ Иногда недоступны при проблемах связи</li>
+                        <li>✅ Устойчивы к сбоям сети</li>
+                    </ul>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <h3>Соцсети (AP):</h3>
+                    <ul>
+                        <li>✅ Всегда доступны для постинга</li>
+                        <li>✅ Работают при любых сбоях</li>
+                        <li>❌ Ваш пост может появиться не сразу у всех</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 20: Запомните -->
+            <section data-background-color="#9b59b6">
+                <h2>🎓 Запомните</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <blockquote style="text-align: center; font-size: 1.3em; font-style: italic;">
+                        "В распределённых системах приходится выбирать между мгновенной согласованностью и постоянной доступностью"
+                    </blockquote>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <p style="text-align: center; font-size: 1.2em; color: #f39c12;">
+                        <strong>Это фундаментальный компромисс, а не недостаток проектирования!</strong>
+                    </p>
+                </div>
+            </section>
+
+            <!-- Слайд 21: CAP - Consistency -->
             <section>
                 <h2>🔄 C - Consistency (Согласованность)</h2>
                 <div class="fragment" data-fragment-index="0">
@@ -273,7 +337,7 @@
                 </div>
             </section>
 
-            <!-- Слайд 19: CAP - Availability -->
+            <!-- Слайд 22: CAP - Availability -->
             <section>
                 <h2>🟢 A - Availability (Доступность)</h2>
                 <div class="fragment" data-fragment-index="0">
@@ -283,7 +347,7 @@
                 </div>
             </section>
 
-            <!-- Слайд 20: CAP - Partition Tolerance -->
+            <!-- Слайд 23: CAP - Partition Tolerance -->
             <section>
                 <h2>🌐 P - Partition Tolerance (Устойчивость к разделению)</h2>
                 <div class="fragment" data-fragment-index="0">
@@ -293,7 +357,7 @@
                 </div>
             </section>
 
-            <!-- Слайд 21: Практические компромиссы CAP -->
+            <!-- Слайд 24: Практические компромиссы CAP -->
             <section>
                 <h2>🤝 Практические компромиссы российских систем</h2>
                 <div class="fragment" data-fragment-index="0">
@@ -312,12 +376,12 @@
                 </div>
             </section>
 
-            <!-- Слайд 22: ACID vs BASE -->
+            <!-- Слайд 25: ACID vs BASE -->
             <section data-background-color="#2980b9">
                 <h2>⚔️ ACID vs BASE - "Банковский подход vs Стартап подход"</h2>
             </section>
 
-            <!-- Слайд 23: ACID - Банковская надежность -->
+            <!-- Слайд 26: ACID - Банковская надежность -->
             <section>
                 <h2>🏦 ACID - "Банковская надежность"</h2>
                 <div class="fragment" data-fragment-index="0">
@@ -328,7 +392,7 @@
                 </div>
             </section>
 
-            <!-- Слайд 24: ACID - Consistency -->
+            <!-- Слайд 27: ACID - Consistency -->
             <section>
                 <h2>🔄 C - Consistency (Согласованность)</h2>
                 <div class="fragment" data-fragment-index="0">
@@ -338,7 +402,7 @@
                 </div>
             </section>
 
-            <!-- Слайд 25: BASE - Стартап философия -->
+            <!-- Слайд 28: BASE - Стартап философия -->
             <section>
                 <h2>🚀 BASE - "Стартап философия"</h2>
                 <div class="fragment" data-fragment-index="0">
@@ -354,7 +418,7 @@
                 </div>
             </section>
 
-            <!-- Слайд 26: Пример из Яндекс.Маркета -->
+            <!-- Слайд 29: Пример из Яндекс.Маркета -->
             <section>
                 <h2>📊 Пример из Яндекс.Маркета</h2>
                 <div class="fragment" data-fragment-index="0">
@@ -367,7 +431,7 @@ P99.9 = 10s  (0.1% пользователей очень злые)
                 </div>
             </section>
 
-            <!-- Слайд 27: Исторические примеры падений -->
+            <!-- Слайд 30: Исторические примеры падений -->
             <section data-background-color="#e74c3c">
                 <h2>📉 Исторические примеры крупных падений</h2>
                 <div class="fragment" data-fragment-index="0">
@@ -379,7 +443,7 @@ P99.9 = 10s  (0.1% пользователей очень злые)
                 </div>
             </section>
 
-            <!-- Слайд 28: Главные истины -->
+            <!-- Слайд 31: Главные истины -->
             <section data-background-color="#27ae60">
                 <h2>💫 Главные истины высоких нагрузок</h2>
                 <div class="fragment" data-fragment-index="0">
@@ -393,7 +457,7 @@ P99.9 = 10s  (0.1% пользователей очень злые)
                 </div>
             </section>
 
-            <!-- Слайд 29: Что дальше -->
+            <!-- Слайд 32: Что дальше -->
             <section>
                 <h2>🗺️ Что нас ждет дальше</h2>
                 <div class="fragment" data-fragment-index="0">
@@ -408,7 +472,7 @@ P99.9 = 10s  (0.1% пользователей очень злые)
                 </div>
             </section>
 
-            <!-- Слайд 30: Домашнее задание -->
+            <!-- Слайд 33: Домашнее задание -->
             <section data-background-color="#f39c12">
                 <h2>📚 Домашнее задание</h2>
                 <div class="fragment" data-fragment-index="0">
@@ -426,7 +490,7 @@ P99.9 = 10s  (0.1% пользователей очень злые)
                 </div>
             </section>
 
-            <!-- Слайд 31: Мотивационная цитата -->
+            <!-- Слайд 34: Мотивационная цитата -->
             <section data-background-color="#9b59b6">
                 <h2 style="text-align: center;">💬 Мудрость дня</h2>
                 <blockquote style="text-align: center; font-size: 1.5em; font-style: italic;">
@@ -440,32 +504,9 @@ P99.9 = 10s  (0.1% пользователей очень злые)
                 </p>
             </section>
 
-            <!-- Слайд 32: Контакты -->
-            <section>
-                <h2>📞 Контакты</h2>
-                <div style="text-align: center;">
-                    <p><strong>Email:</strong> [ваш email]</p>
-                    <p><strong>Консультации:</strong> [время и место]</p>
-                    <p><strong>Telegram:</strong> [ваш telegram]</p>
-                </div>
-                <div class="fragment" style="margin-top: 2em;" data-fragment-index="0">
-                    <h3>Следующая лекция:</h3>
-                    <p style="color: #ff6b6b; font-size: 1.2em;">
-                        "Масштабирование систем: вертикальное vs горизонтальное"
-                    </p>
-                </div>
-            </section>
 
-            <!-- Слайд 33: Вопросы и ответы -->
-            <section data-background-color="#34495e">
-                <h2 style="text-align: center;">❓ Вопросы и обсуждение</h2>
-                <div style="text-align: center; margin-top: 3em;">
-                    <p style="font-size: 2em;">🤔💭</p>
-                    <p style="font-size: 1.3em;">Есть вопросы?</p>
-                </div>
-            </section>
 
-            <!-- Слайд 34: Спасибо за внимание -->
+            <!-- Слайд 35: Спасибо за внимание -->
             <section class="title-slide" data-background-gradient="linear-gradient(45deg, #667eea 0%, #764ba2 100%)">
                 <h1>🎉 Спасибо за внимание!</h1>
                 <div class="fragment" data-fragment-index="0">
@@ -517,7 +558,7 @@ P99.9 = 10s  (0.1% пользователей очень злые)
     <div class="backgrounds"></div><div class="slide-number" style="display: block;"><a href="#/">
 					<span class="slide-number-a">1</span>
 					<span class="slide-number-delimiter">/</span>
-					<span class="slide-number-b">34</span>
+					<span class="slide-number-b">35</span>
 					</a></div><aside class="controls" data-controls-layout="bottom-right" data-controls-back-arrows="faded" style="display: block;"><button class="navigate-left" aria-label="previous slide" disabled="disabled"><div class="controls-arrow"></div></button>
 			<button class="navigate-right enabled" aria-label="next slide"><div class="controls-arrow"></div></button>
 			<button class="navigate-up" aria-label="above slide" disabled="disabled"><div class="controls-arrow"></div></button>
