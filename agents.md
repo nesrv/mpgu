@@ -1,3 +1,32 @@
+"Управление разработкой программного обеспечения  (44+72)\1\Лекция 1a.html" после 8 слайда добавь слайд Принципы Agile. Перечисли 12 принципов.
+добавь анимацию Управление разработкой программного обеспечения  (44+72)\2\img\agile-1.gif и agile-2.gif
+
+для 
+после 8 слайда добав слайд Визуализация Agile с картинкой Управление разработкой программного обеспечения  (44+72)\2\img\agile-principles.gif
+
+```
+from fastapi import FastAPI
+import time
+import random
+
+app = FastAPI()
+
+@app.get('/fast')
+def fast_endpoint():
+    return {'response': 'fast', 'latency': '10ms'}
+
+@app.get('/slow')  
+def slow_endpoint():
+    time.sleep(random.uniform(0.1, 0.5))  # 100-500ms задержка
+    return {'response': 'slow', 'latency': '100-500ms'}
+
+if __name__ == '__main__':
+    import uvicorn
+    uvicorn.run(app, port=8000)
+```
+
+сделай энпоинт для самотестирования ab -n 1000 -c 10
+
 на основе "Разработка высоконагруженных систем  (44+72)\1-2\for_students.md" создай стильную веб-методичку с полями вводи и кнопкой сохранить результаты в pdf
 Только клиентская часть без бэкенда, css, js внутри html 
 
