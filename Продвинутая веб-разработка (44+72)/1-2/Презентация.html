@@ -39,7 +39,280 @@
                 </div>
             </section>
 
-            <!-- Слайд 3: Критерии высокой нагрузки -->
+            <!-- Слайд 3: Сравнение API технологий -->
+            <section>
+                <h2>🔄 Сравнение REST, SOAP, JSON-RPC, gRPC и GraphQL</h2>
+                <div style="text-align: center; margin: 20px 0;">
+                    <img src="img/all_api-2.gif" alt="Сравнение API технологий" style="max-width: 60%; height: auto; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+                </div>
+                <p style="font-size: 0.9em; text-align: center;"><strong>Сравнение REST, SOAP, JSON-RPC, gRPC и GraphQL</strong> в контексте использования в российских компаниях</p>
+            </section>
+
+            <!-- Слайд 4: Использование в российских компаниях -->
+            <section>
+                <h2>🇷🇺 Использование в российских компаниях</h2>
+                <div style="font-size: 0.65em;">
+                    <div class="fragment" data-fragment-index="0">
+                        <h3>1. REST</h3>
+                        <ul style="margin: 5px 0;">
+                            <li><strong>Факт:</strong> Это де-факто стандарт в РФ</li>
+                            <li><strong>Где:</strong> Везде — от стартапов до Сбера и Почты России</li>
+                            <li><strong>Почему:</strong> Простота, широкая поддержка, хорош для фронта и бэка</li>
+                            <li><strong>Фреймворки:</strong> FastAPI, Django REST, Spring, Express.js</li>
+                        </ul>
+                    </div>
+                    <div class="fragment" data-fragment-index="1">
+                        <h3>2. SOAP</h3>
+                        <ul style="margin: 5px 0;">
+                            <li><strong>Факт:</strong> Используется в гос.секторе, банках, интеграциях с 1С</li>
+                            <li><strong>Где:</strong> СМЭВ (госуслуги), ФНС, банки, крупные ERP</li>
+                            <li><strong>Почему:</strong> Требование формата, проверенные стандарты</li>
+                            <li><strong>Недостатки:</strong> Сложный XML, перегрузка, низкая гибкость</li>
+                        </ul>
+                    </div>
+                    <div class="fragment" data-fragment-index="2">
+                        <h3>3. JSON-RPC</h3>
+                        <ul style="margin: 5px 0;">
+                            <li><strong>Факт:</strong> Выбирается для простых внутренних API</li>
+                            <li><strong>Где:</strong> Внутренние сервисы (финтех, маркетплейсы)</li>
+                            <li><strong>Почему:</strong> Лёгкий, без лишнего, JSON, понятен</li>
+                            <li><strong>Пример:</strong> Интеграция микросервисов в legacy-проектах</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 5: Продолжение использования в РФ -->
+            <section>
+                <h2>🇷🇺 Использование в российских компаниях (продолжение)</h2>
+                <div style="font-size: 0.7em;">
+                    <div class="fragment" data-fragment-index="0">
+                        <h3>4. gRPC</h3>
+                        <ul style="margin: 5px 0;">
+                            <li><strong>Факт:</strong> Активно внедряется в технокомпаниях</li>
+                            <li><strong>Где:</strong> Яндекс, Тинькофф, VK, Ozon, Skyeng</li>
+                            <li><strong>Почему:</strong> Скорость, строгие контракты, стриминг, автогенерация</li>
+                            <li><strong>Недостатки:</strong> Не для фронта напрямую (нужен gRPC-web), сложнее CI/CD</li>
+                        </ul>
+                    </div>
+                    <div class="fragment" data-fragment-index="1">
+                        <h3>5. GraphQL</h3>
+                        <ul style="margin: 5px 0;">
+                            <li><strong>Факт:</strong> Используется в продвинутых фронт-ориентированных продуктах</li>
+                            <li><strong>Где:</strong> Ozon, Avito, Яндекс.Практикум, VK, Skyeng</li>
+                            <li><strong>Почему:</strong> Гибкость для мобильных приложений и SPA</li>
+                            <li><strong>Минусы:</strong> Сложнее дебаг, кэширование, безопасность</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 6: Таблица сравнения API -->
+            <section>
+                <h2>🔎 Общее сравнение технологий</h2>
+                <table style="font-size: 0.55em; width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Технология</th>
+                            <th>Формат</th>
+                            <th>Строгая схема</th>
+                            <th>Стриминг</th>
+                            <th>Подходит для Web</th>
+                            <th>Популярность в РФ</th>
+                            <th>Типичный use case</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>REST</strong></td>
+                            <td>JSON / XML</td>
+                            <td>❌ (частично)</td>
+                            <td>❌</td>
+                            <td>✅ (нативно)</td>
+                            <td>🔥 Очень высокая</td>
+                            <td>Публичные и внутренние API</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SOAP</strong></td>
+                            <td>XML</td>
+                            <td>✅ (WSDL)</td>
+                            <td>❌</td>
+                            <td>⚠️ (неудобен)</td>
+                            <td>🔻 Низкая (гос, банки)</td>
+                            <td>Госструктуры, 1С, СМЭВ, банки</td>
+                        </tr>
+                        <tr>
+                            <td><strong>JSON-RPC</strong></td>
+                            <td>JSON</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                            <td>✅</td>
+                            <td>⚪ Средняя/нишево</td>
+                            <td>Простые внутренние API</td>
+                        </tr>
+                        <tr>
+                            <td><strong>gRPC</strong></td>
+                            <td>Protobuf</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                            <td>⚠️ (нужен gRPC-Web)</td>
+                            <td>🔼 Растёт (Яндекс, Тинькофф)</td>
+                            <td>Высокопроизводительные микросервисы</td>
+                        </tr>
+                        <tr>
+                            <td><strong>GraphQL</strong></td>
+                            <td>JSON</td>
+                            <td>✅ (SDL)</td>
+                            <td>⚠️ частично</td>
+                            <td>✅</td>
+                            <td>🔼 Растёт (Ozon, Avito)</td>
+                            <td>Мобильные/веб-клиенты, сложные UI-запросы</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Слайд 7: COBOL в банках -->
+            <section>
+                <h2>🏦 На чём работают банки с COBOL?</h2>
+                <div style="text-align: center; margin: 20px 0;">
+                    <img src="img/cobol.jpeg" alt="COBOL" style="max-width: 50%; height: auto; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+                </div>
+                <div class="fragment" data-fragment-index="0">
+                    <p>В старых и крупных банковских системах (СНГ, Европа, США, Латинская Америка), <strong>ядро</strong> банков (Core Banking Systems) до сих пор написано на <strong>COBOL</strong>.</p>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <p>Но внешние интерфейсы — то, как вы с этим COBOL'ом общаетесь из мира Python, Node, Java — могут быть разные.</p>
+                </div>
+            </section>
+
+            <!-- Слайд 8: Какие API используют COBOL-системы -->
+            <section>
+                <h2>📡 Какие API используют COBOL-системы в банках?</h2>
+                <table style="font-size: 0.6em; width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Тип API</th>
+                            <th>Где и как используется</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>SOAP (WSDL)</strong></td>
+                            <td>80% интеграций с внешним миром. Часто в Java/.NET шлюзах, оборачивающих COBOL</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MQ (IBM MQ / RabbitMQ)</strong></td>
+                            <td>Асинхронный обмен сообщениями между front-end и мейнфреймом. Классика</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ISO 8583 (TCP)</strong></td>
+                            <td>Банковские терминалы, POS'ы, карточные транзакции (очень «низкоуровнево»)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>REST API</strong></td>
+                            <td>Используется как "фасад" — REST → Middleware → SOAP или MQ → COBOL</td>
+                        </tr>
+                        <tr>
+                            <td><strong>gRPC / Kafka</strong></td>
+                            <td>Редко, но появляются в новых системах. Используются на уровне интеграции</td>
+                        </tr>
+                        <tr>
+                            <td><strong>FTP / SFTP файлы</strong></td>
+                            <td>Не шутка. Ежедневные batch-передачи из COBOL в XML/CSV и обратно</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Direct CICS calls</strong></td>
+                            <td>На мейнфреймах через IBM CICS Transaction Server</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Слайд 9: Архитектура -->
+            <section>
+                <h2>💡 Как выглядит архитектура?</h2>
+                <div class="fragment" data-fragment-index="0">
+                    <pre style="font-size: 0.8em;"><code>
+[Mobile App / Web] → REST API → Middleware → SOAP или MQ → COBOL (Mainframe)
+                    </code></pre>
+                </div>
+                <div class="fragment" data-fragment-index="1">
+                    <h3>📋 Перевод на «язык программистов»:</h3>
+                    <ul style="font-size: 0.8em;">
+                        <li><strong>"COBOL сам в API не ходит — к нему ходят."</strong></li>
+                        <li><strong>"Если видишь SOAP с operation=DoAccountTransfer — почти точно внутри COBOL."</strong></li>
+                        <li><strong>"Бэк офиса нет, есть мейнфрейм."</strong></li>
+                        <li><strong>"MQ-шечку брось — и жди, пока мейнфрейм отдумается."</strong></li>
+                        <li><strong>"Там ещё FTP с dump-логами крутится по ночам."</strong></li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 10: Реальный сценарий -->
+            <section>
+                <h2>🧪 Пример реального сценария</h2>
+                <pre style="font-size: 0.55em;"><code>
+Frontend: JavaScript (React)
+Backend: Java (Spring Boot REST API)
+→ вызывает SOAP
+→ который кладёт сообщение в IBM MQ
+→ его подхватывает CICS / COBOL
+→ обрабатывает транзакцию
+→ кладёт ответ в другую очередь
+→ REST API ждёт или polling'ом проверяет
+→ возвращает клиенту JSON
+                </code></pre>
+            </section>
+
+            <!-- Слайд 11: SOAP запрос -->
+            <section>
+                <h2>🧾 Пример SOAP-запроса — AccountTransfer</h2>
+                <pre style="font-size: 0.4em;"><code class="xml">&lt;soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:bank="http://example.com/bank"&gt;
+   &lt;soapenv:Header&gt;
+      &lt;bank:Authentication&gt;
+         &lt;bank:Username&gt;api_user&lt;/bank:Username&gt;
+         &lt;bank:Password&gt;secure123&lt;/bank:Password&gt;
+      &lt;/bank:Authentication&gt;
+   &lt;/soapenv:Header&gt;
+   &lt;soapenv:Body&gt;
+      &lt;bank:AccountTransferRequest&gt;
+         &lt;bank:FromAccount&gt;1234567890&lt;/bank:FromAccount&gt;
+         &lt;bank:ToAccount&gt;9876543210&lt;/bank:ToAccount&gt;
+         &lt;bank:Amount&gt;1000.00&lt;/bank:Amount&gt;
+         &lt;bank:Currency&gt;USD&lt;/bank:Currency&gt;
+         &lt;bank:Reference&gt;Invoice#2025-07&lt;/bank:Reference&gt;
+         &lt;bank:TransactionDate&gt;2025-07-25&lt;/bank:TransactionDate&gt;
+      &lt;/bank:AccountTransferRequest&gt;
+   &lt;/soapenv:Body&gt;
+&lt;/soapenv:Envelope&gt;
+                </code></pre>
+            </section>
+
+            <!-- Слайд 12: SOAP ответ -->
+            <section>
+                <h2>📤 Пример SOAP-ответа</h2>
+                <pre style="font-size: 0.5em;"><code class="xml">&lt;soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:bank="http://example.com/bank"&gt;
+   &lt;soapenv:Body&gt;
+      &lt;bank:AccountTransferResponse&gt;
+         &lt;bank:Status&gt;SUCCESS&lt;/bank:Status&gt;
+         &lt;bank:TransactionId&gt;TXN123456789&lt;/bank:TransactionId&gt;
+         &lt;bank:BalanceAfter&gt;4990.00&lt;/bank:BalanceAfter&gt;
+      &lt;/bank:AccountTransferResponse&gt;
+   &lt;/soapenv:Body&gt;
+&lt;/soapenv:Envelope&gt;
+                </code></pre>
+                <div class="fragment" data-fragment-index="0">
+                    <h3 style="margin-top: 20px;">💬 На сленге:</h3>
+                    <blockquote style="font-size: 0.8em;">
+                        <strong>"XML-овая простыня с soapenv:Envelope, в которую мы молитвенно кладём FromAccount, надеясь, что COBOL-ядро примет жертву и вернёт SUCCESS."</strong>
+                    </blockquote>
+                </div>
+            </section>
+
+            <!-- Слайд 13: Критерии высокой нагрузки -->
             <section data-background-color="#34495e">
                 <h2>📊 Критерии "высокой нагрузки"</h2>
                 <div class="fragment" data-fragment-index="0">
@@ -527,6 +800,8 @@ P99.9 = 10s  (0.1% пользователей очень злые)
             <div class="nav-dot" onclick="goToSlide(4)">5</div>
             <div class="nav-dot" onclick="goToSlide(5)">6</div>
             <div class="nav-dot" onclick="goToSlide(6)">7</div>
+            <div class="nav-dot" onclick="goToSlide(5)">6</div>
+            <div class="nav-dot" onclick="goToSlide(6)">7</div>
             <div class="nav-dot" onclick="goToSlide(7)">8</div>
             <div class="nav-dot" onclick="goToSlide(8)">9</div>
             <div class="nav-dot" onclick="goToSlide(9)">10</div>
@@ -554,11 +829,22 @@ P99.9 = 10s  (0.1% пользователей очень злые)
             <div class="nav-dot" onclick="goToSlide(31)">32</div>
             <div class="nav-dot" onclick="goToSlide(32)">33</div>
             <div class="nav-dot" onclick="goToSlide(33)">34</div>
+            <div class="nav-dot" onclick="goToSlide(34)">35</div>
+            <div class="nav-dot" onclick="goToSlide(35)">36</div>
+            <div class="nav-dot" onclick="goToSlide(36)">37</div>
+            <div class="nav-dot" onclick="goToSlide(37)">38</div>
+            <div class="nav-dot" onclick="goToSlide(38)">39</div>
+            <div class="nav-dot" onclick="goToSlide(39)">40</div>
+            <div class="nav-dot" onclick="goToSlide(40)">41</div>
+            <div class="nav-dot" onclick="goToSlide(41)">42</div>
+            <div class="nav-dot" onclick="goToSlide(42)">43</div>
+            <div class="nav-dot" onclick="goToSlide(43)">44</div>
+            <div class="nav-dot" onclick="goToSlide(44)">45</div>
         </div>
     <div class="backgrounds"></div><div class="slide-number" style="display: block;"><a href="#/">
 					<span class="slide-number-a">1</span>
 					<span class="slide-number-delimiter">/</span>
-					<span class="slide-number-b">35</span>
+					<span class="slide-number-b">45</span>
 					</a></div><aside class="controls" data-controls-layout="bottom-right" data-controls-back-arrows="faded" style="display: block;"><button class="navigate-left" aria-label="previous slide" disabled="disabled"><div class="controls-arrow"></div></button>
 			<button class="navigate-right enabled" aria-label="next slide"><div class="controls-arrow"></div></button>
 			<button class="navigate-up" aria-label="above slide" disabled="disabled"><div class="controls-arrow"></div></button>
