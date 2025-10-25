@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Архитектуры высоконагруженных систем</title>
+    <link rel="stylesheet" href="css/reveal.min.css">
+    <link rel="stylesheet" href="css/black.min.css">
+    <link rel="stylesheet" href="css/monokai.min.css">
+    <link rel="stylesheet" href="css/presentation.css">
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            
+            <!-- Слайд 1: Титульный -->
+            <section data-background-color="#1a1a2e" style="font-family: 'Courier New', monospace;">
+                <div style="background: rgba(22,33,62,0.9); padding: 40px; border: 8px solid #0f3460; box-shadow: 0 0 0 4px #16213e, inset 0 0 20px rgba(0,0,0,0.5);">
+                    <h1 style="font-family: 'Courier New', monospace; text-shadow: 4px 4px 0 #000, 2px 2px 0 #0f3460; color: #FFD700; letter-spacing: 3px;">⛏ Архитектуры высоконагруженных систем</h1>
+                    <h2 style="font-family: 'Courier New', monospace; text-shadow: 3px 3px 0 #000; color: #90EE90;">🛠 Занятие 1: Основы сетевых протоколов и API</h2>
+                    <p style="font-family: 'Courier New', monospace; text-shadow: 2px 2px 0 #000; color: #FFF; font-size: 1.2em; margin-top: 30px;">🏫 МПГУ, 2025</p>
+                </div>
+            </section>
+
+            <!-- Слайд 2: Web-API -->
+            <section>
+                <h2>Web-API</h2>
+                <div style="display: flex; align-items: center; gap: 50px; margin-top: 30px;">
+                    <div style="flex: 1;">
+                        <img src="img/image-2.png" alt="Web-API" style="max-width: 100%;">
+                    </div>
+                    <div id="api-animation" style="flex: 1; height: 300px; position: relative;">
+                        <div class="api-protocol" id="rest" style="position: absolute; left: 10%; top: 20px; padding: 10px 20px; background: #3498db; border-radius: 5px; color: white; font-weight: bold;">REST</div>
+                        <div class="api-protocol" id="graphql" style="position: absolute; left: 60%; top: 80px; padding: 10px 20px; background: #e91e63; border-radius: 5px; color: white; font-weight: bold;">GraphQL</div>
+                        <div class="api-protocol" id="soap" style="position: absolute; left: 30%; top: 150px; padding: 10px 20px; background: #ff9800; border-radius: 5px; color: white; font-weight: bold;">SOAP</div>
+                        <div class="api-protocol" id="grpc" style="position: absolute; left: 70%; top: 200px; padding: 10px 20px; background: #4caf50; border-radius: 5px; color: white; font-weight: bold;">gRPC</div>
+                    </div>
+                </div>
+                <style>
+                    .api-protocol {
+                        animation: float 3s ease-in-out infinite;
+                        transition: transform 0.3s ease;
+                    }
+                    .api-protocol:nth-child(1) { animation-delay: 0s; }
+                    .api-protocol:nth-child(2) { animation-delay: 0.5s; }
+                    .api-protocol:nth-child(3) { animation-delay: 1s; }
+                    .api-protocol:nth-child(4) { animation-delay: 1.5s; }
+                    @keyframes float {
+                        0%, 100% { transform: translateY(0px) scale(1); }
+                        50% { transform: translateY(-20px) scale(1.1); }
+                    }
+                    .api-protocol:hover {
+                        transform: scale(1.2) !important;
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                    }
+                </style>
+            </section>
+
+            <!-- Слайд 3: Учебные вопросы -->
+            <section>
+                <h2>Учебные вопросы:</h2>
+                <ul style="text-align: left; font-size: 0.9em; line-height: 1.8;">
+                    <li>Базовые понятия (без воды)</li>
+                    <li>OSI — модель для тех, кто не хочет гуглить "почему не работает"</li>
+                    <li>Сетевые протоколы — TCP, UDP и вся эта движуха</li>
+                    <li>API-протоколы — GraphQL, REST, SOAP, gRPC и прочие звери</li>
+                </ul>
+            </section>
+
+            <!-- Слайд 4: Модель OSI -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🔧 Модель OSI</h2>
+                <div style="display: flex; align-items: flex-start; gap: 30px; margin-top: 20px;">
+                    <div style="flex: 1; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 2px solid rgba(255,215,0,0.3);">
+                        <img src="img/osi.gif" alt="OSI Model" style="max-width: 100%; border-radius: 5px;">
+                    </div>
+                    <div style="flex: 1; text-align: left; font-size: 0.7em;">
+                        <h3 class="fragment" style="color: #90EE90; margin-bottom: 15px;">Зачем разработчику знать OSI?</h3>
+                        <ul style="line-height: 1.6;">
+                            <li class="fragment" style="margin-bottom: 10px;"><strong style="color: #e74c3c;">🐞 Дебаггинг:</strong> Когда всё "лежит", нужно понять где именно — DNS "умер" (уровень 7) или TCP "отвалился" (уровень 4).</li>
+                            <li class="fragment" style="margin-bottom: 10px;"><strong style="color: #3498db;">🛠 Выбор инструментов:</strong> HTTP-библиотеки (уровень 7), сокеты (уровни 3–4), низкоуровневые инструменты (уровни 2–3)</li>
+                            <li class="fragment" style="margin-bottom: 10px;"><strong style="color: #2ecc71;">⚡ Оптимизация:</strong> HTTP/1.1 → HTTP/2 = профит в скорости. TCP vs UDP = надёжность vs скорость.</li>
+                        </ul>
+                        <p class="fragment" style="margin-top: 20px; padding: 15px; background: rgba(243,156,18,0.2); border-left: 4px solid #f39c12; border-radius: 5px; font-style: italic; line-height: 1.5;">
+                            💡 Короче говоря, чтобы когда всё "упало", ты мог сказать: "Это не я, это DNS" или "Проблема на уровне TCP, я тут ни при чём".
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 3: Уровни OSI -->
+            <section>
+                <h2>📊 Уровни OSI</h2>
+                <table style="font-size: 0.7em; border-collapse: separate; border-spacing: 0 8px;">
+                    <tr style="background: rgba(46,204,113,0.3);"><th style="padding: 12px;">№</th><th style="padding: 12px;">Уровень</th><th style="padding: 12px;">Примеры</th></tr>
+                    <tr style="background: rgba(155,89,182,0.2);"><td style="padding: 10px;">7</td><td style="padding: 10px;">Приложений</td><td style="padding: 10px;">HTTP, REST API, WebSockets</td></tr>
+                    <tr style="background: rgba(52,152,219,0.2);"><td style="padding: 10px;">6</td><td style="padding: 10px;">Представления</td><td style="padding: 10px;">SSL/TLS, JSON, XML</td></tr>
+                    <tr style="background: rgba(52,152,219,0.2);"><td style="padding: 10px;">5</td><td style="padding: 10px;">Сеансовый</td><td style="padding: 10px;">WebSockets, SSH</td></tr>
+                    <tr style="background: rgba(241,196,15,0.2);"><td style="padding: 10px;">4</td><td style="padding: 10px;">Транспортный</td><td style="padding: 10px;">TCP, UDP</td></tr>
+                    <tr style="background: rgba(230,126,34,0.2);"><td style="padding: 10px;">3</td><td style="padding: 10px;">Сетевой</td><td style="padding: 10px;">IP, ICMP</td></tr>
+                    <tr style="background: rgba(231,76,60,0.2);"><td style="padding: 10px;">2</td><td style="padding: 10px;">Канальный</td><td style="padding: 10px;">Ethernet, Wi-Fi</td></tr>
+                    <tr style="background: rgba(231,76,60,0.2);"><td style="padding: 10px;">1</td><td style="padding: 10px;">Физический</td><td style="padding: 10px;">Кабели, сигналы</td></tr>
+                </table>
+            </section>
+
+            <!-- Слайд 4: Мнемоника OSI -->
+            <section data-background-color="#9b59b6">
+                <h2 style="font-size: 1.5em; margin-bottom: 30px;">🧠 Как запомнить порядок уровней?</h2>
+                <div style="display: flex; align-items: flex-start; gap: 30px;">
+                    <div style="flex: 0.55;">
+                        <img src="img/osi-2.gif" alt="OSI" style="max-width: 100%;">
+                    </div>
+                    <div style="flex: 1;">
+                        <div class="fragment">
+                            <h3 style="color: #f39c12;">"Все Программисты Спят, Только Сетевые Калеки Фиксируют"</h3>
+                        </div>
+                        <div class="fragment" style="text-align: left; font-size: 0.7em; margin-top: 15px;">
+                            <ol>
+                                <li><strong>В</strong>се — Приложений</li>
+                                <li><strong>П</strong>рограммисты — Представления</li>
+                                <li><strong>С</strong>пят — Сеансовый</li>
+                                <li><strong>Т</strong>олько — Транспортный</li>
+                                <li><strong>С</strong>етевые — Сетевой</li>
+                                <li><strong>К</strong>алеки — Канальный</li>
+                                <li><strong>Ф</strong>иксируют — Физический</li>
+                            </ol>
+                        </div>
+                        <div class="fragment" style="margin-top: 20px;">
+                            <p style="color: #2ecc71; font-size: 0.8em;"><strong>Или проще (снизу вверх):</strong></p>
+                            <p style="font-size: 0.75em;">"Физики Канают, Сетевики Транспортируют, Сеансы Представляют Приложения"</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 5: Примеры работы с уровнями -->
+            <section>
+                <h2>💻 Примеры работы с уровнями</h2>
+                
+                <div style="margin: 20px 0;">
+                    <pre><code class="bash">curl https://api.github.com</code></pre>
+                    <p class="fragment" style="color: #f39c12;">❓ Какой уровень?</p>
+                    <p class="fragment" style="color: #2ecc71;">✅ Уровень 7 (HTTP)</p>
+                </div>
+
+                <div style="margin: 20px 0;">
+                    <pre><code class="bash">telnet google.com 80
+GET / HTTP/1.1
+Host: google.com</code></pre>
+                    <p class="fragment" style="color: #f39c12;">❓ Какой уровень?</p>
+                    <p class="fragment" style="color: #2ecc71;">✅ Уровень 4 (TCP)</p>
+                </div>
+
+                <div style="margin: 20px 0;">
+                    <pre><code class="bash">ping 8.8.8.8</code></pre>
+                    <p class="fragment" style="color: #f39c12;">❓ Какой уровень?</p>
+                    <p class="fragment" style="color: #2ecc71;">✅ Уровень 3 (IP/ICMP)</p>
+                </div>
+            </section>
+
+            <!-- Слайд 6: Типичные проблемы -->
+            <section data-background-color="#c0392b">
+                <h2>🔧 Типичные проблемы и где копать</h2>
+                <ul style="text-align: left; font-size: 0.9em;">
+                    <li class="fragment"><strong>"Connection refused"</strong> → Порт закрыт (уровень 4) или сервер тебя "послал" (уровень 7).</li>
+                    <li class="fragment"><strong>"SSL certificate failed"</strong> → Сертификат протух или кривой (уровень 6).</li>
+                    <li class="fragment"><strong>"Всё тормозит"</strong> → TCP-буфер маленький (уровень 4) или забыли включить gzip (уровень 7).</li>
+                    <li class="fragment"><strong>"DNS resolution failed"</strong> → DNS "лежит" или домен не существует (уровень 7).</li>
+                </ul>
+            </section>
+
+            <!-- Слайд 7: Кто на каких уровнях работает -->
+            <section data-background-color="#34495e">
+                <h2 style="font-size: 1.4em;">👥 Кто на каких уровнях работает?</h2>
+                <div style="font-size: 0.75em; text-align: left;">
+                    <div>
+                        <h3 class="fragment" style="color: #e74c3c;">Уровни 1-2 (Физический, Канальный)</h3>
+                        <p class="fragment">Сетевые инженеры, Системные администраторы, DevOps (настройка оборудования)</p>
+                    </div>
+                    <div>
+                        <h3 class="fragment" style="color: #e67e22;">Уровень 3 (Сетевой - IP)</h3>
+                        <p class="fragment">Сетевые инженеры (маршрутизация, VPN), DevOps (Kubernetes networking), Сисадмины</p>
+                    </div>
+                    <div>
+                        <h3 class="fragment" style="color: #f39c12;">Уровень 4 (Транспортный - TCP/UDP)</h3>
+                        <p class="fragment">Backend-разработчики (сокеты, WebSocket), DevOps (балансировщики), Системные инженеры</p>
+                    </div>
+                    <div>
+                        <h3 class="fragment" style="color: #3498db;">Уровни 5-6 (Сеансовый, Представления)</h3>
+                        <p class="fragment">Backend-разработчики (сессии, шифрование), Security-инженеры (SSL/TLS), DevOps (сертификаты)</p>
+                    </div>
+                    <div>
+                        <h3 class="fragment" style="color: #2ecc71;">Уровень 7 (Приложений - HTTP, REST, gRPC)</h3>
+                        <p class="fragment">Frontend-разработчики, Backend-разработчики, QA-инженеры, DevOps (мониторинг API)</p>
+                    </div>
+                    <div>
+                        <h3 class="fragment" style="color: #9b59b6; margin-top: 20px;">Все уровни</h3>
+                        <p class="fragment">DevOps/SRE (от железа до приложения), Сетевые архитекторы</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 8: Вывод -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">📝 Вывод</h2>
+                <div style="font-size: 0.85em; text-align: left; max-width: 80%; margin: 20px auto; padding: 30px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 2px solid rgba(255,215,0,0.3);">
+                    <p class="fragment" style="margin-bottom: 15px; padding: 10px; background: rgba(231,76,60,0.2); border-left: 4px solid #e74c3c; border-radius: 5px;">🔧 Уровни 1–2 — для системных программистов.</p>
+                    <p class="fragment" style="margin-bottom: 15px; color: #FFD700;">👨‍💻 Уровни 3–7 — зона ответственности разработчика:</p>
+                    <ul style="line-height: 1.8;">
+                        <li class="fragment" style="margin-bottom: 10px;"><strong style="color: #9b59b6;">Уровень 7</strong> — HTTP-библиотеки (99% задач)</li>
+                        <li class="fragment" style="margin-bottom: 10px;"><strong style="color: #3498db;">Уровень 4</strong> — Сокеты (когда нужен контроль)</li>
+                        <li class="fragment" style="margin-bottom: 10px;"><strong style="color: #e67e22;">Уровень 3</strong> — Низкоуровневые инструменты (диагностика)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 10: HTTP -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🌐 Основные протоколы</h2>
+                <div style="display: flex; gap: 30px; margin-top: 20px;">
+                    <div style="flex: 1; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 2px solid rgba(255,215,0,0.3);">
+                        <img src="img/protocols-2.gif" alt="HTTP" style="max-width: 100%; border-radius: 5px;">
+                    </div>
+                    <div class="fragment" style="flex: 1; text-align: left; font-size: 0.7em;">
+                        <div class="fragment" style="margin-bottom: 20px; padding: 15px; background: rgba(155,89,182,0.2); border-left: 4px solid #9b59b6; border-radius: 5px;">
+                            <h4 style="color: #9b59b6; margin-top: 0;">🌐 HTTP/HTTPS</h4>
+                            <p><strong>Для чего:</strong> Веб-запросы, REST API, загрузка данных.</p>
+                            <p><strong>Инструменты:</strong> curl, wget, HTTP-библиотеки.</p>
+                        </div>
+                        <div class="fragment" style="margin-bottom: 20px; padding: 15px; background: rgba(52,152,219,0.2); border-left: 4px solid #3498db; border-radius: 5px;">
+                            <h4 style="color: #3498db; margin-top: 0;">🔌 WebSocket</h4>
+                            <p><strong>Для чего:</strong> Чат, онлайн-игры, реальное время.</p>
+                            <p><strong>Инструменты:</strong> WebSocket-библиотеки, Socket.io.</p>
+                        </div>
+                        <div class="fragment" style="padding: 15px; background: rgba(230,126,34,0.2); border-left: 4px solid #e67e22; border-radius: 5px;">
+                            <h4 style="color: #e67e22; margin-top: 0;">📁 FTP/SFTP</h4>
+                            <p><strong>Для чего:</strong> Передача файлов.</p>
+                            <p><strong>Инструменты:</strong> FileZilla, командная строка.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 11: HTTP/HTTPS -->
+            <section>
+                <h2>HTTP/HTTPS</h2>
+                <div style="display: flex; gap: 30px; font-size: 0.75em; margin-top: 30px;">
+                    <div style="flex: 1; text-align: left; padding: 20px; background: rgba(231,76,60,0.2); border-left: 4px solid #e74c3c; border-radius: 5px;">
+                        <h3 style="color: #e74c3c; margin-top: 0;">HTTP</h3>
+                        <p>🔓 Порт 80</p>
+                        <p>❌ Данные в открытом виде</p>
+                        <p>⚡ Плюс: Быстрее</p>
+                    </div>
+                    <div style="flex: 1; text-align: left; padding: 20px; background: rgba(46,204,113,0.2); border-left: 4px solid #2ecc71; border-radius: 5px;">
+                        <h3 style="color: #2ecc71; margin-top: 0;">HTTPS</h3>
+                        <p>🔒 Порт 443</p>
+                        <p>✅ Данные шифруются</p>
+                        <p>🎯 Обязательный стандарт</p>
+                    </div>
+                </div>
+                <div class="fragment" style="font-size: 0.7em; margin-top: 30px; text-align: left; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 5px;">
+                    <p style="margin: 5px 0;">🔍 Google понижает HTTP-сайты в поиске</p>
+                    <p style="margin: 5px 0;">⚠️ Chrome/Firefox помечают HTTP как "Небезопасные"</p>
+                    <p style="margin: 5px 0;">🚀 HTTP/2 работает ТОЛЬКО поверх HTTPS</p>
+                </div>
+            </section>
+
+            <!-- Слайд 12: WebSocket -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🔌 WebSocket</h2>
+                <p style="font-size: 0.8em; margin-bottom: 30px;">Протокол полнодуплексной (full-duplex) связи поверх TCP</p>
+                <div style="display: flex; gap: 30px; font-size: 0.75em;">
+                    <div style="flex: 1; padding: 20px; background: rgba(231,76,60,0.2); border-left: 4px solid #e74c3c; border-radius: 5px;">
+                        <h3 style="color: #e74c3c; margin-top: 0;">❌ Не подходит для:</h3>
+                        <ul style="line-height: 1.8;">
+                            <li>Статический контент</li>
+                            <li>REST API (получение данных по запросу)</li>
+                            <li>Когда важна идемпотентность и кэширование</li>
+                        </ul>
+                    </div>
+                    <div style="flex: 1; padding: 20px; background: rgba(46,204,113,0.2); border-left: 4px solid #2ecc71; border-radius: 5px;">
+                        <h3 style="color: #2ecc71; margin-top: 0;">✅ Идеальные сценарии:</h3>
+                        <ul style="line-height: 1.8;">
+                            <li>💬 Чат-приложения</li>
+                            <li>📊 Live-дашборды (биржевые котировки)</li>
+                            <li>📝 Многопользовательские редакторы (Google Docs)</li>
+                            <li>🎮 Игры в реальном времени</li>
+                            <li>📡 Стриминг данных (GPS, IoT)</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 13: WebSocket vs HTTP -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">📊 WebSocket vs HTTP</h2>
+                <table style="font-size: 0.65em; border-collapse: separate; border-spacing: 0 8px; margin-top: 30px;">
+                    <tr style="background: rgba(52,152,219,0.3);"><th style="padding: 12px;">Критерий</th><th style="padding: 12px;">WebSocket</th><th style="padding: 12px;">HTTP</th></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Задержка</td><td style="padding: 10px;">✅ Минимальная</td><td style="padding: 10px;">❌ Высокая (RTT каждый раз)</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Overhead</td><td style="padding: 10px;">✅ ~2-14 байт на сообщение</td><td style="padding: 10px;">❌ 200-800+ байт заголовков</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Инициатива отправки</td><td style="padding: 10px;">✅ Сервер и клиент равноправны</td><td style="padding: 10px;">❌ Только клиент инициирует</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Состояние соединения</td><td style="padding: 10px;">✅ Постоянное</td><td style="padding: 10px;">❌ Stateless</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Порог вхождения</td><td style="padding: 10px;">❌ Сложнее настройка</td><td style="padding: 10px;">✅ Простая модель</td></tr>
+                </table>
+            </section>
+
+            <!-- Слайд 14: WebSocket vs UDP -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🔌 WebSocket vs UDP</h2>
+                <table style="font-size: 0.65em; border-collapse: separate; border-spacing: 0 8px; margin-top: 30px;">
+                    <tr style="background: rgba(52,152,219,0.3);"><th style="padding: 12px;">Характеристика</th><th style="padding: 12px; background: rgba(46,204,113,0.3);">WebSocket</th><th style="padding: 12px; background: rgba(231,76,60,0.3);">UDP</th></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Транспорт</td><td style="padding: 10px;">TCP (надёжный)</td><td style="padding: 10px;">UDP (ненадёжный)</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Гарантия доставки</td><td style="padding: 10px;">✅ Да (встроенная в TCP)</td><td style="padding: 10px;">❌ Нет</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Порядок доставки</td><td style="padding: 10px;">✅ Сохраняется</td><td style="padding: 10px;">❌ Не гарантируется</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Управление потоком</td><td style="padding: 10px;">✅ Есть</td><td style="padding: 10px;">❌ Нет</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Протокол прикладного уровня</td><td style="padding: 10px;">✅ Да (поверх HTTP)</td><td style="padding: 10px;">❌ Транспортный уровень</td></tr>
+                </table>
+            </section>
+
+            <!-- Слайд 15: TCP vs UDP -->
+            <section>
+                <h2>⚔️ TCP vs UDP</h2>
+                <table style="font-size: 0.75em; border-collapse: separate; border-spacing: 0 10px;">
+                    <tr style="background: rgba(52,152,219,0.3);"><th style="padding: 15px;">Характеристика</th><th style="padding: 15px; background: rgba(46,204,113,0.3);">TCP</th><th style="padding: 15px; background: rgba(231,76,60,0.3);">UDP</th></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 12px;">Надёжность</td><td style="padding: 12px;">✅ Гарантирует доставку</td><td style="padding: 12px;">❌ Ненадёжный</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 12px;">Скорость</td><td style="padding: 12px;">Медленнее</td><td style="padding: 12px;">Быстрее</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 12px;">Использование</td><td style="padding: 12px;">HTTP, FTP, SSH</td><td style="padding: 12px;">DNS, стримы, игры</td></tr>
+                </table>
+                <div class="fragment" style="margin-top: 30px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                    <p style="font-size: 0.9em;"><strong>TCP:</strong> 📨 Как письмо с уведомлением</p>
+                    <p style="font-size: 0.9em;"><strong>UDP:</strong> 📢 Как крик в толпе</p>
+                </div>
+            </section>
+
+
+
+            <!-- Слайд 19: FTP vs SFTP -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">📁 FTP vs SFTP</h2>
+                <div style="margin-top: 30px; font-size: 0.85em;">
+                    <div style="padding: 20px; background: rgba(231,76,60,0.2); border-left: 4px solid #e74c3c; border-radius: 5px; margin-bottom: 20px;">
+                        <p><strong style="color: #e74c3c;">FTP (File Transfer Protocol)</strong> — старый протокол (1971 год)</p>
+                    </div>
+                    <div style="padding: 20px; background: rgba(46,204,113,0.2); border-left: 4px solid #2ecc71; border-radius: 5px; margin-bottom: 20px;">
+                        <p><strong style="color: #2ecc71;">SFTP (SSH File Transfer Protocol)</strong> — современный безопасный протокол</p>
+                    </div>
+                    <div style="padding: 15px; background: rgba(52,152,219,0.2); border-radius: 5px;">
+                        <p><strong style="color: #3498db;">🛠 Инструменты:</strong> FileZilla, командная строка</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 15: Ключевые различия -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Ключевые различия</h2>
+                <table style="font-size: 0.65em; border-collapse: separate; border-spacing: 0 8px; margin-top: 30px;">
+                    <tr style="background: rgba(52,152,219,0.3);"><th style="padding: 12px;">Характеристика</th><th style="padding: 12px; background: rgba(231,76,60,0.3);">FTP</th><th style="padding: 12px; background: rgba(46,204,113,0.3);">SFTP</th></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Безопасность</td><td style="padding: 10px;">❌ Пароли в открытом виде</td><td style="padding: 10px;">✅ Шифрование SSH</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Порт</td><td style="padding: 10px;">21 + отдельный порт</td><td style="padding: 10px;">22 (SSH)</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Надежность</td><td style="padding: 10px;">Нет проверки целостности</td><td style="padding: 10px;">Проверка целостности</td></tr>
+                </table>
+                <div class="fragment" style="margin-top: 30px; padding: 15px; background: rgba(243,156,18,0.2); border-radius: 5px;">
+                    <p style="font-size: 0.9em;">✅ FTP поддерживается, но 🛑 использовать опасно</p>
+                </div>
+            </section>
+
+            <!-- Слайд 16: Рекомендация -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">💡 Рекомендация</h2>
+                <div style="margin-top: 40px; font-size: 0.9em;">
+                    <div style="padding: 25px; background: rgba(231,76,60,0.2); border-left: 4px solid #e74c3c; border-radius: 5px; margin-bottom: 25px;">
+                        <p style="font-size: 1.1em;">🛑 <strong>FTP</strong> — устаревший и опасный. Избегайте.</p>
+                    </div>
+                    <div style="padding: 25px; background: rgba(46,204,113,0.2); border-left: 4px solid #2ecc71; border-radius: 5px; margin-bottom: 25px;">
+                        <p style="font-size: 1.1em;">✅ <strong>SFTP</strong> — современный и безопасный. Ваш выбор.</p>
+                    </div>
+                    <div class="fragment" style="padding: 20px; background: rgba(52,152,219,0.2); border-radius: 5px;">
+                        <p><strong style="color: #3498db;">Что делать?</strong> Смените тип соединения в FileZilla с FTP на SFTP.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 15: Как выбрать протокол? -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🤔 Как выбрать протокол?</h2>
+                <table style="font-size: 0.65em; border-collapse: separate; border-spacing: 0 8px; margin-top: 30px;">
+                    <tr style="background: rgba(52,152,219,0.3);"><th style="padding: 12px;">Задача</th><th style="padding: 12px;">Протокол</th><th style="padding: 12px;">Когда использовать</th></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Веб-API</td><td style="padding: 10px;">HTTP/HTTPS</td><td style="padding: 10px;">99% задач</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Реальное время (чаты, игры)</td><td style="padding: 10px;">WebSocket</td><td style="padding: 10px;">Постоянный коннект</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Файлообмен</td><td style="padding: 10px;">FTP/SFTP</td><td style="padding: 10px;">Передача файлов на сервер</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Надёжная передача данных</td><td style="padding: 10px;">TCP</td><td style="padding: 10px;">Когда каждый байт важен</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Быстрая передача (стримы)</td><td style="padding: 10px;">UDP</td><td style="padding: 10px;">Когда скорость важнее надёжности</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Сканирование сети</td><td style="padding: 10px;">ICMP</td><td style="padding: 10px;">Проверка доступности хоста</td></tr>
+                </table>
+            </section>
+
+            <!-- Слайд 6: Виды API -->
+            <section>
+                <h2>🔄 Виды API</h2>
+                <div style="display: flex; align-items: flex-start; gap: 30px; margin-top: 20px;">
+                    <div style="flex: 1.15;">
+                        <img src="img/all_api-2.gif" alt="API Types" style="max-width: 115%; margin-left: -15%;">
+                    </div>
+                    <div style="flex: 1;">
+                        <h3 class="fragment" style="font-size: 0.8em; margin-bottom: 5px; margin-top: -20px;">🔗 Связь API-протоколов и транспортных протоколов</h3>
+                        <table class="fragment" style="font-size: 0.6em; border-collapse: separate; border-spacing: 0 5px; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                            <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;"><th style="padding: 10px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">API</th><th style="padding: 10px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Транспорт</th><th style="padding: 10px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Формат</th><th style="padding: 10px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Особенности</th></tr>
+                            <tr style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; transition: all 0.3s ease;"><td style="padding: 8px; border-left: 4px solid #e74c3c;"><strong>REST</strong></td><td style="padding: 8px;">HTTP/TCP</td><td style="padding: 8px;">JSON</td><td style="padding: 8px;">Stateless, кэширование</td></tr>
+                            <tr style="background: linear-gradient(135deg, #e91e63 0%, #ad1457 100%); color: white; transition: all 0.3s ease;"><td style="padding: 8px; border-left: 4px solid #f39c12;"><strong>GraphQL</strong></td><td style="padding: 8px;">HTTP/TCP</td><td style="padding: 8px;">JSON</td><td style="padding: 8px;">Гибкие запросы</td></tr>
+                            <tr style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; transition: all 0.3s ease;"><td style="padding: 8px; border-left: 4px solid #9b59b6;"><strong>SOAP</strong></td><td style="padding: 8px;">HTTP/TCP</td><td style="padding: 8px;">XML</td><td style="padding: 8px;">Строгая типизация</td></tr>
+                            <tr style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; transition: all 0.3s ease;"><td style="padding: 8px; border-left: 4px solid #e67e22;"><strong>gRPC</strong></td><td style="padding: 8px;">HTTP/2</td><td style="padding: 8px;">Protobuf</td><td style="padding: 8px;">Высокая скорость</td></tr>
+                            <tr style="background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); color: white; transition: all 0.3s ease;"><td style="padding: 8px; border-left: 4px solid #2ecc71;"><strong>WebSocket</strong></td><td style="padding: 8px;">TCP</td><td style="padding: 8px;">Любой</td><td style="padding: 8px;">Реальное время</td></tr>
+                            <tr style="background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%); color: white; transition: all 0.3s ease;"><td style="padding: 8px; border-left: 4px solid #f1c40f;"><strong>Webhook</strong></td><td style="padding: 8px;">HTTP/TCP</td><td style="padding: 8px;">JSON</td><td style="padding: 8px;">Пуш-уведомления</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 7: REST -->
+            <section>
+                <h2>REST API</h2>
+                <div style="display: flex; gap: 40px; margin-top: 30px;">
+                    <div style="flex: 1;">
+                        <div class="fragment">
+                            <p><strong>Когда использовать:</strong> Публичные API, CRUD-операции</p>
+                            <p><strong>Плюсы:</strong> Простота, кеширование, поддержка браузерами</p>
+                            <p><strong>Минусы:</strong> Over-fetching, нет строгой типизации</p>
+                        </div>
+                        <div class="fragment">
+                            <pre><code>GET /api/users/1 HTTP/1.1
+Host: example.com</code></pre>
+                        </div>
+                    </div>
+                    <div style="flex: 1; font-size: 0.8em; text-align: center;">
+                        <h3 class="fragment" style="margin-bottom: 20px;">📋 Стек протоколов</h3>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>REST API</strong> (логика)
+                        </div>
+                        <div class="fragment" style="font-size: 1.5em; color: #3498db; margin: 3px 0;">↓</div>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>HTTP/1.1</strong> (запросы/ответы)
+                        </div>
+                        <div class="fragment" style="font-size: 1.5em; color: #3498db; margin: 3px 0;">↓</div>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>TCP</strong> (надёжная доставка)
+                        </div>
+                        <div class="fragment" style="font-size: 1.5em; color: #3498db; margin: 3px 0;">↓</div>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>IP</strong> (маршрутизация)
+                        </div>
+                        <div class="fragment" style="font-size: 1.5em; color: #3498db; margin: 3px 0;">↓</div>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>Физическая среда</strong>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 8: SOAP -->
+            <section>
+                <h2>SOAP</h2>
+                <div style="display: flex; gap: 40px; margin-top: 30px;">
+                    <div style="flex: 1;">
+                        <div class="fragment">
+                            <p><strong>Когда использовать:</strong> Enterprise-системы, банки, госструктуры</p>
+                            <p><strong>Плюсы:</strong> Безопасность, строгая типизация, ACID-транзакции</p>
+                            <p><strong>Минусы:</strong> Сложность, низкая производительность</p>
+                        </div>
+                    </div>
+                    <div style="flex: 1; font-size: 0.8em; text-align: center;">
+                        <h3 class="fragment" style="margin-bottom: 20px;">📋 Стек протоколов</h3>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>SOAP</strong> (логика)
+                        </div>
+                        <div class="fragment" style="font-size: 1.5em; color: #3498db; margin: 3px 0;">↓</div>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>HTTP/SMTP</strong> (запросы/ответы)
+                        </div>
+                        <div class="fragment" style="font-size: 1.5em; color: #3498db; margin: 3px 0;">↓</div>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>TCP</strong> (надёжная доставка)
+                        </div>
+                        <div class="fragment" style="font-size: 1.5em; color: #3498db; margin: 3px 0;">↓</div>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>IP</strong> (маршрутизация)
+                        </div>
+                        <div class="fragment" style="font-size: 1.5em; color: #3498db; margin: 3px 0;">↓</div>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>Физическая среда</strong>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 9: gRPC -->
+            <section>
+                <h2>gRPC</h2>
+                <div style="display: flex; gap: 40px; margin-top: 30px;">
+                    <div style="flex: 1;">
+                        <div class="fragment">
+                            <p><strong>Когда использовать:</strong> Микросервисы, высоконагруженные системы</p>
+                            <p><strong>Плюсы:</strong> Высокая скорость, поддержка потоков</p>
+                            <p><strong>Минусы:</strong> Сложная отладка, нет поддержки в браузерах</p>
+                        </div>
+                        <div class="fragment">
+                            <pre><code>service UserService {
+  rpc GetUser (UserRequest) returns (UserResponse);
+}</code></pre>
+                        </div>
+                    </div>
+                    <div style="flex: 1; font-size: 0.8em; text-align: center;">
+                        <h3 class="fragment" style="margin-bottom: 20px;">📋 Стек протоколов</h3>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>gRPC</strong> (сервисы, методы)
+                        </div>
+                        <div class="fragment" style="font-size: 1.5em; color: #3498db; margin: 3px 0;">↓</div>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>HTTP/2</strong> (мультиплексирование)
+                        </div>
+                        <div class="fragment" style="font-size: 1.5em; color: #3498db; margin: 3px 0;">↓</div>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>TLS</strong> (шифрование)
+                        </div>
+                        <div class="fragment" style="font-size: 1.5em; color: #3498db; margin: 3px 0;">↓</div>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>TCP</strong> (надёжная доставка)
+                        </div>
+                        <div class="fragment" style="font-size: 1.5em; color: #3498db; margin: 3px 0;">↓</div>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>IP</strong> (маршрутизация)
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 10: GraphQL -->
+            <section>
+                <h2>GraphQL</h2>
+                <div style="display: flex; gap: 40px; margin-top: 30px;">
+                    <div style="flex: 1;">
+                        <div class="fragment">
+                            <p><strong>Когда использовать:</strong> Сложные клиенты, динамические запросы</p>
+                            <p><strong>Плюсы:</strong> Гибкость, единый эндпоинт</p>
+                            <p><strong>Минусы:</strong> Сложность кеширования, N+1 проблема</p>
+                        </div>
+                        <div class="fragment">
+                            <pre><code>query {
+  user(id: 1) {
+    name
+    email
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                    <div style="flex: 1; font-size: 0.8em; text-align: center;">
+                        <h3 class="fragment" style="margin-bottom: 20px;">📋 Стек протоколов</h3>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #e91e63 0%, #ad1457 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>GraphQL</strong> (гибкие запросы)
+                        </div>
+                        <div class="fragment" style="font-size: 1.5em; color: #3498db; margin: 3px 0;">↓</div>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>HTTP/1.1</strong> (запросы/ответы)
+                        </div>
+                        <div class="fragment" style="font-size: 1.5em; color: #3498db; margin: 3px 0;">↓</div>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>TCP</strong> (надёжная доставка)
+                        </div>
+                        <div class="fragment" style="font-size: 1.5em; color: #3498db; margin: 3px 0;">↓</div>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>IP</strong> (маршрутизация)
+                        </div>
+                        <div class="fragment" style="font-size: 1.5em; color: #3498db; margin: 3px 0;">↓</div>
+                        <div class="fragment" style="padding: 10px; margin: 8px 0; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); border-radius: 8px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
+                            <strong>Физическая среда</strong>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 11: Сравнение API -->
+            <section>
+                <h2>📊 Сравнение API</h2>
+                <table style="font-size: 0.65em; border-collapse: separate; border-spacing: 0 8px; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.4); margin-top: 30px;">
+                    <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;"><th style="padding: 15px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Требование</th><th style="padding: 15px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">REST</th><th style="padding: 15px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);">SOAP</th><th style="padding: 15px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);">gRPC</th><th style="padding: 15px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); background: linear-gradient(135deg, #e91e63 0%, #ad1457 100%);">GraphQL</th></tr>
+                    <tr style="background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%); color: white; transition: all 0.3s ease;"><td style="padding: 12px; border-left: 4px solid #3498db; font-weight: bold;">Публичное API</td><td style="padding: 12px; text-align: center; font-size: 1.2em;">✅</td><td style="padding: 12px; text-align: center; font-size: 1.2em;">❌</td><td style="padding: 12px; text-align: center; font-size: 1.2em;">❌</td><td style="padding: 12px; text-align: center; font-size: 1.2em;">✅</td></tr>
+                    <tr style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; transition: all 0.3s ease;"><td style="padding: 12px; border-left: 4px solid #e74c3c; font-weight: bold;">Высокая скорость</td><td style="padding: 12px; text-align: center; font-size: 1.2em;">❌</td><td style="padding: 12px; text-align: center; font-size: 1.2em;">❌</td><td style="padding: 12px; text-align: center; font-size: 1.2em;">✅</td><td style="padding: 12px; text-align: center; font-size: 1.2em;">❌</td></tr>
+                    <tr style="background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%); color: white; transition: all 0.3s ease;"><td style="padding: 12px; border-left: 4px solid #f39c12; font-weight: bold;">Гибкость запросов</td><td style="padding: 12px; text-align: center; font-size: 1.2em;">❌</td><td style="padding: 12px; text-align: center; font-size: 1.2em;">❌</td><td style="padding: 12px; text-align: center; font-size: 1.2em;">❌</td><td style="padding: 12px; text-align: center; font-size: 1.2em;">✅</td></tr>
+                    <tr style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; transition: all 0.3s ease;"><td style="padding: 12px; border-left: 4px solid #2ecc71; font-weight: bold;">Безопасность</td><td style="padding: 12px; text-align: center; font-size: 1.2em;">⚠️</td><td style="padding: 12px; text-align: center; font-size: 1.2em;">✅</td><td style="padding: 12px; text-align: center; font-size: 1.2em;">✅</td><td style="padding: 12px; text-align: center; font-size: 1.2em;">⚠️</td></tr>
+                </table>
+            </section>
+
+            <!-- Слайд 11.1: Выбор протокола по задаче -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700; text-shadow: 2px 2px 4px rgba(0,0,0,0.7); margin-bottom: 40px;">🎯 Выбор протокола по задаче</h2>
+                <table style="font-size: 0.55em; border-collapse: separate; border-spacing: 0 5px; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.6); margin-top: 20px; width: 100%;">
+                    <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; height: 50px;">
+                        <th style="padding: 15px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.7); border-right: 1px solid rgba(255,255,255,0.2);">📋 Задача</th>
+                        <th style="padding: 15px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.7); border-right: 1px solid rgba(255,255,255,0.2);">🔧 API-протокол</th>
+                        <th style="padding: 15px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.7); border-right: 1px solid rgba(255,255,255,0.2);">🚀 Транспорт</th>
+                        <th style="padding: 15px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.7);">📊 Доля в ПО, %</th>
+                    </tr>
+                    <tr style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; transition: all 0.3s ease; height: 45px;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                        <td style="padding: 12px; border-left: 5px solid #FFD700; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">🌐 Веб-API для браузеров</td>
+                        <td style="padding: 12px; color: #FFD700; font-weight: bold;">REST, GraphQL</td>
+                        <td style="padding: 12px;">HTTP/1.1, HTTP/2</td>
+                        <td style="padding: 12px; text-align: center; font-weight: bold; color: #FFD700; font-size: 1.2em;">65%</td>
+                    </tr>
+                    <tr style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; transition: all 0.3s ease; height: 45px;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                        <td style="padding: 12px; border-left: 5px solid #FFD700; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">⚙️ Внутренняя коммуникация сервисов</td>
+                        <td style="padding: 12px; color: #FFD700; font-weight: bold;">gRPC</td>
+                        <td style="padding: 12px;">HTTP/2</td>
+                        <td style="padding: 12px; text-align: center; font-weight: bold; color: #FFD700; font-size: 1.2em;">15%</td>
+                    </tr>
+                    <tr style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; transition: all 0.3s ease; height: 45px;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                        <td style="padding: 12px; border-left: 5px solid #FFD700; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">⚡ Real-time уведомления</td>
+                        <td style="padding: 12px; color: #FFD700; font-weight: bold;">WebSocket</td>
+                        <td style="padding: 12px;">TCP (WebSocket)</td>
+                        <td style="padding: 12px; text-align: center; font-weight: bold; color: #FFD700; font-size: 1.2em;">8%</td>
+                    </tr>
+                    <tr style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; transition: all 0.3s ease; height: 45px;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                        <td style="padding: 12px; border-left: 5px solid #FFD700; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">🏢 Корпоративные системы</td>
+                        <td style="padding: 12px; color: #FFD700; font-weight: bold;">SOAP</td>
+                        <td style="padding: 12px;">HTTP, SMTP</td>
+                        <td style="padding: 12px; text-align: center; font-weight: bold; color: #FFD700; font-size: 1.2em;">7%</td>
+                    </tr>
+                    <tr style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; transition: all 0.3s ease; height: 45px;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                        <td style="padding: 12px; border-left: 5px solid #FFD700; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">📈 Высокочастотные данные</td>
+                        <td style="padding: 12px; color: #FFD700; font-weight: bold;">gRPC, WebSocket</td>
+                        <td style="padding: 12px;">HTTP/2, TCP</td>
+                        <td style="padding: 12px; text-align: center; font-weight: bold; color: #FFD700; font-size: 1.2em;">3%</td>
+                    </tr>
+                    <tr style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); color: white; transition: all 0.3s ease; height: 45px;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                        <td style="padding: 12px; border-left: 5px solid #FFD700; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">🔗 Простая интеграция</td>
+                        <td style="padding: 12px; color: #FFD700; font-weight: bold;">REST</td>
+                        <td style="padding: 12px;">HTTP/1.1</td>
+                        <td style="padding: 12px; text-align: center; font-weight: bold; color: #FFD700; font-size: 1.2em;">2%</td>
+                    </tr>
+                </table>
+            </section>
+
+            <!-- Слайд 12: Практические кейсы -->
+            <section>
+                <h2>💼 Практические кейсы</h2>
+                <div class="fragment">
+                    <h3>Социальная сеть:</h3>
+                    <p>REST (фиксированные данные) или GraphQL (гибкость)</p>
+                </div>
+                <div class="fragment">
+                    <h3>Банковские транзакции:</h3>
+                    <p>SOAP (безопасность и транзакции)</p>
+                </div>
+                <div class="fragment">
+                    <h3>Микросервисы:</h3>
+                    <p>gRPC (скорость и потоки)</p>
+                </div>
+            </section>
+
+            <!-- Слайд 13: DNS -->
+            <section>
+                <h2>🌐 DNS</h2>
+                <p>Domain Name System - "телефонная книга" интернета</p>
+                <div class="fragment">
+                    <pre><code>nslookup google.com 8.8.8.8
+nslookup google.com 1.1.1.1</code></pre>
+                </div>
+                <div class="fragment">
+                    <p><strong>Google DNS:</strong> 8.8.8.8 (стабильный)</p>
+                    <p><strong>Cloudflare:</strong> 1.1.1.1 (часто быстрее)</p>
+                </div>
+            </section>
+
+            <!-- Слайд 14: Инструменты отладки -->
+            <section>
+                <h2>🔧 Инструменты отладки</h2>
+                <ul>
+                    <li><code>ping</code> → проверка доступности хоста</li>
+                    <li><code>telnet</code> → проверка открытого порта</li>
+                    <li><code>traceroute</code> → маршрут пакетов</li>
+                    <li><code>curl -v</code> → отладка HTTP</li>
+                    <li><code>nslookup</code> → проверка DNS</li>
+                </ul>
+            </section>
+
+            <!-- Слайд 15: Домашнее задание -->
+            <section data-background-color="#f39c12">
+                <h2>📚 Домашнее задание</h2>
+                <ol>
+                    <li>Сравните REST и GraphQL для e-commerce API</li>
+                    <li>Создайте простой REST и GraphQL эндпоинт</li>
+                    <li>Замерьте скорость работы gRPC vs REST</li>
+                </ol>
+            </section>
+
+            <!-- Слайд 16: Вопрос 1 -->
+            <section data-background-color="#e74c3c">
+                <h2>❓ Вопрос для обсуждения #1</h2>
+                <p style="font-size: 1.3em;"><strong>Почему нельзя использовать UDP для банковских транзакций?</strong></p>
+                <div class="fragment">
+                    <p style="color: #f39c12;">💡 Подсказка: Подумайте о надёжности доставки</p>
+                </div>
+                <div class="fragment">
+                    <p style="color: #2ecc71;">✅ Ответ: UDP не гарантирует доставку пакетов. Потеря данных о транзакции = потеря денег</p>
+                </div>
+            </section>
+
+            <!-- Слайд 17: Типичные проблемы -->
+            <section>
+                <h2>🔧 Типичные сетевые проблемы</h2>
+                <div class="fragment">
+                    <h3>Connection refused</h3>
+                    <p>Порт закрыт или сервер не слушает</p>
+                </div>
+                <div class="fragment">
+                    <h3>Timeout</h3>
+                    <p>Сервер не отвечает в установленное время</p>
+                </div>
+                <div class="fragment">
+                    <h3>DNS resolution failed</h3>
+                    <p>DNS не может преобразовать домен в IP</p>
+                </div>
+            </section>
+
+            <!-- Слайд 18: Вопрос 2 -->
+            <section data-background-color="#e74c3c">
+                <h2>❓ Вопрос для обсуждения #2</h2>
+                <p style="font-size: 1.3em;"><strong>На каком уровне OSI работает HTTP?</strong></p>
+                <div class="fragment">
+                    <p style="color: #f39c12;">💡 Подсказка: Это протокол приложения</p>
+                </div>
+                <div class="fragment">
+                    <p style="color: #2ecc71;">✅ Ответ: Уровень 7 (Приложений)</p>
+                </div>
+            </section>
+
+            <!-- Слайд 19: Пакеты и маршрутизация -->
+            <section>
+                <h2>📦 Как данные путешествуют по сети</h2>
+                <ol>
+                    <li class="fragment">Компьютер разбивает данные на пакеты</li>
+                    <li class="fragment">Пакеты идут через маршрутизаторы</li>
+                    <li class="fragment">Сервер собирает пакеты обратно</li>
+                </ol>
+                <div class="fragment">
+                    <p><strong>Аналогия:</strong> Отправка книги по почте листами в разных конвертах</p>
+                </div>
+            </section>
+
+            <!-- Слайд 20: Трассировка -->
+            <section>
+                <h2>🔍 Трассировка маршрута</h2>
+                <pre><code># Windows:
+tracert google.com
+
+# Linux/macOS:
+traceroute google.com</code></pre>
+                <div class="fragment">
+                    <p>Показывает путь пакетов через маршрутизаторы</p>
+                </div>
+            </section>
+
+            <!-- Слайд 21: Связь API-протоколов и транспортных протоколов -->
+            <section>
+                <h2>🔗 Связь API-протоколов и транспортных протоколов</h2>
+                <table style="font-size: 0.55em; border-collapse: separate; border-spacing: 0 5px; margin-top: 20px;">
+                    <tr style="background: rgba(52,152,219,0.3);"><th style="padding: 8px;">API-протокол</th><th style="padding: 8px;">Транспортные протоколы</th><th style="padding: 8px;">Уровень OSI</th><th style="padding: 8px;">Формат данных</th><th style="padding: 8px;">Ключевые особенности</th></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 6px;"><strong>REST</strong></td><td style="padding: 6px;"><strong>HTTP/1.1, HTTP/2</strong> (поверх TCP)</td><td style="padding: 6px;">Прикладной (7)</td><td style="padding: 6px;">JSON, XML, HTML</td><td style="padding: 6px;">Стандартные HTTP-методы, stateless, кэширование</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 6px;"><strong>GraphQL</strong></td><td style="padding: 6px;"><strong>HTTP/1.1, HTTP/2</strong> (поверх TCP)</td><td style="padding: 6px;">Прикладной (7)</td><td style="padding: 6px;">JSON</td><td style="padding: 6px;">Единая endpoint, клиент определяет структуру ответа</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 6px;"><strong>SOAP</strong></td><td style="padding: 6px;"><strong>HTTP, SMTP, TCP</strong></td><td style="padding: 6px;">Прикладной (7)</td><td style="padding: 6px;">XML</td><td style="padding: 6px;">Строгая типизация, WS-* стандарты, тяжеловесный</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 6px;"><strong>gRPC</strong></td><td style="padding: 6px;"><strong>HTTP/2</strong> (поверх TCP)</td><td style="padding: 6px;">Прикладной (7)</td><td style="padding: 6px;">Protocol Buffers (бинарный)</td><td style="padding: 6px;">Высокая производительность, потоковая передача</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 6px;"><strong>WebSocket</strong></td><td style="padding: 6px;"><strong>WebSocket</strong> (поверх TCP)</td><td style="padding: 6px;">Прикладной (7)</td><td style="padding: 6px;">Любой (JSON, бинарный)</td><td style="padding: 6px;">Двусторонняя связь, реальное время</td></tr>
+                </table>
+            </section>
+
+            <!-- Слайд 22: Вопрос 3 -->
+            <section data-background-color="#e74c3c">
+                <h2>❓ Вопрос для обсуждения #3</h2>
+                <p style="font-size: 1.3em;"><strong>Какой протокол быстрее для онлайн-игр: TCP или UDP?</strong></p>
+                <div class="fragment">
+                    <p style="color: #f39c12;">💡 Подсказка: В играх важна скорость, а не надёжность</p>
+                </div>
+                <div class="fragment">
+                    <p style="color: #2ecc71;">✅ Ответ: UDP. Лучше потерять кадр, чем лагать</p>
+                </div>
+            </section>
+
+            <!-- Слайд 22: WebSocket -->
+            <section>
+                <h2>🔌 WebSocket</h2>
+                <p><strong>Для чего:</strong> Постоянное двустороннее соединение</p>
+                <div class="fragment">
+                    <h3>Примеры использования:</h3>
+                    <ul>
+                        <li>Чаты в реальном времени</li>
+                        <li>Онлайн-игры</li>
+                        <li>Биржевые котировки</li>
+                        <li>Совместное редактирование документов</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 23: Вопрос 4 -->
+            <section data-background-color="#e74c3c">
+                <h2>❓ Вопрос для обсуждения #4</h2>
+                <p style="font-size: 1.3em;"><strong>Почему REST API популярнее SOAP?</strong></p>
+                <div class="fragment">
+                    <p style="color: #f39c12;">💡 Подсказка: Подумайте о простоте</p>
+                </div>
+                <div class="fragment">
+                    <p style="color: #2ecc71;">✅ Ответ: REST проще (JSON vs XML), легче в использовании, поддержка браузерами</p>
+                </div>
+            </section>
+
+            <!-- Слайд 24: REST детально -->
+            <section>
+                <h2>REST: Детальный разбор</h2>
+                <div class="fragment">
+                    <h3>HTTP методы:</h3>
+                    <ul>
+                        <li><strong>GET</strong> - получить данные</li>
+                        <li><strong>POST</strong> - создать</li>
+                        <li><strong>PUT</strong> - обновить</li>
+                        <li><strong>DELETE</strong> - удалить</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 25: REST пример -->
+            <section>
+                <h2>REST: Пример API</h2>
+                <pre><code>GET /api/users - список пользователей
+GET /api/users/1 - пользователь с id=1
+POST /api/users - создать пользователя
+PUT /api/users/1 - обновить пользователя
+DELETE /api/users/1 - удалить пользователя</code></pre>
+            </section>
+
+            <!-- Слайд 26: Вопрос 5 -->
+            <section data-background-color="#e74c3c">
+                <h2>❓ Вопрос для обсуждения #5</h2>
+                <p style="font-size: 1.3em;"><strong>Когда стоит выбрать GraphQL вместо REST?</strong></p>
+                <div class="fragment">
+                    <p style="color: #f39c12;">💡 Подсказка: Подумайте о гибкости запросов</p>
+                </div>
+                <div class="fragment">
+                    <p style="color: #2ecc71;">✅ Ответ: Когда клиенту нужна гибкость в выборе полей, чтобы избежать over-fetching</p>
+                </div>
+            </section>
+
+            <!-- Слайд 27: SOAP детально -->
+            <section>
+                <h2>SOAP: Где используется</h2>
+                <div class="fragment">
+                    <ul>
+                        <li>Госструктуры (СМЭВ, ФНС)</li>
+                        <li>Банковские системы</li>
+                        <li>Интеграции с 1С</li>
+                        <li>Enterprise-системы</li>
+                    </ul>
+                </div>
+                <div class="fragment">
+                    <p><strong>Почему:</strong> Требования безопасности и стандартов</p>
+                </div>
+            </section>
+
+            <!-- Слайд 28: SOAP пример -->
+            <section>
+                <h2>SOAP: Структура запроса</h2>
+                <pre style="font-size: 0.5em;"><code>&lt;soap:Envelope&gt;
+  &lt;soap:Header&gt;
+    &lt;Authentication&gt;...&lt;/Authentication&gt;
+  &lt;/soap:Header&gt;
+  &lt;soap:Body&gt;
+    &lt;GetUserRequest&gt;
+      &lt;UserId&gt;1&lt;/UserId&gt;
+    &lt;/GetUserRequest&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</code></pre>
+            </section>
+
+            <!-- Слайд 29: Вопрос 6 -->
+            <section data-background-color="#e74c3c">
+                <h2>❓ Вопрос для обсуждения #6</h2>
+                <p style="font-size: 1.3em;"><strong>Почему gRPC не подходит для браузеров?</strong></p>
+                <div class="fragment">
+                    <p style="color: #f39c12;">💡 Подсказка: Подумайте о формате данных</p>
+                </div>
+                <div class="fragment">
+                    <p style="color: #2ecc71;">✅ Ответ: gRPC использует бинарный Protobuf, браузеры не поддерживают нативно (нужен gRPC-Web)</p>
+                </div>
+            </section>
+
+            <!-- Слайд 30: gRPC детально -->
+            <section>
+                <h2>gRPC: Преимущества</h2>
+                <div class="fragment">
+                    <ul>
+                        <li>Высокая скорость (бинарный протокол)</li>
+                        <li>Строгие контракты (Protobuf)</li>
+                        <li>Поддержка стриминга</li>
+                        <li>Автогенерация клиентов</li>
+                    </ul>
+                </div>
+                <div class="fragment">
+                    <p><strong>Используют:</strong> Яндекс, Тинькофф, VK, Ozon</p>
+                </div>
+            </section>
+
+            <!-- Слайд 31: gRPC vs REST -->
+            <section>
+                <h2>gRPC vs REST: Производительность</h2>
+                <div class="fragment">
+                    <p>gRPC в 5-10 раз быстрее REST</p>
+                </div>
+                <div class="fragment">
+                    <p><strong>Но:</strong> REST проще в отладке и поддержке</p>
+                </div>
+            </section>
+
+            <!-- Слайд 32: Вопрос 7 -->
+            <section data-background-color="#e74c3c">
+                <h2>❓ Вопрос для обсуждения #7</h2>
+                <p style="font-size: 1.3em;"><strong>Какой DNS быстрее: Google (8.8.8.8) или Cloudflare (1.1.1.1)?</strong></p>
+                <div class="fragment">
+                    <p style="color: #f39c12;">💡 Подсказка: Зависит от местоположения</p>
+                </div>
+                <div class="fragment">
+                    <p style="color: #2ecc71;">✅ Ответ: Cloudflare часто быстрее, особенно в Европе/США</p>
+                </div>
+            </section>
+
+            <!-- Слайд 33: GraphQL детально -->
+            <section>
+                <h2>GraphQL: Гибкость запросов</h2>
+                <pre><code>query {
+  user(id: 1) {
+    name
+    email
+    posts {
+      title
+      comments { text }
+    }
+  }
+}</code></pre>
+                <div class="fragment">
+                    <p>Клиент сам выбирает нужные поля</p>
+                </div>
+            </section>
+
+            <!-- Слайд 34: GraphQL проблемы -->
+            <section>
+                <h2>GraphQL: Проблемы</h2>
+                <div class="fragment">
+                    <h3>N+1 проблема:</h3>
+                    <p>Запрос пользователей и их постов может вызвать 1 + N запросов к БД</p>
+                </div>
+                <div class="fragment">
+                    <h3>Решение:</h3>
+                    <p>DataLoader для батчинга запросов</p>
+                </div>
+            </section>
+
+            <!-- Слайд 35: Вопрос 8 -->
+            <section data-background-color="#e74c3c">
+                <h2>❓ Вопрос для обсуждения #8</h2>
+                <p style="font-size: 1.3em;"><strong>Что произойдёт, если DNS-сервер недоступен?</strong></p>
+                <div class="fragment">
+                    <p style="color: #f39c12;">💡 Подсказка: Как браузер найдёт IP сайта?</p>
+                </div>
+                <div class="fragment">
+                    <p style="color: #2ecc71;">✅ Ответ: Сайты не будут открываться (кроме тех, что в кеше или по IP)</p>
+                </div>
+            </section>
+
+            <!-- Слайд 36: Кеширование DNS -->
+            <section>
+                <h2>🗄️ Кеширование DNS</h2>
+                <div class="fragment">
+                    <p>Браузер и ОС кешируют DNS-записи</p>
+                </div>
+                <div class="fragment">
+                    <p><strong>TTL (Time To Live):</strong> Время жизни записи в кеше</p>
+                </div>
+                <div class="fragment">
+                    <pre><code>ipconfig /flushdns  # Windows
+sudo dscacheutil -flushcache  # macOS</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 37: HTTP/2 vs HTTP/1.1 -->
+            <section>
+                <h2>🚀 HTTP/2 vs HTTP/1.1</h2>
+                <table style="font-size: 0.7em;">
+                    <tr><th>Характеристика</th><th>HTTP/1.1</th><th>HTTP/2</th></tr>
+                    <tr><td>Мультиплексирование</td><td>❌</td><td>✅</td></tr>
+                    <tr><td>Сжатие заголовков</td><td>❌</td><td>✅</td></tr>
+                    <tr><td>Server Push</td><td>❌</td><td>✅</td></tr>
+                </table>
+            </section>
+
+            <!-- Слайд 38: Вопрос 9 -->
+            <section data-background-color="#e74c3c">
+                <h2>❓ Вопрос для обсуждения #9</h2>
+                <p style="font-size: 1.3em;"><strong>Зачем нужен HTTPS, если есть HTTP?</strong></p>
+                <div class="fragment">
+                    <p style="color: #f39c12;">💡 Подсказка: Подумайте о безопасности</p>
+                </div>
+                <div class="fragment">
+                    <p style="color: #2ecc71;">✅ Ответ: HTTPS шифрует данные, защищает от перехвата (man-in-the-middle)</p>
+                </div>
+            </section>
+
+            <!-- Слайд 39: SSL/TLS -->
+            <section>
+                <h2>🔒 SSL/TLS</h2>
+                <div class="fragment">
+                    <p><strong>SSL/TLS:</strong> Протокол шифрования (уровень 6 OSI)</p>
+                </div>
+                <div class="fragment">
+                    <ul>
+                        <li>Шифрование данных</li>
+                        <li>Аутентификация сервера</li>
+                        <li>Целостность данных</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 40: Вопрос 10 -->
+            <section data-background-color="#e74c3c">
+                <h2>❓ Вопрос для обсуждения #10</h2>
+                <p style="font-size: 1.3em;"><strong>Можно ли использовать REST для микросервисов?</strong></p>
+                <div class="fragment">
+                    <p style="color: #f39c12;">💡 Подсказка: Подумайте о производительности</p>
+                </div>
+                <div class="fragment">
+                    <p style="color: #2ecc71;">✅ Ответ: Можно, но gRPC эффективнее для внутренней коммуникации</p>
+                </div>
+            </section>
+
+            <!-- Слайд 41: API Gateway -->
+            <section>
+                <h2>🚪 API Gateway</h2>
+                <div class="fragment">
+                    <p>Единая точка входа для всех API</p>
+                </div>
+                <div class="fragment">
+                    <h3>Функции:</h3>
+                    <ul>
+                        <li>Маршрутизация запросов</li>
+                        <li>Аутентификация</li>
+                        <li>Rate limiting</li>
+                        <li>Кеширование</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 42: Rate Limiting -->
+            <section>
+                <h2>⏱️ Rate Limiting</h2>
+                <div class="fragment">
+                    <p>Ограничение количества запросов от клиента</p>
+                </div>
+                <div class="fragment">
+                    <p><strong>Пример:</strong> 100 запросов в минуту</p>
+                </div>
+                <div class="fragment">
+                    <p><strong>Зачем:</strong> Защита от DDoS и перегрузки</p>
+                </div>
+            </section>
+
+            <!-- Слайд 43: Вопрос 11 -->
+            <section data-background-color="#e74c3c">
+                <h2>❓ Вопрос для обсуждения #11</h2>
+                <p style="font-size: 1.3em;"><strong>Что лучше для мобильного приложения: REST или GraphQL?</strong></p>
+                <div class="fragment">
+                    <p style="color: #f39c12;">💡 Подсказка: Подумайте о трафике</p>
+                </div>
+                <div class="fragment">
+                    <p style="color: #2ecc71;">✅ Ответ: GraphQL - меньше трафика, клиент выбирает нужные поля</p>
+                </div>
+            </section>
+
+            <!-- Слайд 44: Версионирование API -->
+            <section>
+                <h2>📌 Версионирование API</h2>
+                <div class="fragment">
+                    <h3>Способы:</h3>
+                    <ul>
+                        <li><code>/api/v1/users</code> - в URL</li>
+                        <li><code>Accept: application/vnd.api+json;version=1</code> - в заголовках</li>
+                        <li><code>?version=1</code> - в параметрах</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 45: Документация API -->
+            <section>
+                <h2>📖 Документация API</h2>
+                <div class="fragment">
+                    <h3>Инструменты:</h3>
+                    <ul>
+                        <li><strong>Swagger/OpenAPI</strong> - для REST</li>
+                        <li><strong>Apollo Studio</strong> - для GraphQL</li>
+                        <li><strong>Postman</strong> - тестирование</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 46: Вопрос 12 -->
+            <section data-background-color="#e74c3c">
+                <h2>❓ Вопрос для обсуждения #12</h2>
+                <p style="font-size: 1.3em;"><strong>Почему важно документировать API?</strong></p>
+                <div class="fragment">
+                    <p style="color: #f39c12;">💡 Подсказка: Подумайте о других разработчиках</p>
+                </div>
+                <div class="fragment">
+                    <p style="color: #2ecc71;">✅ Ответ: Упрощает интеграцию, снижает количество вопросов, ускоряет разработку</p>
+                </div>
+            </section>
+
+            <!-- Слайд 47: Мониторинг API -->
+            <section>
+                <h2>📊 Мониторинг API</h2>
+                <div class="fragment">
+                    <h3>Метрики:</h3>
+                    <ul>
+                        <li>Latency (задержка)</li>
+                        <li>Throughput (пропускная способность)</li>
+                        <li>Error rate (процент ошибок)</li>
+                        <li>Availability (доступность)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Слайд 48: Практические советы -->
+            <section>
+                <h2>💡 Практические советы</h2>
+                <ul>
+                    <li class="fragment">Используйте HTTPS везде</li>
+                    <li class="fragment">Документируйте API</li>
+                    <li class="fragment">Версионируйте API</li>
+                    <li class="fragment">Мониторьте производительность</li>
+                    <li class="fragment">Тестируйте под нагрузкой</li>
+                </ul>
+            </section>
+
+            <!-- Слайд 49: Итоги -->
+            <section data-background-color="#27ae60">
+                <h2>📝 Итоги занятия</h2>
+                <ul>
+                    <li>Изучили модель OSI</li>
+                    <li>Разобрали TCP vs UDP</li>
+                    <li>Сравнили REST, SOAP, gRPC, GraphQL</li>
+                    <li>Обсудили практические кейсы</li>
+                    <li>Узнали про DNS и инструменты отладки</li>
+                </ul>
+            </section>
+
+            <!-- Слайд 50: Спасибо -->
+            <section data-background-gradient="linear-gradient(45deg, #667eea 0%, #764ba2 100%)">
+                <h1>🎉 Спасибо за внимание!</h1>
+                <p>Вопросы?</p>
+            </section>
+
+        </div>
+    </div>
+
+    <div class="navigation">
+        <div class="nav-dot active" onclick="goToSlide(0)">1</div>
+        <div class="nav-dot" onclick="goToSlide(1)">2</div>
+        <div class="nav-dot" onclick="goToSlide(2)">3</div>
+        <div class="nav-dot" onclick="goToSlide(3)">4</div>
+        <div class="nav-dot" onclick="goToSlide(4)">5</div>
+        <div class="nav-dot" onclick="goToSlide(5)">6</div>
+        <div class="nav-dot" onclick="goToSlide(6)">7</div>
+        <div class="nav-dot" onclick="goToSlide(7)">8</div>
+        <div class="nav-dot" onclick="goToSlide(8)">9</div>
+        <div class="nav-dot" onclick="goToSlide(9)">10</div>
+        <div class="nav-dot" onclick="goToSlide(10)">11</div>
+        <div class="nav-dot" onclick="goToSlide(11)">12</div>
+        <div class="nav-dot" onclick="goToSlide(12)">13</div>
+        <div class="nav-dot" onclick="goToSlide(13)">14</div>
+        <div class="nav-dot" onclick="goToSlide(14)">15</div>
+        <div class="nav-dot" onclick="goToSlide(15)">16</div>
+        <div class="nav-dot" onclick="goToSlide(16)">17</div>
+        <div class="nav-dot" onclick="goToSlide(17)">18</div>
+        <div class="nav-dot" onclick="goToSlide(18)">19</div>
+        <div class="nav-dot" onclick="goToSlide(19)">20</div>
+        <div class="nav-dot" onclick="goToSlide(20)">21</div>
+        <div class="nav-dot" onclick="goToSlide(21)">22</div>
+        <div class="nav-dot" onclick="goToSlide(22)">23</div>
+        <div class="nav-dot" onclick="goToSlide(23)">24</div>
+        <div class="nav-dot" onclick="goToSlide(24)">25</div>
+        <div class="nav-dot" onclick="goToSlide(25)">26</div>
+        <div class="nav-dot" onclick="goToSlide(26)">27</div>
+        <div class="nav-dot" onclick="goToSlide(27)">28</div>
+        <div class="nav-dot" onclick="goToSlide(28)">29</div>
+        <div class="nav-dot" onclick="goToSlide(29)">30</div>
+        <div class="nav-dot" onclick="goToSlide(30)">31</div>
+        <div class="nav-dot" onclick="goToSlide(31)">32</div>
+        <div class="nav-dot" onclick="goToSlide(32)">33</div>
+        <div class="nav-dot" onclick="goToSlide(33)">34</div>
+        <div class="nav-dot" onclick="goToSlide(34)">35</div>
+        <div class="nav-dot" onclick="goToSlide(35)">36</div>
+        <div class="nav-dot" onclick="goToSlide(36)">37</div>
+        <div class="nav-dot" onclick="goToSlide(37)">38</div>
+        <div class="nav-dot" onclick="goToSlide(38)">39</div>
+        <div class="nav-dot" onclick="goToSlide(39)">40</div>
+        <div class="nav-dot" onclick="goToSlide(40)">41</div>
+        <div class="nav-dot" onclick="goToSlide(41)">42</div>
+        <div class="nav-dot" onclick="goToSlide(42)">43</div>
+        <div class="nav-dot" onclick="goToSlide(43)">44</div>
+        <div class="nav-dot" onclick="goToSlide(44)">45</div>
+        <div class="nav-dot" onclick="goToSlide(45)">46</div>
+        <div class="nav-dot" onclick="goToSlide(46)">47</div>
+        <div class="nav-dot" onclick="goToSlide(47)">48</div>
+        <div class="nav-dot" onclick="goToSlide(48)">49</div>
+        <div class="nav-dot" onclick="goToSlide(49)">50</div>
+    </div>
+
+    <script src="js/reveal.min.js"></script>
+    <script src="js/notes.min.js"></script>
+    <script src="js/markdown.min.js"></script>
+    <script src="js/highlight.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            transition: 'slide',
+            controls: true,
+            progress: true,
+            slideNumber: 'c/t',
+            center: true,
+            plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+        });
+
+        // Обновляем навигацию
+        Reveal.on('slidechanged', event => {
+            const dots = document.querySelectorAll('.nav-dot');
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            const currentSlide = event.indexh;
+            if (dots[currentSlide]) {
+                dots[currentSlide].classList.add('active');
+            }
+        });
+
+        // Функция навигации
+        function goToSlide(slideIndex) {
+            Reveal.slide(slideIndex, 0);
+        }
+
+        // Инициализация навигации
+        Reveal.on('ready', () => {
+            document.querySelector('.nav-dot').classList.add('active');
+        });
+    </script>
+</body>
+</html>
