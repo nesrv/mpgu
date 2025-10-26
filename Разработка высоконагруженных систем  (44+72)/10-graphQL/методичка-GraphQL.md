@@ -18,6 +18,12 @@
 - Получать много данных за один запрос
 - Иметь строго типизированную схему
 
+https://habr.com/ru/articles/769384/
+
+https://countries.trevorblades.com/
+
+
+
 ### 🔄 Сравнение с REST
 ```python
 # REST - много endpoints
@@ -107,7 +113,20 @@ mutation CreatePost {
 
 ### SpaceX API - отличный для обучения
 
-**Открой в браузере:** https://studio.apollographql.com/sandbox/explorer
+**Открой в браузере:** https://studio.apollographql.com/public/SpaceX-pxxbxen/variant/current/explorer
+
+```
+query ExampleQuery {
+  company {
+    ceo
+  }
+  roadster {
+    apoapsis_au
+  }
+}
+
+```
+
 
 ### Задание 1: Получить информацию о миссиях
 ```graphql
@@ -123,7 +142,41 @@ query GetLaunches {
 }
 ```
 
-curl -X POST https://api.spacex.land/graphql/  -H "Content-Type: application/json"  -d '{"query":"query{launches(limit:1){mission_name}}"}'
+
+```json
+{
+  "data": {
+    "launches": [
+      {
+        "mission_name": "FalconSat",
+        "launch_date_utc": "2006-03-24T22:30:00.000Z",
+        "rocket": {
+          "rocket_name": "Falcon 1"
+        },
+        "launch_success": null
+      },
+      {
+        "mission_name": "DemoSat",
+        "launch_date_utc": "2007-03-21T01:10:00.000Z",
+        "rocket": {
+          "rocket_name": "Falcon 1"
+        },
+        "launch_success": null
+      },
+      {
+        "mission_name": "Trailblazer",
+        "launch_date_utc": "2008-08-03T03:34:00.000Z",
+        "rocket": {
+          "rocket_name": "Falcon 1"
+        },
+        "launch_success": null
+      }
+    ]
+  }
+}
+
+```
+
 
 
 ### Задание 2: Детальная информация о ракете
@@ -142,6 +195,39 @@ query GetRocketDetails {
   }
 }
 ```
+
+```json
+{
+  "data": {
+    "rockets": [
+      {
+        "id": "5e9d0d95eda69955f709d1eb",
+        "name": "Falcon 1",
+        "description": "The Falcon 1 was an expendable launch system privately developed and manufactured by SpaceX during 2006-2009. On 28 September 2008, Falcon 1 became the first privately-developed liquid-fuel launch vehicle to go into orbit around the Earth.",
+        "height": {
+          "meters": 22.25
+        },
+        "mass": {
+          "kg": 30146
+        }
+      },
+      {
+        "id": "5e9d0d95eda69973a809d1ec",
+        "name": "Falcon 9",
+        "description": "Falcon 9 is a two-stage rocket designed and manufactured by SpaceX for the reliable and safe transport of satellites and the Dragon spacecraft into orbit.",
+        "height": {
+          "meters": 70
+        },
+        "mass": {
+          "kg": 549054
+        }
+      }
+    ]
+  }
+}
+
+```
+
 
 ### Практика с Python-клиентом
 ```python
@@ -182,6 +268,73 @@ print(json.dumps(result, indent=2))
 ---
 
 ## 💻 Часть 4: Создаем свой сервер на Python (30 минут)
+
+
+На основе анализа рынка и production-опыта:
+
+## **Наиболее распространенные в production:**
+
+### 1. **Graphene** (~60-70% рынка)
+```python
+# Самый популярный в enterprise и legacy проектах
+import graphene
+
+class Query(graphene.ObjectType):
+    hello = graphene.String()
+
+    def resolve_hello(self, info):
+        return "Hello World"
+```
+
+**Почему доминирует:**
+- Самый старый и проверенный (с 2016 года)
+- Используется в крупных компаниях: **Instagram, Shopify, Yelp**
+- Больше всего готовых интеграций (Django, SQLAlchemy)
+- Огромное комьюнити
+
+### 2. **Strawberry** (~20-30% и быстро растет)
+```python
+# Современный выбор для новых проектов
+import strawberry
+
+@strawberry.type
+class Query:
+    @strawberry.field
+    def hello(self) -> str:
+        return "Hello World"
+```
+
+**Почему набирает популярность:**
+- Использует современные Python фичи (type hints, dataclasses)
+- Лучшая производительность
+- **Используется в: Uber, Netflix, Microsoft**
+- Активная разработка
+
+## **Real-world статистика:**
+
+| Библиотека | Доля рынка | Кому подходит |
+|------------|------------|---------------|
+| **Graphene** | ~65% | Enterprise, legacy, Django-проекты |
+| **Strawberry** | ~25% | Новые проекты, микросервисы, FastAPI |
+| **Ariadne** | ~10% | Schema-first, миграция с других языков |
+
+## **Рекомендация для production:**
+
+### Выберите **Graphene** если:
+- У вас Django-проект
+- Нужна максимальная стабильность
+- Много legacy-кода
+- Нужны готовые плагины
+
+### Выберите **Strawberry** если:
+- Стартуете новый проект
+- Используете FastAPI/современный стек
+- Важна типобезопасность
+- Хотите лучшую производительность
+
+**Личный совет:** Для нового проекта в 2024 я бы выбрал **Strawberry** - он быстро догоняет Graphene по популярности и предлагает лучший developer experience.
+
+
 
 ### Быстрый старт с Strawberry (современная GraphQL библиотека)
 
