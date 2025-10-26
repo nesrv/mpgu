@@ -1,10 +1,267 @@
+Почему сокеты?
+
+Сокеты = интерфейс к сетевому стеку ОС
+
+Приложение (Python)
+       ↓
+    Сокеты (API)
+       ↓
+   TCP/UDP (ОС)
+       ↓
+    IP (ОС)
+       ↓
+   Сетевая карта
+
+
+Абстракция - скрывают сложность сетевых протоколов
+
+Стандарт - одинаковый API для всех языков/ОС
+
+Прямой доступ - минимальные накладные расходы
+
+Контроль - можно настроить все параметры соединения
+
+Альтернативы:
+
+HTTP-библиотеки (requests, aiohttp) - обертки над сокетами
+
+Фреймворки (FastAPI, Flask) - еще больше абстракций
+
+Итог: Сокеты = самый низкоуровневый способ работы с сетью в приложениях.
+
+Как поднять TCP-сервер?
+
+```py
+import socket
+
+# Создаем  сокет (AF_INET = IPv4, SOCK_STREAM = TCP)
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+# Привязываем к адресу localhost:8080
+server.bind(('localhost', 8080))
+
+# Слушаем входящие соединения (максимум 1 в очереди)
+server.listen(1)
+
+while True:
+    # Принимаем соединение (блокирующий вызов)
+    client, addr = server.accept()  # client - сокет клиента, addr - его адрес
+    
+    # Читаем данные от клиента (до 1024 байт)
+    data = client.recv(1024)
+    
+    # Отправляем HTTP-ответ
+    client.send(b'HTTP/1.1 200 OK\r\n\r\nHello World')
+    
+    # Закрываем соединение с клиентом
+    client.close()
+
+
+```
+
+Обрабатывает только 1 клиента одновременно (блокирующий)
+Не парсит HTTP-заголовки/методы
+Всегда возвращает одно и то же
+Нет маршрутизации
+
+
+```py
+import socket
+
+server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+server.bind(('localhost', 8080))
+
+while True:
+    data, addr = server.recvfrom(1024)
+    server.sendto(b'Hello from UDP server', addr)
+
+
+```
+
+Отличия от сокетов:
+
+Автоматически обрабатывает HTTP-протокол
+
+Асинхронность из коробки
+
+Роутинг URL
+
+Парсинг запросов/ответов
+
+
+```py
+from aiohttp import web
+
+async def hello(request):
+    return web.Response(text='Hello World')
+
+app = web.Application()
+app.router.add_get('/', hello)
+web.run_app(app, host='localhost', port=8080)
+```
+
+Отличия от сокетов:
+
+Автоматически обрабатывает HTTP-протокол
+
+Асинхронность из коробки
+
+Роутинг URL
+
+Парсинг запросов/ответов
+
+Под капотом: aiohttp использует сокеты, но скрывает всю низкоуровневую работу.
+
+Тест: curl localhost:8080
+
+
+```py
+import asyncio
+
+class UDPServer:
+    def datagram_received(self, data, addr):
+        print(f"Received {data} from {addr}")
+        self.transport.sendto(b'Hello from UDP server', addr)
+
+async def main():
+    loop = asyncio.get_running_loop()
+    transport, protocol = await loop.create_datagram_endpoint(
+        UDPServer, local_addr=('localhost', 8080))
+    
+    try:
+        await asyncio.sleep(3600)  # Работает час
+    finally:
+        transport.close()
+
+asyncio.run(main())
+```
+
+HTTP работает только поверх TCP
+
+UDP = без соединений, HTTP = с соединениями
+
+Разные парадигмы
+
 после 1 слайд добавь слайд
 web-api
 c картинкой
 img/image-2.png
 
 
+```py
+from aiohttp import web
+import json
 
+users = [{'id': 1, 'name': 'John'}]
+
+async def get_users(request):
+    return web.json_response(users)
+
+async def create_user(request):
+    data = await request.json()
+    user = {'id': len(users) + 1, 'name': data['name']}
+    users.append(user)
+    return web.json_response(user, status=201)
+
+async def get_user(request):
+    user_id = int(request.match_info['id'])
+    user = next((u for u in users if u['id'] == user_id), None)
+    if not user:
+        return web.json_response({'error': 'Not found'}, status=404)
+    return web.json_response(user)
+
+app = web.Application()
+app.router.add_get('/users', get_users)
+app.router.add_post('/users', create_user)
+app.router.add_get('/users/{id}', get_user)
+
+web.run_app(app, port=8080)
+```
+
+```bash
+curl localhost:8080/users
+curl -X POST localhost:8080/users -d '{"name":"Alice"}' -H "Content-Type: application/json"
+
+```
+чем fastapi лучше aiohttp ?
+
+```py
+
+# aiohttp - больше кода
+async def create_user(request):
+    data = await request.json()
+    user = User(name=data['name'])  # Ручная валидация
+    return web.json_response(user.dict())
+
+# FastAPI - меньше кода
+@app.post("/users")
+async def create_user(user: User):  # Автовалидация
+    return user
+
+```
+Преимущества FastAPI:
+
+Автодокументация - Swagger UI из коробки
+
+Валидация - Pydantic модели автоматически
+
+Type hints - IDE подсказки и проверки
+
+Меньше кода - декораторы вместо роутеров
+
+OpenAPI - стандартная схема API
+
+aiohttp лучше когда:
+
+Нужен полный контроль
+
+Не только REST (WebSocket, статика)
+
+Минимальные зависимости
+
+FastAPI лучше для REST API, aiohttp - для сложных веб-приложений.
+
+
+aiohttp для каких- для сложных веб-приложений?
+aiohttp подходит для:
+
+Полноценные веб-приложения
+
+Статические файлы + API + шаблоны
+
+Сессии, куки, middleware
+
+WebSocket серверы
+```py
+async def websocket_handler(request):
+    ws = web.WebSocketResponse()
+    await ws.prepare(request)
+    # реалтайм чат, игры
+
+
+```
+
+Микросервисы с разными протоколами
+
+HTTP + WebSocket + статика в одном приложении
+
+Когда нужен контроль
+
+Кастомная обработка запросов
+
+Специфичные заголовки/middleware
+
+Прокси/шлюзы
+
+Перенаправление запросов
+
+Модификация трафика
+
+FastAPI = только REST API
+aiohttp = универсальный веб-фреймворк
+
+Если только REST → FastAPI
+Если сложнее → aiohttp
 
 
 Разработка высоконагруженных систем  (44+72)\2\Презентация.html переделай для
