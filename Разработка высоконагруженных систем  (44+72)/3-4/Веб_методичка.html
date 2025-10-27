@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Практическое занятие: FastAPI - Основы веб-разработки</title>
+    <style media="print">
+        body { font-family: Arial, sans-serif; font-size: 12px; }
+        .container { box-shadow: none; background: white; }
+        .header { background: white !important; color: black !important; }
+        .save-btn { display: none !important; }
+        .section { page-break-inside: avoid; }
+        input, textarea { border: 1px solid #ccc; background: white; color: black; }
+        .code-block { background: white !important; color: black !important; border: 1px solid #ccc; }
+    </style>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .student-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #4A90E2;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #4A90E2;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .code-textarea {
+            font-family: 'Courier New', monospace;
+            background: #2d3748;
+            color: #e2e8f0;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 25px;
+            background: #fff;
+            border-left: 5px solid #4A90E2;
+            border-radius: 0 10px 10px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            color: #4A90E2;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .section h3 {
+            color: #357ABD;
+            margin: 20px 0 10px 0;
+            font-size: 1.3em;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .code-block .keyword { color: #ff6b6b; }
+        .code-block .string { color: #0be881; }
+        .code-block .function { color: #feca57; }
+        .code-block .class { color: #4ecdc4; }
+        .code-block .decorator { color: #48dbfb; }
+        .code-block .comment { color: #95a5a6; }
+
+        .checkbox-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: block;
+            margin: 30px auto;
+            transition: transform 0.3s;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .textbox {
+            display: inline-block;
+            min-width: 100px;
+            padding: 5px 10px;
+            border: 2px solid #4A90E2;
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .student-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Практическое занятие</h1>
+            <h2>FastAPI - Основы веб-разработки</h2>
+        </div>
+
+        <div class="student-info">
+            <div class="form-group">
+                <label for="student-name">ФИО студента:</label>
+                <input type="text" id="student-name" placeholder="Иванов Иван Иванович">
+            </div>
+            <div class="form-group">
+                <label for="group">Группа:</label>
+                <input type="text" id="group" placeholder="ИСТ-21">
+            </div>
+            <div class="form-group">
+                <label for="date">Дата:</label>
+                <input type="date" id="date">
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📦 1. Установка uv</h2>
+            
+            <h3>Что такое uv?</h3>
+            <p><strong>uv</strong> — это современный менеджер пакетов Python, написанный на Rust. Он значительно быстрее pip и предоставляет удобные инструменты для управления зависимостями.</p>
+
+            <h3>Установка на Linux/macOS:</h3>
+            <div class="code-block">curl -LsSf https://astral.sh/uv/install.sh | sh</div>
+
+            <h3>Установка на Windows:</h3>
+            <div class="code-block">powershell -c "irm https://astral.sh/uv/install.ps1 | iex"</div>
+
+            <h3>Проверка установки:</h3>
+            <div class="code-block">uv --version</div>
+
+            <div class="form-group">
+                <label>Версия uv на вашей системе:</label>
+                <input type="text" class="textbox" placeholder="0.5.11">
+            </div>
+
+            <div class="checkbox-item">
+                <input type="checkbox" id="task1-1">
+                <label for="task1-1">✅ uv установлен и работает</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🏗️ 2. Создание проекта FastAPI</h2>
+
+            <h3>Создание виртуального окружения:</h3>
+            <div class="code-block">uv venv</div>
+
+            <h3>Активация окружения:</h3>
+            <div class="code-block"># Linux/macOS
+source .venv/bin/activate
+
+# Windows
+.venv\Scripts\activate</div>
+
+            <h3>Установка FastAPI и Uvicorn:</h3>
+            <div class="code-block">uv pip install fastapi uvicorn httpie</div>
+
+            <div class="checkbox-item">
+                <input type="checkbox" id="task2-1">
+                <label for="task2-1">✅ Виртуальное окружение создано</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task2-2">
+                <label for="task2-2">✅ FastAPI и зависимости установлены</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>👋 3. Первое приложение FastAPI</h2>
+
+            <h3>Файл: hello.py</h3>
+            <div class="code-block"><span class="keyword">from</span> <span class="class">fastapi</span> <span class="keyword">import</span> <span class="class">FastAPI</span>
+
+<span class="function">app</span> = <span class="class">FastAPI</span>()
+
+<span class="decorator">@app.get</span>(<span class="string">"/hi"</span>)
+<span class="keyword">def</span> <span class="function">greet</span>():
+    <span class="keyword">return</span> <span class="string">"Hello? World?"</span></div>
+
+            <h3>Запуск сервера:</h3>
+            <div class="code-block">uvicorn hello:app --reload</div>
+
+            <h3>Тестирование:</h3>
+            <div class="code-block"># Браузер
+http://localhost:8000/hi
+
+# HTTPie
+http localhost:8000/hi
+
+# Результат
+"Hello? World?"</div>
+
+            <div class="form-group">
+                <label>Результат выполнения:</label>
+                <textarea placeholder="Вставьте результат..."></textarea>
+            </div>
+
+            <div class="checkbox-item">
+                <input type="checkbox" id="task3-1">
+                <label for="task3-1">✅ Сервер запущен успешно</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📚 4. Автоматическая документация</h2>
+
+            <p>FastAPI автоматически генерирует интерактивную документацию API:</p>
+
+            <ul>
+                <li><strong>Swagger UI:</strong> <code>http://localhost:8000/docs</code></li>
+                <li><strong>ReDoc:</strong> <code>http://localhost:8000/redoc</code></li>
+            </ul>
+
+            <div class="checkbox-item">
+                <input type="checkbox" id="task4-1">
+                <label for="task4-1">✅ Открыл Swagger UI</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task4-2">
+                <label for="task4-2">✅ Открыл ReDoc</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🛣️ 5. Параметры пути (Path Parameters)</h2>
+
+            <h3>Файл: hello.py</h3>
+            <div class="code-block"><span class="keyword">from</span> <span class="class">fastapi</span> <span class="keyword">import</span> <span class="class">FastAPI</span>
+
+<span class="function">app</span> = <span class="class">FastAPI</span>()
+
+<span class="decorator">@app.get</span>(<span class="string">"/hi/{who}"</span>)
+<span class="keyword">def</span> <span class="function">greet</span>(who):
+    <span class="keyword">return</span> <span class="string">f"Hello? {who}?"</span></div>
+
+            <h3>Тестирование:</h3>
+            <div class="code-block">http localhost:8000/hi/Mom</div>
+
+            <div class="form-group">
+                <label>Результат:</label>
+                <textarea placeholder="Напишите ответ здесь..."></textarea>
+            </div>
+
+            <div class="checkbox-item">
+                <input type="checkbox" id="task5-1">
+                <label for="task5-1">✅ Выполнено</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>❓ 6. Параметры запроса (Query Parameters)</h2>
+
+            <h3>Файл: hello.py</h3>
+            <div class="code-block"><span class="keyword">from</span> <span class="class">fastapi</span> <span class="keyword">import</span> <span class="class">FastAPI</span>
+
+<span class="function">app</span> = <span class="class">FastAPI</span>()
+
+<span class="decorator">@app.get</span>(<span class="string">"/hi"</span>)
+<span class="keyword">def</span> <span class="function">greet</span>(who):
+    <span class="keyword">return</span> <span class="string">f"Hello? {who}?"</span></div>
+
+            <h3>Тестирование:</h3>
+            <div class="code-block"># Браузер
+localhost:8000/hi?who=Mom
+
+# HTTPie (способ 1)
+http -b localhost:8000/hi?who=Mom
+
+# HTTPie (способ 2)
+http -b localhost:8000/hi who==Mom</div>
+
+            <h3>Python Requests:</h3>
+            <div class="code-block"><span class="keyword">import</span> <span class="class">requests</span>
+
+<span class="comment"># Способ 1</span>
+<span class="function">r</span> = <span class="class">requests</span>.<span class="function">get</span>(<span class="string">"http://localhost:8000/hi?who=Mom"</span>)
+<span class="function">print</span>(r.<span class="function">json</span>())
+
+<span class="comment"># Способ 2</span>
+<span class="function">params</span> = {<span class="string">"who"</span>: <span class="string">"Mom"</span>}
+<span class="function">r</span> = <span class="class">requests</span>.<span class="function">get</span>(<span class="string">"http://localhost:8000/hi"</span>, params=params)
+<span class="function">print</span>(r.<span class="function">json</span>())</div>
+
+            <div class="checkbox-item">
+                <input type="checkbox" id="task6-1">
+                <label for="task6-1">✅ Выполнено</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📦 7. Тело запроса (Request Body)</h2>
+
+            <h3>Файл: hello.py</h3>
+            <div class="code-block"><span class="keyword">from</span> <span class="class">fastapi</span> <span class="keyword">import</span> <span class="class">FastAPI</span>, <span class="class">Body</span>
+
+<span class="function">app</span> = <span class="class">FastAPI</span>()
+
+<span class="decorator">@app.post</span>(<span class="string">"/hi"</span>)
+<span class="keyword">def</span> <span class="function">greet</span>(who: str = <span class="class">Body</span>(embed=<span class="keyword">True</span>)):
+    <span class="keyword">return</span> <span class="string">f"Hello? {who}?"</span></div>
+
+            <h3>Тестирование:</h3>
+            <div class="code-block"># HTTPie
+http -v localhost:8000/hi who=Mom</div>
+
+            <h3>Python Requests:</h3>
+            <div class="code-block"><span class="keyword">import</span> <span class="class">requests</span>
+
+<span class="function">data</span> = {<span class="string">"who"</span>: <span class="string">"Mom"</span>}
+<span class="function">r</span> = <span class="class">requests</span>.<span class="function">post</span>(<span class="string">"http://localhost:8000/hi"</span>, json=data)
+<span class="function">print</span>(r.<span class="function">json</span>())</div>
+
+            <div class="checkbox-item">
+                <input type="checkbox" id="task7-1">
+                <label for="task7-1">✅ Выполнено</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📋 8. HTTP-заголовки (Headers)</h2>
+
+            <h3>Файл: hello.py</h3>
+            <div class="code-block"><span class="keyword">from</span> <span class="class">fastapi</span> <span class="keyword">import</span> <span class="class">FastAPI</span>, <span class="class">Header</span>
+
+<span class="function">app</span> = <span class="class">FastAPI</span>()
+
+<span class="decorator">@app.post</span>(<span class="string">"/hi"</span>)
+<span class="keyword">def</span> <span class="function">greet</span>(who: str = <span class="class">Header</span>()):
+    <span class="keyword">return</span> <span class="string">f"Hello? {who}?"</span>
+
+<span class="decorator">@app.get</span>(<span class="string">"/agent"</span>)
+<span class="keyword">def</span> <span class="function">get_agent</span>(user_agent: str = <span class="class">Header</span>()):
+    <span class="keyword">return</span> user_agent</div>
+
+            <h3>Тестирование:</h3>
+            <div class="code-block"># HTTPie
+http -v localhost:8000/hi who:Mom
+http -v localhost:8000/agent</div>
+
+            <div class="form-group">
+                <label>Результат /agent:</label>
+                <textarea placeholder="Напишите ответ здесь..."></textarea>
+            </div>
+
+            <div class="checkbox-item">
+                <input type="checkbox" id="task8-1">
+                <label for="task8-1">✅ Выполнено</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔀 9. Комбинирование источников данных</h2>
+
+            <h3>Рекомендации по выбору метода:</h3>
+            <table>
+                <tr>
+                    <th>Метод</th>
+                    <th>Когда использовать</th>
+                </tr>
+                <tr>
+                    <td><strong>Path</strong></td>
+                    <td>Идентификация ресурса (RESTful)</td>
+                </tr>
+                <tr>
+                    <td><strong>Query</strong></td>
+                    <td>Дополнительные аргументы (пагинация, фильтры)</td>
+                </tr>
+                <tr>
+                    <td><strong>Body</strong></td>
+                    <td>Большие объемы данных, модели</td>
+                </tr>
+                <tr>
+                    <td><strong>Header</strong></td>
+                    <td>Метаданные, аутентификация</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>🎯 10. Коды состояния HTTP</h2>
+
+            <div class="code-block"><span class="decorator">@app.get</span>(<span class="string">"/happy"</span>, status_code=<span class="string">200</span>)
+<span class="keyword">def</span> <span class="function">happy</span>():
+    <span class="keyword">return</span> <span class="string">":)"</span></div>
+
+            <h3>Тестирование:</h3>
+            <div class="code-block">http localhost:8000/happy</div>
+
+            <div class="checkbox-item">
+                <input type="checkbox" id="task10-1">
+                <label for="task10-1">✅ Выполнено</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📤 11. Установка заголовков ответа</h2>
+
+            <div class="code-block"><span class="keyword">from</span> <span class="class">fastapi</span> <span class="keyword">import</span> <span class="class">FastAPI</span>, <span class="class">Response</span>
+
+<span class="function">app</span> = <span class="class">FastAPI</span>()
+
+<span class="decorator">@app.get</span>(<span class="string">"/header/{name}/{value}"</span>)
+<span class="keyword">def</span> <span class="function">header</span>(name: str, value: str, response: <span class="class">Response</span>):
+    response.headers[name] = value
+    <span class="keyword">return</span> <span class="string">"normal body"</span></div>
+
+            <h3>Тестирование:</h3>
+            <div class="code-block">http localhost:8000/header/marco/polo</div>
+
+            <div class="checkbox-item">
+                <input type="checkbox" id="task11-1">
+                <label for="task11-1">✅ Выполнено</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📝 12. Типы ответов</h2>
+
+            <h3>Основные типы:</h3>
+            <ul>
+                <li><strong>JSONResponse</strong> (по умолчанию)</li>
+                <li><strong>HTMLResponse</strong></li>
+                <li><strong>PlainTextResponse</strong></li>
+                <li><strong>RedirectResponse</strong></li>
+                <li><strong>FileResponse</strong></li>
+                <li><strong>StreamingResponse</strong></li>
+            </ul>
+
+            <h3>Пользовательский Response:</h3>
+            <div class="code-block"><span class="keyword">from</span> <span class="class">fastapi</span> <span class="keyword">import</span> <span class="class">Response</span>
+
+<span class="decorator">@app.get</span>(<span class="string">"/custom"</span>)
+<span class="keyword">def</span> <span class="function">custom</span>():
+    <span class="keyword">return</span> <span class="class">Response</span>(
+        content=<span class="string">"Custom content"</span>,
+        media_type=<span class="string">"text/plain"</span>,
+        status_code=<span class="string">200</span>,
+        headers={<span class="string">"X-Custom"</span>: <span class="string">"Header"</span>}
+    )</div>
+
+            <div class="checkbox-item">
+                <input type="checkbox" id="task12-1">
+                <label for="task12-1">✅ Выполнено</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎓 Задание 1: Приветствие пользователя</h2>
+
+            <p>Создайте эндпоинт, который приветствует пользователя, используя данные из разных источников.</p>
+
+            <div class="info-box">
+                <strong>Используйте:</strong>
+                <ul>
+                    <li><strong>Path:</strong> имя пользователя</li>
+                    <li><strong>Query:</strong> язык приветствия (ru, en)</li>
+                    <li><strong>Body:</strong> возраст пользователя</li>
+                    <li><strong>Header:</strong> город пользователя</li>
+                </ul>
+            </div>
+
+            <h3>Решение:</h3>
+            <div class="form-group">
+                <textarea class="code-textarea" placeholder="from fastapi import FastAPI, Path, Query, Body, Header
+
+app = FastAPI()
+
+@app.post('/greet/{...}')
+def greet_user(
+    name: ...,
+    lang: ...,
+    age: ...,
+    city: ...
+):
+    ..."></textarea>
+            </div>
+
+            <h3>Тестирование:</h3>
+            <div class="code-block">http POST localhost:8000/greet/Ivan lang==ru age:=25 city:Moscow</div>
+
+            <div class="form-group">
+                <label>Результат:</label>
+                <textarea placeholder="Вставьте результат..."></textarea>
+            </div>
+
+            <div class="checkbox-item">
+                <input type="checkbox" id="task-1">
+                <label for="task-1">✅ Выполнено</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🧮 Задание 2: Калькулятор с настройками</h2>
+
+            <p>Создайте эндпоинт-калькулятор, который выполняет операции с числами.</p>
+
+            <div class="info-box">
+                <strong>Используйте:</strong>
+                <ul>
+                    <li><strong>Path:</strong> операция (add, subtract, multiply, divide)</li>
+                    <li><strong>Query:</strong> первое число</li>
+                    <li><strong>Body:</strong> второе число</li>
+                    <li><strong>Header:</strong> количество знаков после запятой</li>
+                </ul>
+            </div>
+
+            <h3>Решение:</h3>
+            <div class="form-group">
+                <textarea class="code-textarea" placeholder="@app.post('/calc/{...}')
+def calculate(
+    ...
+):
+    return {
+        ...
+    }"></textarea>
+            </div>
+
+            <h3>Тестирование:</h3>
+            <div class="code-block"># Сложение
+http POST localhost:8000/calc/add num1==10.5 num2:=5.3 precision:3
+
+# Умножение
+http POST localhost:8000/calc/multiply num1==7 num2:=8 precision:0</div>
+
+            <div class="form-group">
+                <label>Результат:</label>
+                <textarea placeholder="Вставьте результат..."></textarea>
+            </div>
+
+            <div class="checkbox-item">
+                <input type="checkbox" id="task-2">
+                <label for="task-2">✅ Выполнено</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Выводы по занятию</h2>
+
+            <div class="form-group">
+                <label>На данном занятии мы изучили:</label>
+                <textarea placeholder="Перечислите основные темы..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Что нового узнал(а):</label>
+                <textarea placeholder="Опишите новые знания..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Что было трудно для понимания:</label>
+                <textarea placeholder="Опишите сложности..."></textarea>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📚 Заключение</h2>
+
+            <p>В этом занятии мы рассмотрели:</p>
+            <ul>
+                <li>Установку и настройку uv</li>
+                <li>Создание первого приложения FastAPI</li>
+                <li>Различные способы тестирования API</li>
+                <li>Работу с параметрами (Path, Query, Body, Header)</li>
+                <li>Структуру HTTP-запросов</li>
+                <li>Коды состояния и заголовки</li>
+                <li>Типы ответов</li>
+            </ul>
+
+            <h3>Следующие шаги:</h3>
+            <ul>
+                <li>Изучение моделей Pydantic</li>
+                <li>Работа с базами данных</li>
+                <li>Аутентификация и авторизация</li>
+                <li>Тестирование приложений</li>
+            </ul>
+        </div>
+
+        <button class="save-btn" onclick="saveToPDF()">💾 Сохранить в PDF</button>
+    </div>
+
+    <script>
+        document.getElementById('date').value = new Date().toISOString().split('T')[0];
+
+        function highlightPython(code) {
+            return code
+                .replace(/(#.*$)/gm, '<span class="comment">$1</span>')
+                .replace(/(['"`])((?:\\.|(?!\1)[^\\\r\n])*?)\1/g, '<span class="string">$1$2$1</span>')
+                .replace(/\b(from|import|def|class|return|if|else|elif|for|while|try|except|finally|with|as|and|or|not|in|is|True|False|None)\b/g, '<span class="keyword">$1</span>')
+                .replace(/@\w+/g, '<span class="decorator">$&</span>')
+                .replace(/\b(\w+)(?=\s*\()/g, '<span class="function">$1</span>')
+                .replace(/\b(FastAPI|Header|Body|Response|Query|Path)\b/g, '<span class="class">$1</span>');
+        }
+
+        document.querySelectorAll('.code-textarea').forEach(textarea => {
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            textarea.parentNode.insertBefore(wrapper, textarea);
+            wrapper.appendChild(textarea);
+
+            const preview = document.createElement('div');
+            preview.className = 'code-block';
+            preview.style.display = 'none';
+            preview.style.cursor = 'pointer';
+            wrapper.appendChild(preview);
+
+            textarea.addEventListener('input', () => {
+                if (textarea.value.trim()) {
+                    preview.innerHTML = highlightPython(textarea.value);
+                    preview.style.display = 'block';
+                    textarea.style.display = 'none';
+                }
+            });
+
+            textarea.addEventListener('blur', () => {
+                setTimeout(() => {
+                    if (textarea.value.trim()) {
+                        preview.innerHTML = highlightPython(textarea.value);
+                        preview.style.display = 'block';
+                        textarea.style.display = 'none';
+                    }
+                }, 100);
+            });
+
+            preview.addEventListener('click', () => {
+                preview.style.display = 'none';
+                textarea.style.display = 'block';
+                textarea.focus();
+            });
+        });
+
+        function saveToPDF() {
+            const studentName = document.getElementById('student-name').value || 'Не указано';
+            const group = document.getElementById('group').value || 'Не указано';
+            const date = document.getElementById('date').value || 'Не указано';
+            
+            const originalTitle = document.title;
+            document.title = `FastAPI_Методичка_${studentName}_${group}_${date}`;
+            
+            window.print();
+            
+            setTimeout(() => {
+                document.title = originalTitle;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
