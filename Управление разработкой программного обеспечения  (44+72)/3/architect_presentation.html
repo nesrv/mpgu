@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Архитектор в команде разработки</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+        .slide-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            transition: transform 0.5s ease;
+        }
+        .slide {
+            min-width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            color: white;
+        }
+        h1 { font-size: 3.5em; margin-bottom: 30px; text-shadow: 3px 3px 6px rgba(0,0,0,0.3); }
+        h2 { font-size: 2.8em; margin-bottom: 25px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        h3 { font-size: 2em; margin: 20px 0; color: #FFD700; }
+        p, li { font-size: 1.5em; line-height: 1.6; margin: 10px 0; }
+        ul { list-style: none; padding-left: 0; }
+        ul li::before { content: "▸ "; color: #FFD700; font-weight: bold; margin-right: 10px; }
+        .code { 
+            background: #2d3748; 
+            padding: 20px; 
+            border-radius: 10px; 
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+            margin: 20px 0;
+            max-width: 800px;
+        }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; width: 100%; max-width: 1200px; }
+        .card { 
+            background: rgba(255,255,255,0.1); 
+            padding: 25px; 
+            border-radius: 15px; 
+            border: 2px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+        }
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+        button {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover { background: rgba(255,255,255,0.4); transform: scale(1.05); }
+        .slide-number {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            color: white;
+            font-size: 1.5em;
+            z-index: 1000;
+        }
+        .highlight { color: #FFD700; font-weight: bold; }
+        table { border-collapse: collapse; width: 100%; max-width: 900px; margin: 20px 0; font-size: 1.2em; }
+        th, td { padding: 15px; border: 2px solid rgba(255,255,255,0.3); text-align: left; }
+        th { background: rgba(255,255,255,0.2); font-weight: bold; }
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 1000;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 15px;
+            border-radius: 25px;
+        }
+        .nav-dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            color: white;
+        }
+        .nav-dot:hover { background: rgba(255,255,255,0.5); transform: scale(1.1); }
+        .nav-dot.active { background: #FFD700; color: #000; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="slide-container" id="slideContainer">
+        
+        <!-- Слайд 1: Титульный -->
+        <div class="slide">
+            <h1>🎯 Архитектор в команде разработки</h1>
+            <p style="margin-top: 40px; font-size: 1.5em;">МПГУ, 2025</p>
+        </div>
+
+        <!-- Слайд 2: Учебные вопросы -->
+        <div class="slide">
+            <h2>📝 Учебные вопросы</h2>
+            <ul style="max-width: 900px; text-align: left; font-size: 1.4em;">
+                <li>1. Кто такой архитектор</li>
+                <li>2. Как выбираются технологии и стеки</li>
+                <li>3. Как проектируется высокоуровневая структура</li>
+                <li>4. Как проектируются нефункциональные характеристики</li>
+                <li>5. Как выглядит работа архитектора в разных процессах</li>
+            </ul>
+        </div>
+
+        <!-- Слайд 3: Кто такой архитектор -->
+        <div class="slide">
+            <h2>👨‍💻 Кто такой архитектор?</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Сеньор</h3>
+                    <ul>
+                        <li>Пишет код</li>
+                        <li>Ревьюит PR</li>
+                        <li>Менторит джунов</li>
+                        <li>Знает стек</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Тимлид</h3>
+                    <ul>
+                        <li>Управляет командой</li>
+                        <li>1-on-1 встречи</li>
+                        <li>Распределяет задачи</li>
+                        <li>Много митингов</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card" style="margin-top: 30px; max-width: 600px;">
+                <h3 style="color: #FFD700;">Архитектор</h3>
+                <ul>
+                    <li>Проектирует систему</li>
+                    <li>Выбирает технологии</li>
+                    <li>Думает о масштабировании</li>
+                    <li>Пишет ADR</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Слайд 3: Типичный день -->
+        <div class="slide">
+            <h2>📅 Типичный день архитектора</h2>
+            <ul style="max-width: 900px;">
+                <li><span class="highlight">09:00-10:00</span> Стендап с командой</li>
+                <li><span class="highlight">10:00-12:00</span> Проектирование (диаграммы, sequence diagrams)</li>
+                <li><span class="highlight">12:00-13:00</span> Обед и холивары про MongoDB</li>
+                <li><span class="highlight">13:00-15:00</span> Митинги (sync с командами, технический долг)</li>
+                <li><span class="highlight">15:00-17:00</span> Code review и консультации</li>
+                <li><span class="highlight">17:00-18:00</span> Документация (ADR, диаграммы)</li>
+                <li><span class="highlight">18:00+</span> Чтение статей на Medium, доклады</li>
+            </ul>
+        </div>
+
+        <!-- Слайд 4: Навыки -->
+        <div class="slide">
+            <h2>🛠️ Навыки архитектора</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Hard Skills</h3>
+                    <ul>
+                        <li>Паттерны проектирования</li>
+                        <li>Распределенные системы</li>
+                        <li>SQL, NoSQL, NewSQL</li>
+                        <li>HTTP, gRPC, WebSocket</li>
+                        <li>DevOps (CI/CD, Docker)</li>
+                        <li>Облака (AWS, GCP, Azure)</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Soft Skills</h3>
+                    <ul>
+                        <li>Коммуникация</li>
+                        <li>Умение слушать</li>
+                        <li>Компромиссы</li>
+                        <li>Документирование</li>
+                        <li>Презентация идей</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 5: Выбор языка -->
+        <div class="slide">
+            <h2>🐍 Выбор языка программирования</h2>
+            <table>
+                <tr>
+                    <th>Язык</th>
+                    <th>Когда использовать</th>
+                    <th>Когда НЕ использовать</th>
+                </tr>
+                <tr>
+                    <td><span class="highlight">Python</span></td>
+                    <td>MVP, data science, бэкенд стартапа</td>
+                    <td>Высоконагруженные системы</td>
+                </tr>
+                <tr>
+                    <td><span class="highlight">Java</span></td>
+                    <td>Enterprise, банки, большие системы</td>
+                    <td>Быстрые прототипы</td>
+                </tr>
+                <tr>
+                    <td><span class="highlight">Go</span></td>
+                    <td>Микросервисы, CLI, сетевые приложения</td>
+                    <td>Сложная бизнес-логика</td>
+                </tr>
+                <tr>
+                    <td><span class="highlight">Rust</span></td>
+                    <td>Системное программирование</td>
+                    <td>Быстрая разработка</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Слайд 6: Выбор БД -->
+        <div class="slide">
+            <h2>💾 Выбор базы данных</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>SQL (PostgreSQL)</h3>
+                    <ul>
+                        <li>ACID транзакции</li>
+                        <li>Строгая схема</li>
+                        <li>JOIN'ы</li>
+                        <li>Финансы, сложные связи</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>NoSQL (MongoDB)</h3>
+                    <ul>
+                        <li>Гибкая схема</li>
+                        <li>Горизонтальное масштабирование</li>
+                        <li>Быстрая разработка</li>
+                        <li>Логи, меняющаяся схема</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card" style="margin-top: 30px; max-width: 600px;">
+                <h3>Redis (Key-Value)</h3>
+                <ul>
+                    <li>Очень быстрый</li>
+                    <li>Кэш, сессии, счетчики</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Слайд 7: Монолит vs Микросервисы -->
+        <div class="slide">
+            <h2>🏗️ Монолит vs Микросервисы</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Монолит</h3>
+                    <p><span class="highlight">Плюсы:</span></p>
+                    <ul>
+                        <li>Просто разрабатывать</li>
+                        <li>Просто деплоить</li>
+                        <li>Легко дебажить</li>
+                    </ul>
+                    <p style="margin-top: 20px;"><span class="highlight">Минусы:</span></p>
+                    <ul>
+                        <li>Сложно масштабировать</li>
+                        <li>Один баг = вся система</li>
+                        <li>Долгий CI/CD</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Микросервисы</h3>
+                    <p><span class="highlight">Плюсы:</span></p>
+                    <ul>
+                        <li>Независимое масштабирование</li>
+                        <li>Изоляция отказов</li>
+                        <li>Разные технологии</li>
+                    </ul>
+                    <p style="margin-top: 20px;"><span class="highlight">Минусы:</span></p>
+                    <ul>
+                        <li>Сложность</li>
+                        <li>Сетевые задержки</li>
+                        <li>Сложный деплой</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 9: Performance -->
+        <div class="slide">
+            <h2>⚡ Performance - делаем систему быстрой</h2>
+            <ul style="max-width: 900px;">
+                <li><span class="highlight">Кэширование</span> - Redis с TTL 5 минут</li>
+                <li><span class="highlight">Индексы в БД</span> - CREATE INDEX на часто используемые поля</li>
+                <li><span class="highlight">Асинхронность</span> - очереди для долгих задач</li>
+                <li><span class="highlight">Connection pooling</span> - пул соединений к БД</li>
+                <li><span class="highlight">Батчинг</span> - избегаем N+1 проблемы</li>
+            </ul>
+            <p style="margin-top: 40px; font-size: 1.5em;">
+                <span class="highlight">Метрики:</span> P50, P95, P99, RPS, Latency
+            </p>
+        </div>
+
+        <!-- Слайд 10: Scalability -->
+        <div class="slide">
+            <h2>📈 Scalability - масштабируем систему</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Вертикальное</h3>
+                    <ul>
+                        <li>Больше CPU, RAM</li>
+                        <li>Просто</li>
+                        <li>Ограничено железом</li>
+                        <li>Дорого</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Горизонтальное</h3>
+                    <ul>
+                        <li>Больше серверов</li>
+                        <li>Сложнее</li>
+                        <li>Почти безгранично</li>
+                        <li>Дешевле</li>
+                    </ul>
+                </div>
+            </div>
+            <p style="margin-top: 40px; font-size: 1.5em;">
+                <span class="highlight">Ключ:</span> Stateless сервисы + Load Balancer
+            </p>
+        </div>
+
+        <!-- Слайд 11: Reliability -->
+        <div class="slide">
+            <h2>🛡️ Reliability - делаем систему надежной</h2>
+            <ul style="max-width: 900px;">
+                <li><span class="highlight">Retry</span> - повторяем запрос с exponential backoff</li>
+                <li><span class="highlight">Circuit Breaker</span> - предохранитель от каскадных отказов</li>
+                <li><span class="highlight">Bulkhead</span> - изоляция ресурсов</li>
+                <li><span class="highlight">Timeout</span> - не висим вечно</li>
+                <li><span class="highlight">Graceful Degradation</span> - работаем с ограничениями</li>
+            </ul>
+            <p style="margin-top: 40px; font-size: 1.5em;">
+                <span class="highlight">Availability:</span> 99.9% = 8.76 часов простоя в год
+            </p>
+        </div>
+
+        <!-- Слайд 12: Security -->
+        <div class="slide">
+            <h2>🔒 Security - защищаем систему</h2>
+            <ul style="max-width: 900px;">
+                <li><span class="highlight">SQL Injection</span> - параметризованные запросы</li>
+                <li><span class="highlight">Authentication</span> - хэшируем пароли (bcrypt)</li>
+                <li><span class="highlight">Sensitive Data</span> - не возвращаем лишнее</li>
+                <li><span class="highlight">XSS</span> - экранируем вывод</li>
+                <li><span class="highlight">Rate Limiting</span> - 100 запросов/минуту</li>
+                <li><span class="highlight">HTTPS only</span> - всегда шифруем</li>
+            </ul>
+        </div>
+
+        <!-- Слайд 13: Архитектор в Scrum -->
+        <div class="slide">
+            <h2>🔄 Архитектор в Scrum</h2>
+            <ul style="max-width: 900px;">
+                <li><span class="highlight">Sprint Planning</span> - оценивает сложность, предлагает решения</li>
+                <li><span class="highlight">Daily Standup</span> - слушает блокеры, помогает решать</li>
+                <li><span class="highlight">Sprint Review</span> - демонстрирует архитектурные решения</li>
+                <li><span class="highlight">Retrospective</span> - предлагает улучшения, обсуждает технический долг</li>
+                <li><span class="highlight">Backlog Refinement</span> - помогает формулировать требования</li>
+            </ul>
+        </div>
+
+        <!-- Слайд 14: Ключевые выводы -->
+        <div class="slide">
+            <h2>🎓 Ключевые выводы</h2>
+            <ul style="max-width: 900px; font-size: 1.4em;">
+                <li>Архитектор это не просто "рисовальщик диаграмм"</li>
+                <li>Нет идеальной архитектуры - все решения это trade-offs</li>
+                <li>Архитектура эволюционирует - начинайте с простого</li>
+                <li>Коммуникация важнее технологий</li>
+                <li>Учитесь постоянно - технологии меняются</li>
+            </ul>
+        </div>
+
+        <!-- Слайд 15: Как стать архитектором -->
+        <div class="slide">
+            <h2>🚀 Как стать архитектором?</h2>
+            <div class="card" style="max-width: 800px;">
+                <h3>Путь:</h3>
+                <ul>
+                    <li>Junior (1-2 года) - учитесь писать код</li>
+                    <li>Middle (2-4 года) - понимаете систему целиком</li>
+                    <li>Senior (4-6 лет) - проектируете компоненты</li>
+                    <li>Architect (6+ лет) - проектируете системы</li>
+                </ul>
+            </div>
+            <p style="margin-top: 40px; font-size: 1.3em;">
+                Читайте код, изучайте open source, делайте pet projects, ходите на конференции
+            </p>
+        </div>
+
+        <!-- Слайд 17: Типы управленцев -->
+        <div class="slide">
+            <h2>👥 Типы управленцев</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Техлид</h3>
+                    <ul>
+                        <li>Самый опытный разработчик</li>
+                        <li>Технические решения</li>
+                        <li>Ревью кода и архитектуры</li>
+                        <li>Управление техдолгом</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Тимлид</h3>
+                    <ul>
+                        <li>Найм и развитие людей</li>
+                        <li>Планирование и цели</li>
+                        <li>Процессы в команде</li>
+                        <li>Коммуникация со стейкхолдерами</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card" style="margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto; background: rgba(255,215,0,0.2);">
+                <h3 style="color: #FFD700;">Архитектор</h3>
+                <ul>
+                    <li>Общее направление технологий</li>
+                    <li>Унификация решений</li>
+                    <li>Безопасность и надежность</li>
+                    <li>Вне продуктовых команд</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Слайд 18: Выбор фреймворка -->
+        <div class="slide">
+            <h2>🛠️ Выбор фреймворка</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3 style="color: #2ecc71;">Django</h3>
+                    <ul>
+                        <li>Батарейки включены</li>
+                        <li>ORM, admin, auth</li>
+                        <li>Хорош для: CMS, CRUD</li>
+                        <li>Плох для: микросервисы</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3 style="color: #3498db;">FastAPI</h3>
+                    <ul>
+                        <li>Async из коробки</li>
+                        <li>Автовалидация</li>
+                        <li>Хорош для: REST API</li>
+                        <li>Плох для: нужна админка</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card" style="margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                <h3 style="color: #e67e22;">Flask</h3>
+                <ul>
+                    <li>Минималистичный</li>
+                    <li>Гибкий</li>
+                    <li>Хорош для: прототипы</li>
+                    <li>Плох для: большие проекты</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Слайд 19: Архитектурные паттерны -->
+        <div class="slide">
+            <h2>🏛️ Архитектурные паттерны</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Монолит</h3>
+                    <p><span class="highlight">Плюсы:</span></p>
+                    <ul>
+                        <li>Просто разрабатывать</li>
+                        <li>Легко дебажить</li>
+                    </ul>
+                    <p style="margin-top: 15px;"><span class="highlight">Минусы:</span></p>
+                    <ul>
+                        <li>Сложно масштабировать</li>
+                        <li>Долгий CI/CD</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Микросервисы</h3>
+                    <p><span class="highlight">Плюсы:</span></p>
+                    <ul>
+                        <li>Независимое масштабирование</li>
+                        <li>Изоляция отказов</li>
+                    </ul>
+                    <p style="margin-top: 15px;"><span class="highlight">Минусы:</span></p>
+                    <ul>
+                        <li>Сложность</li>
+                        <li>Сетевые задержки</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 20: Паттерны интеграции -->
+        <div class="slide">
+            <h2>🔗 Паттерны интеграции</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3 style="color: #3498db;">Синхронная</h3>
+                    <ul>
+                        <li><strong>REST:</strong> простой, HTTP/JSON</li>
+                        <li><strong>gRPC:</strong> быстрый, Protobuf</li>
+                        <li><strong>GraphQL:</strong> гибкие запросы</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3 style="color: #e74c3c;">Асинхронная</h3>
+                    <ul>
+                        <li><strong>RabbitMQ:</strong> гарантированная доставка</li>
+                        <li><strong>Kafka:</strong> event streaming</li>
+                        <li><strong>Redis Pub/Sub:</strong> real-time</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 21: Финальный -->
+        <div class="slide">
+            <h1>🎯 Спасибо за внимание!</h1>
+            <h3 style="margin-top: 40px;">Вопросы?</h3>
+            <p style="margin-top: 60px; font-size: 1.5em;">
+                Следующая лекция: Микросервисы и распределенные системы
+            </p>
+        </div>
+
+    </div>
+
+    <div class="slide-number" id="slideNumber">1 / 20</div>
+    
+    <div class="controls">
+        <button onclick="prevSlide()">← Назад</button>
+        <button onclick="nextSlide()">Вперед →</button>
+    </div>
+
+    <div class="navigation" id="navigation"></div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const navigation = document.getElementById('navigation');
+
+        for (let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+            dot.textContent = i + 1;
+            dot.onclick = () => goToSlide(i);
+            navigation.appendChild(dot);
+        }
+
+        function updateSlide() {
+            const container = document.getElementById('slideContainer');
+            container.style.transform = `translateX(-${currentSlide * 100}vw)`;
+            document.getElementById('slideNumber').textContent = `${currentSlide + 1} / ${totalSlides}`;
+            document.querySelectorAll('.nav-dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === currentSlide);
+            });
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateSlide();
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        // Клавиатурная навигация
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+
+        // Свайп на мобильных
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            if (touchStartX - touchEndX > 50) nextSlide();
+            if (touchEndX - touchStartX > 50) prevSlide();
+        });
+    </script>
+</body>
+</html>

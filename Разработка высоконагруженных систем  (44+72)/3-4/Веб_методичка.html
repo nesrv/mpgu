@@ -991,18 +991,24 @@ http POST localhost:8000/greet/Ivan lang==ru age:=25 city:Moscow
 
             <h3>Решение:</h3>
             <div class="form-group">
-                <textarea class="code-textarea" placeholder="from fastapi import FastAPI, Path, Query, Body, Header
+                <textarea class="code-textarea">from fastapi import FastAPI, Body, Header
 
 app = FastAPI()
 
-@app.post('/greet/{...}')
+@app.post("/greet/{name}")
 def greet_user(
-    name: ...,
-    lang: ...,
-    age: ...,
-    city: ...
+    name: str,
+    lang: str,
+    age: int = Body(embed=True),
+    city: str = Header()
 ):
-    ..."></textarea>
+    greeting_text = "Привет" if lang == "ru" else "Hello"
+    return {
+        "greeting": f"{greeting_text}, {name}!",
+        "age": age,
+        "city": city,
+        "language": lang
+    }</textarea>
             </div>
 
             <div class="checkbox-item">
