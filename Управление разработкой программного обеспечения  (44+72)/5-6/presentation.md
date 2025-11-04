@@ -106,7 +106,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 # Определяем модель Пользователь
-class Пользователь(Base):
+class User(Base):
     # Указываем имя таблицы в БД
     __tablename__ = 'users'
     
@@ -183,20 +183,20 @@ COMMIT; -- или ROLLBACK;
 ```python
 # Создание одного объекта
 # Создаем экземпляр модели Пользователь
-пользователь = Пользователь(name='Иван Иванов', email='ivan@example.com')
+user = User(name='Иван Иванов', email='ivan@example.com')
 # Добавляем объект в сессию (пока только в памяти)
-session.add(пользователь)
+session.add(user)
 # Фиксируем изменения в БД (выполняется INSERT)
 session.commit()
 
 # Создание нескольких объектов
 # Создаем список объектов
-пользователи = [
-    Пользователь(name='Алиса', email='alice@example.com'),
-    Пользователь(name='Борис', email='boris@example.com')
+users = [
+    User(name='Алиса', email='alice@example.com'),
+    User(name='Борис', email='boris@example.com')
 ]
 # Добавляем все объекты одной командой
-session.add_all(пользователи)
+session.add_all(users)
 # Фиксируем все изменения
 session.commit()
 ```
@@ -222,21 +222,21 @@ VALUES
 ```python
 # Получить все записи из таблицы
 # all() возвращает список объектов
-пользователи = session.query(Пользователь).all()
+users = session.query(Пользователь).all()
 
 # Получить первую запись или None
-пользователь = session.query(Пользователь).first()
+user = session.query(Пользователь).first()
 
 # Получить запись по первичному ключу
-пользователь = session.query(Пользователь).get(1)
+user = session.query(Пользователь).get(1)
 
 # Фильтрация по одному условию
 # Используем оператор == для сравнения
-пользователи = session.query(Пользователь).filter(Пользователь.name == 'Иван').all()
+users = session.query(Пользователь).filter(Пользователь.name == 'Иван').all()
 
 # Фильтрация с несколькими условиями (AND)
 # like() - поиск по шаблону, > - сравнение
-пользователи = session.query(Пользователь).filter(
+users = session.query(Пользователь).filter(
     Пользователь.name.like('%Иван%'),  # Содержит 'Иван'
     Пользователь.id > 5  # ID больше 5
 ).all()
@@ -269,9 +269,9 @@ WHERE name LIKE '%Иван%' AND id > 5;
 ```python
 # Обновление одного объекта
 # Сначала получаем объект из БД
-пользователь = session.query(Пользователь).filter(Пользователь.id == 1).first()
+user = session.query(Пользователь).filter(Пользователь.id == 1).first()
 # Изменяем атрибут объекта
-пользователь.name = 'Мария Петрова'
+user.name = 'Мария Петрова'
 # SQLAlchemy автоматически отслеживает изменения
 session.commit()
 
@@ -304,9 +304,9 @@ WHERE name = 'Иван';
 ```python
 # Удаление одного объекта
 # Сначала получаем объект
-пользователь = session.query(Пользователь).filter(Пользователь.id == 1).first()
+user = session.query(Пользователь).filter(Пользователь.id == 1).first()
 # Помечаем объект на удаление
-session.delete(пользователь)
+session.delete(user)
 # Фиксируем удаление
 session.commit()
 
@@ -335,13 +335,13 @@ DELETE FROM users;
 ### SQLAlchemy:
 ```python
 # Сортировка по возрастанию (для убывания: .desc())
-пользователи = session.query(Пользователь).order_by(Пользователь.name).all()
+users = session.query(Пользователь).order_by(Пользователь.name).all()
 
 # Ограничение количества результатов (пагинация)
-пользователи = session.query(Пользователь).limit(10).all()
+users = session.query(Пользователь).limit(10).all()
 
 # Смещение + ограничение (пропускаем 5, берем 10)
-пользователи = session.query(Пользователь).offset(5).limit(10).all()
+users = session.query(Пользователь).offset(5).limit(10).all()
 # Подсчет количества записей
 count = session.query(Пользователь).count()
 
@@ -376,34 +376,34 @@ SELECT EXISTS(SELECT 1 FROM users WHERE id = 1);
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
-class Пользователь(Base):
-    __tablename__ = 'пользователи'
+class User(Base):
+    __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
-    имя = Column(String(50))
+    name = Column(String(50))
     # Определяем отношение к Статья (один пользователь - много статей)
-    статьи = relationship('Статья', back_populates='автор')
+    posts = relationship('Post', back_populates='author')
 
-class Статья(Base):
-    __tablename__ = 'статьи'
+class Post(Base):
+    __tablename__ = 'posts'
     id = Column(Integer, primary_key=True)
-    заголовок = Column(String(100))
-    # Внешний ключ на таблицу пользователи
-    пользователь_id = Column(Integer, ForeignKey('пользователи.id'))
+    title = Column(String(100))
+    # Внешний ключ на таблицу users
+    user_id = Column(Integer, ForeignKey('users.id'))
     # Обратное отношение к Пользователь
-    автор = relationship('Пользователь', back_populates='статьи')
+    author = relationship('User', back_populates='posts')
 ```
 
 ### SQL (PostgreSQL):
 ```sql
-CREATE TABLE пользователи (
+CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    имя VARCHAR(50)
+    name VARCHAR(50)
 );
 
-CREATE TABLE статьи (
+CREATE TABLE posts (
     id SERIAL PRIMARY KEY,
-    заголовок VARCHAR(100),
-    пользователь_id INTEGER REFERENCES пользователи(id)
+    title VARCHAR(100),
+    user_id INTEGER REFERENCES users(id)
 );
 ```
 
@@ -415,41 +415,41 @@ CREATE TABLE статьи (
 ```python
 # Создание с отношением
 # Создаем пользователя
-пользователь = Пользователь(имя='Иван')
+user = User(name='Иван')
 # Создаем статьи, связывая их с пользователем
-статья1 = Статья(заголовок='Первая статья', автор=пользователь)
-статья2 = Статья(заголовок='Вторая статья', автор=пользователь)
+post1 = Post(title='Первая статья', author=user)
+post2 = Post(title='Вторая статья', author=user)
 # Достаточно добавить только пользователь, статьи добавятся автоматически
-session.add(пользователь)
+session.add(user)
 session.commit()
 
 # Чтение с отношением (от родителя к детям)
-пользователь = session.query(Пользователь).filter(Пользователь.id == 1).first()
+user = session.query(Пользователь).filter(Пользователь.id == 1).first()
 # Получаем все статьи пользователя через relationship
-статьи = пользователь.статьи
+posts = user.posts
 
 # Обратное чтение (от ребенка к родителю)
-статья = session.query(Статья).first()
+post = session.query(Post).first()
 # Получаем автора статьи
-автор = статья.автор
+author = post.author
 ```
 
 ### SQL (PostgreSQL):
 ```sql
 -- Создание
-INSERT INTO пользователи (имя) VALUES ('Иван') RETURNING id;
-INSERT INTO статьи (заголовок, пользователь_id) VALUES 
+INSERT INTO users (name) VALUES ('Иван') RETURNING id;
+INSERT INTO posts (title, user_id) VALUES 
     ('Первая статья', 1), ('Вторая статья', 1);
 
 -- Чтение с JOIN
-SELECT статьи.* FROM статьи 
-JOIN пользователи ON статьи.пользователь_id = пользователи.id 
-WHERE пользователи.id = 1;
+SELECT posts.* FROM posts 
+JOIN users ON posts.user_id = users.id 
+WHERE users.id = 1;
 
 -- Обратное чтение
-SELECT пользователи.* FROM пользователи 
-JOIN статьи ON пользователи.id = статьи.пользователь_id 
-WHERE статьи.id = 1;
+SELECT users.* FROM users 
+JOIN posts ON users.id = posts.user_id 
+WHERE posts.id = 1;
 ```
 
 ---
@@ -462,42 +462,42 @@ from sqlalchemy import Table
 
 # Промежуточная таблица для связи многие-ко-многим
 # Создается через Table, а не через класс
-студент_курс = Table('студент_курс', Base.metadata,
-    Column('студент_id', Integer, ForeignKey('студенты.id')),
-    Column('курс_id', Integer, ForeignKey('курсы.id'))
+student_course = Table('student_course', Base.metadata,
+    Column('student_id', Integer, ForeignKey('students.id')),
+    Column('course_id', Integer, ForeignKey('courses.id'))
 )
 
-class Студент(Base):
-    __tablename__ = 'студенты'
+class Student(Base):
+    __tablename__ = 'students'
     id = Column(Integer, primary_key=True)
-    имя = Column(String(50))
+    name = Column(String(50))
     # secondary - указываем промежуточную таблицу
-    курсы = relationship('Курс', secondary=студент_курс, back_populates='студенты')
+    courses = relationship('Course', secondary=student_course, back_populates='students')
 
-class Курс(Base):
-    __tablename__ = 'курсы'
+class Course(Base):
+    __tablename__ = 'courses'
     id = Column(Integer, primary_key=True)
-    название = Column(String(100))
+    title = Column(String(100))
     # Обратное отношение через ту же промежуточную таблицу
-    студенты = relationship('Студент', secondary=студент_курс, back_populates='курсы')
+    students = relationship('Student', secondary=student_course, back_populates='courses')
 ```
 
 ### SQL (PostgreSQL):
 ```sql
-CREATE TABLE студенты (
+CREATE TABLE students (
     id SERIAL PRIMARY KEY,
-    имя VARCHAR(50)
+    name VARCHAR(50)
 );
 
-CREATE TABLE курсы (
+CREATE TABLE courses (
     id SERIAL PRIMARY KEY,
-    название VARCHAR(100)
+    title VARCHAR(100)
 );
 
-CREATE TABLE студент_курс (
-    студент_id INTEGER REFERENCES студенты(id),
-    курс_id INTEGER REFERENCES курсы(id),
-    PRIMARY KEY (студент_id, курс_id)
+CREATE TABLE student_course (
+    student_id INTEGER REFERENCES students(id),
+    course_id INTEGER REFERENCES courses(id),
+    PRIMARY KEY (student_id, course_id)
 );
 ```
 
@@ -508,42 +508,42 @@ CREATE TABLE студент_курс (
 ### SQLAlchemy:
 ```python
 # Создание связи многие-ко-многим
-студент = Студент(имя='Алиса')
-курс1 = Курс(название='Математика')
-курс2 = Курс(название='Физика')
+student = Student(name='Алиса')
+course1 = Course(title='Математика')
+course2 = Course(title='Физика')
 # Добавляем несколько курсов студенту
-студент.курсы.extend([курс1, курс2])
+student.courses.extend([курс1, курс2])
 # SQLAlchemy автоматически создаст записи в промежуточной таблице
-session.add(студент)
+session.add(student)
 session.commit()
 
 # Чтение связанных данных
-студент = session.query(Студент).first()
+student = session.query(Student).first()
 # Получаем все курсы студента
-курсы = студент.курсы
+курсы = student.courses
 
 # Удаление связи (не удаляет сам курс!)
 # Удаляется только запись из промежуточной таблицы
-студент.курсы.remove(курс1)
+student.courses.remove(курс1)
 session.commit()
 ```
 
 ### SQL (PostgreSQL):
 ```sql
 -- Создание
-INSERT INTO студенты (имя) VALUES ('Алиса') RETURNING id;
-INSERT INTO курсы (название) VALUES ('Математика'), ('Физика');
-INSERT INTO студент_курс (студент_id, курс_id) 
+INSERT INTO students (name) VALUES ('Алиса') RETURNING id;
+INSERT INTO courses (title) VALUES ('Математика'), ('Физика');
+INSERT INTO student_course (student_id, course_id) 
 VALUES (1, 1), (1, 2);
 
 -- Чтение
-SELECT курсы.* FROM курсы
-JOIN студент_курс ON курсы.id = студент_курс.курс_id
-WHERE студент_курс.студент_id = 1;
+SELECT courses.* FROM courses
+JOIN student_course ON courses.id = student_course.course_id
+WHERE student_course.student_id = 1;
 
 -- Удаление связи
-DELETE FROM студент_курс 
-WHERE студент_id = 1 AND курс_id = 1;
+DELETE FROM student_course 
+WHERE student_id = 1 AND course_id = 1;
 ```
 
 ---

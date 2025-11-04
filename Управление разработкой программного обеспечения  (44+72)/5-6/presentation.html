@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL ORM SQLAlchemy</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#1a1a1a;overflow:hidden}
+.reveal{width:100%;height:100vh;position:relative}
+.slides{width:100%;height:100%;position:relative}
+section{display:none;position:absolute;width:100%;height:100%;padding:40px;color:#fff;overflow-y:auto}
+section.present{display:flex;flex-direction:column;justify-content:center;align-items:center;animation:fadeIn .5s}
+section>*{max-width:1200px;width:100%}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+h1{font-size:3.5em;margin-bottom:40px;color:#4A90E2;text-align:center}
+h2{font-size:2.8em;margin:0 0 30px;color:#4A90E2;text-align:center}
+h3{font-size:2em;margin:25px 0 15px;color:#64B5F6}
+.fragment{opacity:0;transition:opacity .5s}
+.fragment.visible{opacity:1}
+p,li{font-size:1.4em;line-height:1.8;margin:10px 0}
+ul{margin-left:30px}
+pre{background:#2d2d2d;padding:20px;border-radius:8px;overflow-x:auto;margin:15px 0;border-left:4px solid #4A90E2}
+code{font-family:'Courier New',monospace;font-size:1.1em;color:#f8f8f2}
+code .k{color:#ff79c6}
+code .s{color:#f1fa8c}
+code .c{color:#50fa7b}
+code .n{color:#8be9fd}
+.navigation{position:fixed;bottom:20px;left:20px;display:flex;gap:8px;z-index:100;overflow-x:auto;max-width:calc(100vw - 40px)}
+.nav-dot{width:32px;height:32px;background:rgba(74,144,226,.3);border:2px solid #4A90E2;border-radius:5px;color:#fff;font-size:12px;cursor:pointer;transition:.3s;display:flex;align-items:center;justify-content:center;font-weight:bold}
+.nav-dot:hover{background:rgba(74,144,226,.6);transform:scale(1.1)}
+.nav-dot.active{background:#4A90E2;box-shadow:0 0 10px #4A90E2}
+.highlight{color:#ffd700}
+.check{color:#4caf50}
+.cross{color:#f44336}
+</style>
+
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<section class="present">
+<h1>SQL ORM SQLAlchemy</h1>
+<p style="font-size:1.3em;margin-top:30px">Современный подход к работе с базами данных</p>
+</section>
+
+<section>
+<h2>Учебные вопросы и структура занятия</h2>
+<div class="fragment"><h3>Учебные вопросы:</h3>
+<ul>
+<li>Основы работы с SQLAlchemy ORM</li>
+<li>Синхронная и асинхронная работа с БД</li>
+<li>CRUD операции</li>
+<li>Отношения между таблицами</li>
+<li>Продвинутые SQL операции</li>
+</ul></div>
+<div class="fragment"><h3>Структура занятия:</h3>
+<ul>
+<li>Введение в SQLAlchemy (плюсы и минусы)</li>
+<li>Подключение к БД (sync/async)</li>
+<li>Определение моделей и создание таблиц</li>
+<li>CRUD операции</li>
+<li>Отношения: один-ко-многим, многие-ко-многим</li>
+<li>Продвинутые операции: MERGE, UNION, JOIN, JSON</li>
+</ul></div>
+</section>
+
+<section>
+<h2>Плюсы и минусы SQLAlchemy</h2>
+<div class="fragment"><h3><span class="check">✅</span> Плюсы:</h3>
+<ul>
+<li>Абстракция от конкретной СУБД</li>
+<li>Безопасность (защита от SQL-инъекций)</li>
+<li>Удобная работа с объектами Python</li>
+<li>Автоматическая генерация SQL</li>
+<li>Миграции и версионирование схемы</li>
+<li>Поддержка отношений между таблицами</li>
+</ul></div>
+<div class="fragment"><h3><span class="cross">❌</span> Минусы:</h3>
+<ul>
+<li>Производительность ниже чистого SQL</li>
+<li>Сложность изучения</li>
+<li>Overhead при простых запросах</li>
+<li>Сложная отладка сгенерированных запросов</li>
+<li>Ограничения при специфичных операциях СУБД</li>
+</ul></div>
+</section>
+
+<section>
+<h2>Синхронное и асинхронное подключение</h2>
+<div class="fragment"><h3>Синхронное подключение:</h3>
+<pre><code><span class="k">from</span> sqlalchemy <span class="k">import</span> create_engine
+<span class="k">from</span> sqlalchemy.orm <span class="k">import</span> sessionmaker
+
+engine = create_engine(<span class="s">'postgresql://user:pass@localhost/db'</span>)
+<span class="n">Session</span> = sessionmaker(bind=engine)
+session = <span class="n">Session</span>()</code></pre></div>
+<div class="fragment"><h3>Асинхронное подключение:</h3>
+<pre><code><span class="k">from</span> sqlalchemy.ext.asyncio <span class="k">import</span> create_async_engine, <span class="n">AsyncSession</span>
+<span class="k">from</span> sqlalchemy.orm <span class="k">import</span> sessionmaker
+
+engine = create_async_engine(<span class="s">'postgresql+asyncpg://user:pass@localhost/db'</span>)
+async_session = sessionmaker(engine, class_=<span class="n">AsyncSession</span>, 
+                             expire_on_commit=<span class="k">False</span>)
+
+<span class="k">async with</span> async_session() <span class="k">as</span> session:
+    <span class="k">pass</span></code></pre></div>
+</section>
+
+<section>
+<h2>Плюсы и минусы синхронной и асинхронной работы</h2>
+<div class="fragment"><h3>Синхронная работа:</h3>
+<p><span class="check">✅</span> Простота, понятность, легкая отладка, совместимость</p>
+<p><span class="cross">❌</span> Блокировка потока, низкая производительность при I/O</p></div>
+<div class="fragment"><h3>Асинхронная работа:</h3>
+<p><span class="check">✅</span> Высокая производительность, масштабируемость</p>
+<p><span class="cross">❌</span> Сложность кода, сложная отладка, требует async-драйверов</p></div>
+<div class="fragment"><h3>Когда использовать:</h3>
+<ul>
+<li><strong>Sync:</strong> Скрипты, CLI, простые приложения</li>
+<li><strong>Async:</strong> Веб-сервисы, высоконагруженные системы, микросервисы</li>
+</ul></div>
+</section>
+
+<section>
+<h2>Определение моделей и создание таблиц</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="k">from</span> sqlalchemy <span class="k">import</span> <span class="n">Column</span>, <span class="n">Integer</span>, <span class="n">String</span>, create_engine
+<span class="k">from</span> sqlalchemy.ext.declarative <span class="k">import</span> declarative_base
+
+<span class="n">Base</span> = declarative_base()
+
+<span class="k">class</span> <span class="n">User</span>(<span class="n">Base</span>):
+    __tablename__ = <span class="s">'users'</span>
+    id = <span class="n">Column</span>(<span class="n">Integer</span>, primary_key=<span class="k">True</span>)
+    name = <span class="n">Column</span>(<span class="n">String</span>(50), nullable=<span class="k">False</span>)
+    email = <span class="n">Column</span>(<span class="n">String</span>(100), unique=<span class="k">True</span>)
+
+engine = create_engine(<span class="s">'postgresql://user:pass@localhost/db'</span>)
+<span class="n">Base</span>.metadata.create_all(engine)</code></pre></div>
+<div class="fragment"><h3>SQL (PostgreSQL):</h3>
+<pre><code>CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE
+);</code></pre></div>
+</section>
+
+<section>
+<h2>Создание сессии</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="k">from</span> sqlalchemy.orm <span class="k">import</span> sessionmaker, <span class="n">Session</span>
+
+<span class="n">SessionLocal</span> = sessionmaker(bind=engine)
+
+session = <span class="n">SessionLocal</span>()
+<span class="k">try</span>:
+    session.commit()
+<span class="k">except</span>:
+    session.rollback()
+<span class="k">finally</span>:
+    session.close()
+
+<span class="c"># Рекомендуемый способ</span>
+<span class="k">with</span> <span class="n">Session</span>(engine) <span class="k">as</span> session:
+    session.commit()</code></pre></div>
+<div class="fragment"><h3>SQL (PostgreSQL):</h3>
+<pre><code><span class="k">BEGIN</span>;
+<span class="c">-- SQL операции</span>
+<span class="k">COMMIT</span>; <span class="c">-- или ROLLBACK;</span></code></pre></div>
+</section>
+
+<section>
+<h2>CREATE - Создание записи</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="c"># Создание одного объекта</span>
+user = <span class="n">User</span>(name=<span class="s">'Иван Иванов'</span>, email=<span class="s">'ivan@example.com'</span>)
+session.add(user)
+session.commit()
+
+<span class="c"># Создание нескольких объектов</span>
+users = [
+    <span class="n">User</span>(name=<span class="s">'Алиса'</span>, email=<span class="s">'alice@example.com'</span>),
+    <span class="n">User</span>(name=<span class="s">'Борис'</span>, email=<span class="s">'boris@example.com'</span>)
+]
+session.add_all(users)
+session.commit()</code></pre></div>
+<div class="fragment"><h3>SQL (PostgreSQL):</h3>
+<pre><code><span class="k">INSERT</span> <span class="k">INTO</span> users (name, email) 
+<span class="k">VALUES</span> (<span class="s">'Иван Иванов'</span>, <span class="s">'ivan@example.com'</span>);
+
+<span class="k">INSERT</span> <span class="k">INTO</span> users (name, email) 
+<span class="k">VALUES</span> (<span class="s">'Алиса'</span>, <span class="s">'alice@example.com'</span>),
+       (<span class="s">'Борис'</span>, <span class="s">'boris@example.com'</span>);</code></pre></div>
+</section>
+
+<section>
+<h2>READ - Чтение записей</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="c"># Получить все записи</span>
+users = session.query(<span class="n">User</span>).all()
+
+<span class="c"># Получить первую запись</span>
+user = session.query(<span class="n">User</span>).first()
+
+<span class="c"># Получить по ID</span>
+user = session.query(<span class="n">User</span>).get(1)
+
+<span class="c"># Фильтрация</span>
+users = session.query(<span class="n">User</span>).filter(<span class="n">User</span>.name == <span class="s">'Иван'</span>).all()
+
+<span class="c"># Несколько условий</span>
+users = session.query(<span class="n">User</span>).filter(
+    <span class="n">User</span>.name.like(<span class="s">'%Иван%'</span>),
+    <span class="n">User</span>.id > 5
+).all()</code></pre></div>
+<div class="fragment"><h3>SQL (PostgreSQL):</h3>
+<pre><code><span class="k">SELECT</span> * <span class="k">FROM</span> users;
+<span class="k">SELECT</span> * <span class="k">FROM</span> users <span class="k">WHERE</span> name = <span class="s">'Иван'</span>;
+<span class="k">SELECT</span> * <span class="k">FROM</span> users <span class="k">WHERE</span> name <span class="k">LIKE</span> <span class="s">'%Иван%'</span> <span class="k">AND</span> id > 5;</code></pre></div>
+</section>
+
+<section>
+<h2>UPDATE - Обновление записей</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="c"># Обновление одного объекта</span>
+user = session.query(<span class="n">User</span>).filter(<span class="n">User</span>.id == 1).first()
+user.name = <span class="s">'Мария Петрова'</span>
+session.commit()
+
+<span class="c"># Массовое обновление</span>
+session.query(<span class="n">User</span>).filter(<span class="n">User</span>.name == <span class="s">'Иван'</span>).update({
+    <span class="s">'email'</span>: <span class="s">'newemail@example.com'</span>
+})
+session.commit()</code></pre></div>
+<div class="fragment"><h3>SQL (PostgreSQL):</h3>
+<pre><code><span class="k">UPDATE</span> users <span class="k">SET</span> name = <span class="s">'Мария Петрова'</span> <span class="k">WHERE</span> id = 1;
+
+<span class="k">UPDATE</span> users <span class="k">SET</span> email = <span class="s">'newemail@example.com'</span> <span class="k">WHERE</span> name = <span class="s">'Иван'</span>;</code></pre></div>
+</section>
+
+<section>
+<h2>DELETE - Удаление записей</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="c"># Удаление одного объекта</span>
+user = session.query(<span class="n">User</span>).filter(<span class="n">User</span>.id == 1).first()
+session.delete(user)
+session.commit()
+
+<span class="c"># Массовое удаление</span>
+session.query(<span class="n">User</span>).filter(<span class="n">User</span>.name == <span class="s">'Иван'</span>).delete()
+session.commit()</code></pre></div>
+<div class="fragment"><h3>SQL (PostgreSQL):</h3>
+<pre><code><span class="k">DELETE</span> <span class="k">FROM</span> users <span class="k">WHERE</span> id = 1;
+<span class="k">DELETE</span> <span class="k">FROM</span> users <span class="k">WHERE</span> name = <span class="s">'Иван'</span>;</code></pre></div>
+</section>
+
+<section>
+<h2>Дополнительные операции READ</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="c"># Сортировка</span>
+users = session.query(<span class="n">User</span>).order_by(<span class="n">User</span>.name).all()
+
+<span class="c"># Ограничение</span>
+users = session.query(<span class="n">User</span>).limit(10).all()
+
+<span class="c"># Смещение + ограничение</span>
+users = session.query(<span class="n">User</span>).offset(5).limit(10).all()
+
+<span class="c"># Подсчет</span>
+count = session.query(<span class="n">User</span>).count()
+
+<span class="c"># Проверка существования</span>
+exists = session.query(<span class="n">User</span>).filter(<span class="n">User</span>.id == 1).exists()</code></pre></div>
+<div class="fragment"><h3>SQL (PostgreSQL):</h3>
+<pre><code><span class="k">SELECT</span> * <span class="k">FROM</span> users <span class="k">ORDER BY</span> name;
+<span class="k">SELECT</span> * <span class="k">FROM</span> users <span class="k">LIMIT</span> 10;
+<span class="k">SELECT</span> * <span class="k">FROM</span> users <span class="k">OFFSET</span> 5 <span class="k">LIMIT</span> 10;</code></pre></div>
+</section>
+
+<section>
+<h2>Отношение один-ко-многим</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="k">from</span> sqlalchemy <span class="k">import</span> <span class="n">ForeignKey</span>
+<span class="k">from</span> sqlalchemy.orm <span class="k">import</span> relationship
+
+<span class="k">class</span> <span class="n">User</span>(<span class="n">Base</span>):
+    __tablename__ = <span class="s">'users'</span>
+    id = <span class="n">Column</span>(<span class="n">Integer</span>, primary_key=<span class="k">True</span>)
+    name = <span class="n">Column</span>(<span class="n">String</span>(50))
+    posts = relationship(<span class="s">'Post'</span>, back_populates=<span class="s">'author'</span>)
+
+<span class="k">class</span> <span class="n">Post</span>(<span class="n">Base</span>):
+    __tablename__ = <span class="s">'posts'</span>
+    id = <span class="n">Column</span>(<span class="n">Integer</span>, primary_key=<span class="k">True</span>)
+    title = <span class="n">Column</span>(<span class="n">String</span>(100))
+    user_id = <span class="n">Column</span>(<span class="n">Integer</span>, <span class="n">ForeignKey</span>(<span class="s">'users.id'</span>))
+    author = relationship(<span class="s">'User'</span>, back_populates=<span class="s">'posts'</span>)</code></pre></div>
+<div class="fragment"><h3>SQL (PostgreSQL):</h3>
+<pre><code><span class="k">CREATE TABLE</span> users (id <span class="k">SERIAL PRIMARY KEY</span>, name <span class="k">VARCHAR</span>(50));
+<span class="k">CREATE TABLE</span> posts (
+    id <span class="k">SERIAL PRIMARY KEY</span>,
+    title <span class="k">VARCHAR</span>(100),
+    user_id <span class="k">INTEGER REFERENCES</span> users(id)
+);</code></pre></div>
+</section>
+
+<section>
+<h2>CRUD для один-ко-многим</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="c"># Создание с отношением</span>
+user = <span class="n">User</span>(name=<span class="s">'Иван'</span>)
+post1 = <span class="n">Post</span>(title=<span class="s">'Первая статья'</span>, author=user)
+post2 = <span class="n">Post</span>(title=<span class="s">'Вторая статья'</span>, author=user)
+session.add(user)
+session.commit()
+
+<span class="c"># Чтение</span>
+user = session.query(<span class="n">User</span>).filter(<span class="n">User</span>.id == 1).first()
+posts = user.posts
+
+<span class="c"># Обратное чтение</span>
+post = session.query(<span class="n">Post</span>).first()
+author = post.author</code></pre></div>
+<div class="fragment"><h3>SQL (PostgreSQL):</h3>
+<pre><code><span class="k">INSERT INTO</span> users (name) <span class="k">VALUES</span> (<span class="s">'Иван'</span>) <span class="k">RETURNING</span> id;
+<span class="k">INSERT INTO</span> posts (title, user_id) <span class="k">VALUES</span> 
+    (<span class="s">'Первая статья'</span>, 1), (<span class="s">'Вторая статья'</span>, 1);</code></pre></div>
+</section>
+
+<section>
+<h2>Отношение многие-ко-многим</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="k">from</span> sqlalchemy <span class="k">import</span> <span class="n">Table</span>
+
+student_course = <span class="n">Table</span>(<span class="s">'student_course'</span>, <span class="n">Base</span>.metadata,
+    <span class="n">Column</span>(<span class="s">'student_id'</span>, <span class="n">Integer</span>, <span class="n">ForeignKey</span>(<span class="s">'students.id'</span>)),
+    <span class="n">Column</span>(<span class="s">'course_id'</span>, <span class="n">Integer</span>, <span class="n">ForeignKey</span>(<span class="s">'courses.id'</span>))
+)
+
+<span class="k">class</span> <span class="n">Student</span>(<span class="n">Base</span>):
+    __tablename__ = <span class="s">'students'</span>
+    id = <span class="n">Column</span>(<span class="n">Integer</span>, primary_key=<span class="k">True</span>)
+    name = <span class="n">Column</span>(<span class="n">String</span>(50))
+    courses = relationship(<span class="s">'Course'</span>, secondary=student_course, 
+                          back_populates=<span class="s">'students'</span>)
+
+<span class="k">class</span> <span class="n">Course</span>(<span class="n">Base</span>):
+    __tablename__ = <span class="s">'courses'</span>
+    id = <span class="n">Column</span>(<span class="n">Integer</span>, primary_key=<span class="k">True</span>)
+    title = <span class="n">Column</span>(<span class="n">String</span>(100))
+    students = relationship(<span class="n">'Student'</span>, secondary=student_course, 
+                           back_populates=<span class="s">'courses'</span>)</code></pre></div>
+</section>
+
+<section>
+<h2>CRUD для многие-ко-многим</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="c"># Создание связи</span>
+student = <span class="n">Student</span>(name=<span class="s">'Алиса'</span>)
+course1 = <span class="n">Course</span>(title=<span class="s">'Математика'</span>)
+course2 = <span class="n">Course</span>(title=<span class="s">'Физика'</span>)
+student.courses.extend([course1, course2])
+session.add(student)
+session.commit()
+
+<span class="c"># Чтение</span>
+student = session.query(<span class="n">Student</span>).first()
+courses = student.courses
+
+<span class="c"># Удаление связи</span>
+student.courses.remove(course1)
+session.commit()</code></pre></div>
+<div class="fragment"><h3>SQL (PostgreSQL):</h3>
+<pre><code><span class="k">INSERT INTO</span> students (name) <span class="k">VALUES</span> (<span class="s">'Алиса'</span>);
+<span class="k">INSERT INTO</span> courses (title) <span class="k">VALUES</span> (<span class="s">'Математика'</span>), (<span class="s">'Физика'</span>);
+<span class="k">INSERT INTO</span> student_course (student_id, course_id) 
+<span class="k">VALUES</span> (1, 1), (1, 2);</code></pre></div>
+</section>
+
+<section>
+<h2>Операция MERGE (UPSERT)</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="k">from</span> sqlalchemy.dialects.postgresql <span class="k">import</span> insert
+
+stmt = insert(<span class="n">User</span>).values(id=1, name=<span class="s">'John'</span>, email=<span class="s">'john@example.com'</span>)
+stmt = stmt.on_conflict_do_update(
+    index_elements=[<span class="s">'id'</span>],
+    set_=dict(name=<span class="s">'John Updated'</span>, email=<span class="s">'john@example.com'</span>)
+)
+session.execute(stmt)
+session.commit()
+
+<span class="c"># Или через merge</span>
+user = <span class="n">User</span>(id=1, name=<span class="s">'John'</span>, email=<span class="s">'john@example.com'</span>)
+session.merge(user)
+session.commit()</code></pre></div>
+<div class="fragment"><h3>SQL (PostgreSQL):</h3>
+<pre><code><span class="k">INSERT INTO</span> users (id, name, email) 
+<span class="k">VALUES</span> (1, <span class="s">'John'</span>, <span class="s">'john@example.com'</span>)
+<span class="k">ON CONFLICT</span> (id) 
+<span class="k">DO UPDATE SET</span> name = <span class="s">'John Updated'</span>, email = <span class="s">'john@example.com'</span>;</code></pre></div>
+</section>
+
+<section>
+<h2>Что такое MERGE?</h2>
+<div class="fragment"><p><span class="k">MERGE</span> (также известный как UPSERT) позволяет объединять данные - вставлять новые записи или обновлять существующие в одной операции.</p></div>
+<div class="fragment"><h3>Синтаксис:</h3>
+<pre><code><span class="k">MERGE INTO</span> target_table 
+<span class="k">USING</span> source_table 
+<span class="k">ON</span> condition
+<span class="k">WHEN MATCHED THEN</span>
+    <span class="k">UPDATE SET</span> column = value
+<span class="k">WHEN NOT MATCHED THEN</span>
+    <span class="k">INSERT</span> (columns) <span class="k">VALUES</span> (values);</code></pre></div>
+<div class="fragment"><h3>Пример MERGE:</h3>
+<pre><code><span class="c">-- Обновляем или добавляем курсы для студента</span>
+<span class="k">MERGE INTO</span> courses <span class="k">AS</span> target
+<span class="k">USING</span> (<span class="k">VALUES</span> (1, <span class="s">'Математика'</span>, 95)) <span class="k">AS</span> source(student_id, course_name, grade)
+<span class="k">ON</span> target.student_id = source.student_id <span class="k">AND</span> target.course_name = source.course_name
+<span class="k">WHEN MATCHED THEN</span>
+    <span class="k">UPDATE SET</span> grade = source.grade
+<span class="k">WHEN NOT MATCHED THEN</span>
+    <span class="k">INSERT</span> (student_id, course_name, grade) 
+    <span class="k">VALUES</span> (source.student_id, source.course_name, source.grade);</code></pre></div>
+</section>
+
+<section>
+<h2>Операции UNION, INTERSECT, EXCEPT</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="k">from</span> sqlalchemy <span class="k">import</span> union, intersect, except_
+
+<span class="c"># UNION - объединение результатов (без дубликатов)</span>
+query1 = session.query(<span class="n">User</span>.name).filter(<span class="n">User</span>.id < 5)
+query2 = session.query(<span class="n">User</span>.name).filter(<span class="n">User</span>.id > 10)
+result = union(query1, query2).all()
+
+<span class="c"># INTERSECT - пересечение (только общие элементы)</span>
+result = intersect(query1, query2).all()
+
+<span class="c"># EXCEPT - разность (элементы из query1, которых нет в query2)</span>
+result = except_(query1, query2).all()
+
+<span class="c"># UNION ALL (с дубликатами, быстрее)</span>
+result = union(query1, query2).union_all().all()</code></pre></div>
+<div class="fragment"><h3>SQL (PostgreSQL):</h3>
+<pre><code><span class="c">-- UNION (без дубликатов)</span>
+<span class="k">SELECT</span> name <span class="k">FROM</span> users <span class="k">WHERE</span> id < 5
+<span class="k">UNION</span>
+<span class="k">SELECT</span> name <span class="k">FROM</span> users <span class="k">WHERE</span> id > 10;
+
+<span class="c">-- INTERSECT</span>
+<span class="k">SELECT</span> name <span class="k">FROM</span> users <span class="k">WHERE</span> id < 5
+<span class="k">INTERSECT</span>
+<span class="k">SELECT</span> name <span class="k">FROM</span> users <span class="k">WHERE</span> id > 10;
+
+<span class="c">-- EXCEPT</span>
+<span class="k">SELECT</span> name <span class="k">FROM</span> users <span class="k">WHERE</span> id < 5
+<span class="k">EXCEPT</span>
+<span class="k">SELECT</span> name <span class="k">FROM</span> users <span class="k">WHERE</span> id > 10;
+
+<span class="c">-- UNION ALL (с дубликатами)</span>
+<span class="k">SELECT</span> name <span class="k">FROM</span> users <span class="k">WHERE</span> id < 5
+<span class="k">UNION ALL</span>
+<span class="k">SELECT</span> name <span class="k">FROM</span> users <span class="k">WHERE</span> id > 10;</code></pre></div>
+</section>
+
+<section>
+<h2>Виды JOIN</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="k">from</span> sqlalchemy.orm <span class="k">import</span> joinedload
+
+<span class="c"># INNER JOIN (по умолчанию) - только совпадающие записи</span>
+result = session.query(<span class="n">User</span>).join(<span class="n">Post</span>).all()
+
+<span class="c"># LEFT JOIN - все записи из левой таблицы + совпадения</span>
+result = session.query(<span class="n">User</span>).outerjoin(<span class="n">Post</span>).all()
+
+<span class="c"># RIGHT JOIN (через переворот таблиц)</span>
+result = session.query(<span class="n">Post</span>).outerjoin(<span class="n">User</span>).all()
+
+<span class="c"># FULL OUTER JOIN - все записи из обеих таблиц</span>
+result = session.query(<span class="n">User</span>).outerjoin(<span class="n">Post</span>, full=<span class="k">True</span>).all()
+
+<span class="c"># Явное указание условия JOIN (если нет relationship)</span>
+result = session.query(<span class="n">User</span>).join(<span class="n">Post</span>, <span class="n">User</span>.id == <span class="n">Post</span>.user_id).all()</code></pre></div>
+<div class="fragment"><h3>SQL (PostgreSQL):</h3>
+<pre><code><span class="c">-- INNER JOIN</span>
+<span class="k">SELECT</span> users.* <span class="k">FROM</span> users 
+<span class="k">INNER JOIN</span> posts <span class="k">ON</span> users.id = posts.user_id;
+
+<span class="c">-- LEFT JOIN</span>
+<span class="k">SELECT</span> users.* <span class="k">FROM</span> users 
+<span class="k">LEFT JOIN</span> posts <span class="k">ON</span> users.id = posts.user_id;
+
+<span class="c">-- RIGHT JOIN</span>
+<span class="k">SELECT</span> users.* <span class="k">FROM</span> users 
+<span class="k">RIGHT JOIN</span> posts <span class="k">ON</span> users.id = posts.user_id;
+
+<span class="c">-- FULL OUTER JOIN</span>
+<span class="k">SELECT</span> users.* <span class="k">FROM</span> users 
+<span class="k">FULL OUTER JOIN</span> posts <span class="k">ON</span> users.id = posts.user_id;
+
+<span class="c">-- NATURAL JOIN (автоматическое соединение)</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> users <span class="k">NATURAL JOIN</span> posts;</code></pre></div>
+</section>
+
+<section>
+<h2>Работа с JSON полями</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="k">from</span> sqlalchemy.dialects.postgresql <span class="k">import</span> <span class="n">JSON</span>, <span class="n">JSONB</span>
+
+<span class="k">class</span> <span class="n">Product</span>(<span class="n">Base</span>):
+    __tablename__ = <span class="s">'products'</span>
+    id = <span class="n">Column</span>(<span class="n">Integer</span>, primary_key=<span class="k">True</span>)
+    name = <span class="n">Column</span>(<span class="n">String</span>(100))
+    attributes = <span class="n">Column</span>(<span class="n">JSONB</span>)
+
+<span class="c"># Создание</span>
+product = <span class="n">Product</span>(name=<span class="s">'Laptop'</span>, 
+                 attributes={<span class="s">'color'</span>: <span class="s">'black'</span>, <span class="s">'ram'</span>: 16})
+session.add(product)
+session.commit()
+
+<span class="c"># Запрос по JSON</span>
+products = session.query(<span class="n">Product</span>).filter(
+    <span class="n">Product</span>.attributes[<span class="s">'color'</span>].astext == <span class="s">'black'</span>
+).all()
+
+<span class="c"># Обновление</span>
+product.attributes[<span class="s">'ram'</span>] = 32
+session.commit()</code></pre></div>
+</section>
+
+<section>
+<h2>Продвинутые JSON операции</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="c"># Проверка существования ключа</span>
+products = session.query(<span class="n">Product</span>).filter(
+    <span class="n">Product</span>.attributes.has_key(<span class="s">'color'</span>)
+).all()
+
+<span class="c"># Содержит значение</span>
+products = session.query(<span class="n">Product</span>).filter(
+    <span class="n">Product</span>.attributes.contains({<span class="s">'color'</span>: <span class="s">'black'</span>})
+).all()
+
+<span class="c"># Вложенные значения</span>
+products = session.query(<span class="n">Product</span>).filter(
+    <span class="n">Product</span>.attributes[<span class="s">'specs'</span>][<span class="s">'cpu'</span>].astext == <span class="s">'Intel'</span>
+).all()</code></pre></div>
+<div class="fragment"><h3>SQL (PostgreSQL):</h3>
+<pre><code><span class="k">SELECT</span> * <span class="k">FROM</span> products <span class="k">WHERE</span> attributes ? <span class="s">'color'</span>;
+<span class="k">SELECT</span> * <span class="k">FROM</span> products <span class="k">WHERE</span> attributes @> <span class="s">'{"color": "black"}'</span>;
+<span class="k">SELECT</span> * <span class="k">FROM</span> products <span class="k">WHERE</span> attributes-><span class="s">'specs'</span>->><span class="s">'cpu'</span> = <span class="s">'Intel'</span>;</code></pre></div>
+</section>
+
+<section>
+<h2>Агрегатные функции</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="k">from</span> sqlalchemy <span class="k">import</span> func
+
+<span class="c"># COUNT</span>
+count = session.query(func.count(<span class="n">User</span>.id)).scalar()
+
+<span class="c"># Агрегатные функции</span>
+total = session.query(func.sum(<span class="n">Product</span>.price)).scalar()
+avg_price = session.query(func.avg(<span class="n">Product</span>.price)).scalar()
+
+<span class="c"># GROUP BY</span>
+result = session.query(<span class="n">User</span>.name, func.count(<span class="n">Post</span>.id))\
+    .join(<span class="n">Post</span>).group_by(<span class="n">User</span>.name).all()
+
+<span class="c"># HAVING</span>
+result = session.query(<span class="n">User</span>.name, func.count(<span class="n">Post</span>.id))\
+    .join(<span class="n">Post</span>).group_by(<span class="n">User</span>.name)\
+    .having(func.count(<span class="n">Post</span>.id) > 5).all()</code></pre></div>
+<div class="fragment"><h3>SQL (PostgreSQL):</h3>
+<pre><code><span class="k">SELECT COUNT</span>(id) <span class="k">FROM</span> users;
+<span class="k">SELECT</span> users.name, <span class="k">COUNT</span>(posts.id) <span class="k">FROM</span> users 
+<span class="k">JOIN</span> posts <span class="k">ON</span> users.id = posts.user_id <span class="k">GROUP BY</span> users.name;</code></pre></div>
+</section>
+
+<section>
+<h2>Подзапросы и CTE</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="k">from</span> sqlalchemy <span class="k">import</span> select
+
+<span class="c"># Подзапрос</span>
+subq = session.query(func.avg(<span class="n">Product</span>.price)).scalar_subquery()
+products = session.query(<span class="n">Product</span>).filter(<span class="n">Product</span>.price > subq).all()
+
+<span class="c"># CTE</span>
+cte = session.query(<span class="n">User</span>.id, <span class="n">User</span>.name).filter(<span class="n">User</span>.id < 10).cte()
+result = session.query(cte, <span class="n">Post</span>)\
+    .join(<span class="n">Post</span>, cte.c.id == <span class="n">Post</span>.user_id).all()
+
+<span class="c"># Рекурсивный CTE</span>
+cte = select([<span class="n">Category</span>.id, <span class="n">Category</span>.parent_id])\
+    .where(<span class="n">Category</span>.id == 1).cte(recursive=<span class="k">True</span>)
+cte = cte.union_all(
+    select([<span class="n">Category</span>.id, <span class="n">Category</span>.parent_id])\
+    .where(<span class="n">Category</span>.parent_id == cte.c.id)
+)</code></pre></div>
+</section>
+
+<section>
+<h2>Транзакции и блокировки</h2>
+<div class="fragment"><h3>SQLAlchemy:</h3>
+<pre><code><span class="c"># Явная транзакция</span>
+<span class="k">with</span> session.begin():
+    user = <span class="n">User</span>(name=<span class="s">'John'</span>)
+    session.add(user)
+
+<span class="c"># Вложенные транзакции</span>
+<span class="k">with</span> session.begin_nested():
+    session.add(user)
+
+<span class="c"># Блокировка FOR UPDATE</span>
+user = session.query(<span class="n">User</span>).filter(<span class="n">User</span>.id == 1)\
+    .with_for_update().first()
+
+<span class="c"># Блокировка FOR SHARE</span>
+user = session.query(<span class="n">User</span>).filter(<span class="n">User</span>.id == 1)\
+    .with_for_update(read=<span class="k">True</span>).first()</code></pre></div>
+<div class="fragment"><h3>SQL (PostgreSQL):</h3>
+<pre><code><span class="k">BEGIN</span>;
+<span class="k">INSERT INTO</span> users (name) <span class="k">VALUES</span> (<span class="s">'John'</span>);
+<span class="k">COMMIT</span>;
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> users <span class="k">WHERE</span> id = 1 <span class="k">FOR UPDATE</span>;</code></pre></div>
+</section>
+
+<section>
+<h2>Best Practices и заключение</h2>
+<div class="fragment"><h3>Рекомендации:</h3>
+<ul style="font-size:1.2em">
+<li><strong>Connection pooling</strong> - повторное использование подключений к БД вместо создания новых</li>
+<li><strong>Eager loading</strong> - загрузка связанных данных одним запросом (избегаем N+1 проблему)</li>
+<li><strong>Индексы</strong> - ускоряют поиск по полям в WHERE, JOIN, ORDER BY</li>
+<li><strong>Batch операции</strong> - вставка/обновление множества записей за один запрос</li>
+<li><strong>Async</strong> - неблокирующая работа с БД для высокой производительности</li>
+<li><strong>Миграции (Alembic)</strong> - версионирование изменений структуры БД</li>
+</ul></div>
+<div class="fragment"><h3>Типичные ошибки:</h3>
+<ul style="font-size:1.2em">
+<li><strong>Забывать commit()</strong> - изменения не сохранятся в БД</li>
+<li><strong>N+1 проблема</strong> - 1 запрос для списка + N запросов для связанных данных</li>
+<li><strong>Не закрывать сессии</strong> - утечка памяти и исчерпание пула подключений</li>
+<li><strong>Sync в async</strong> - блокировка event loop, падение производительности</li>
+</ul></div>
+<div class="fragment"><h3>Полезные ресурсы:</h3>
+<ul style="font-size:1.2em">
+<li>Документация: <a href="https://docs.sqlalchemy.org" style="color:#4A90E2">docs.sqlalchemy.org</a></li>
+<li>Alembic: <a href="https://alembic.sqlalchemy.org" style="color:#4A90E2">alembic.sqlalchemy.org</a></li>
+<li>PostgreSQL: <a href="https://www.postgresql.org/docs/" style="color:#4A90E2">postgresql.org/docs</a></li>
+</ul></div>
+</section>
+
+</div>
+<div class="navigation"></div>
+</div>
+
+<script>
+const sections=document.querySelectorAll('section');
+const nav=document.querySelector('.navigation');
+let current=0,fragmentIndex=0;
+
+sections.forEach((_,i)=>{
+const btn=document.createElement('div');
+btn.className='nav-dot';
+btn.textContent=i+1;
+btn.onclick=()=>goTo(i);
+nav.appendChild(btn);
+});
+
+function goTo(n){
+if(n<0||n>=sections.length)return;
+sections[current].classList.remove('present');
+nav.children[current].classList.remove('active');
+current=n;
+fragmentIndex=0;
+sections[current].classList.add('present');
+nav.children[current].classList.add('active');
+showFragments();
+}
+
+function showFragments(){
+const fragments=sections[current].querySelectorAll('.fragment');
+fragments.forEach((f,i)=>f.classList.toggle('visible',i<fragmentIndex));
+}
+
+function nextFragment(){
+const fragments=sections[current].querySelectorAll('.fragment');
+if(fragmentIndex<fragments.length){fragmentIndex++;showFragments();return true}
+return false;
+}
+
+document.addEventListener('keydown',e=>{
+if(e.code==='Space'||e.code==='ArrowRight'){e.preventDefault();if(!nextFragment())goTo(current+1)}
+else if(e.code==='ArrowLeft'){e.preventDefault();if(fragmentIndex>0){fragmentIndex--;showFragments()}else goTo(current-1)}
+});
+
+
+goTo(0);
+</script>
+</body>
+</html>
