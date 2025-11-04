@@ -41,54 +41,54 @@ code .n{color:#8be9fd}
 <div class="slides">
 
 <section class="present">
-<h1>SQL ORM SQLAlchemy</h1>
-<p style="font-size:1.3em;margin-top:30px">Современный подход к работе с базами данных</p>
+<h1>🐍 SQL ORM SQLAlchemy 🗄️</h1>
+<p style="font-size:1.3em;margin-top:30px">Современный подход к работе с базами данных<br>(или как перестать писать SQL руками 😅)</p>
 </section>
 
 <section>
-<h2>Учебные вопросы и структура занятия</h2>
-<div class="fragment"><h3>Учебные вопросы:</h3>
+<h2>📚 Учебные вопросы и структура занятия</h2>
+<div class="fragment"><h3>🎯 Учебные вопросы:</h3>
 <ul>
-<li>Основы работы с SQLAlchemy ORM</li>
-<li>Синхронная и асинхронная работа с БД</li>
-<li>CRUD операции</li>
-<li>Отношения между таблицами</li>
-<li>Продвинутые SQL операции</li>
+<li>🔰 Основы работы с SQLAlchemy ORM</li>
+<li>⚡ Синхронная и асинхронная работа с БД</li>
+<li>✏️ CRUD операции (Create, Read, Update, Delete)</li>
+<li>🔗 Отношения между таблицами</li>
+<li>🚀 Продвинутые SQL операции</li>
 </ul></div>
-<div class="fragment"><h3>Структура занятия:</h3>
+<div class="fragment"><h3>🗺️ Структура занятия:</h3>
 <ul>
-<li>Введение в SQLAlchemy (плюсы и минусы)</li>
-<li>Подключение к БД (sync/async)</li>
-<li>Определение моделей и создание таблиц</li>
-<li>CRUD операции</li>
-<li>Отношения: один-ко-многим, многие-ко-многим</li>
-<li>Продвинутые операции: MERGE, UNION, JOIN, JSON</li>
-</ul></div>
-</section>
-
-<section>
-<h2>Плюсы и минусы SQLAlchemy</h2>
-<div class="fragment"><h3><span class="check">✅</span> Плюсы:</h3>
-<ul>
-<li>Абстракция от конкретной СУБД</li>
-<li>Безопасность (защита от SQL-инъекций)</li>
-<li>Удобная работа с объектами Python</li>
-<li>Автоматическая генерация SQL</li>
-<li>Миграции и версионирование схемы</li>
-<li>Поддержка отношений между таблицами</li>
-</ul></div>
-<div class="fragment"><h3><span class="cross">❌</span> Минусы:</h3>
-<ul>
-<li>Производительность ниже чистого SQL</li>
-<li>Сложность изучения</li>
-<li>Overhead при простых запросах</li>
-<li>Сложная отладка сгенерированных запросов</li>
-<li>Ограничения при специфичных операциях СУБД</li>
+<li>👋 Введение в SQLAlchemy (плюсы и минусы)</li>
+<li>🔌 Подключение к БД (sync/async)</li>
+<li>🏗️ Определение моделей и создание таблиц</li>
+<li>✏️ CRUD операции</li>
+<li>🤝 Отношения: один-ко-многим, многие-ко-многим</li>
+<li>🎓 Продвинутые операции: MERGE, UNION, JOIN, JSON</li>
 </ul></div>
 </section>
 
 <section>
-<h2>Синхронное и асинхронное подключение</h2>
+<h2>⚖️ Плюсы и минусы SQLAlchemy</h2>
+<div class="fragment"><h3><span class="check">✅</span> Плюсы (почему мы его любим 💚):</h3>
+<ul>
+<li>🔄 Абстракция от конкретной СУБД (PostgreSQL, MySQL, SQLite - всё равно!)</li>
+<li>🛡️ Безопасность (защита от SQL-инъекций - Bobby Tables не пройдёт!)</li>
+<li>🐍 Удобная работа с объектами Python (пишем код, а не SQL)</li>
+<li>🤖 Автоматическая генерация SQL (магия!)</li>
+<li>📦 Миграции и версионирование схемы</li>
+<li>🔗 Поддержка отношений между таблицами</li>
+</ul></div>
+<div class="fragment"><h3><span class="cross">❌</span> Минусы (за всё надо платить 💸):</h3>
+<ul>
+<li>🐌 Производительность ниже чистого SQL (но не критично)</li>
+<li>📚 Сложность изучения (кривая обучения как у React)</li>
+<li>🎒 Overhead при простых запросах (зачем ORM для SELECT *?)</li>
+<li>🔍 Сложная отладка сгенерированных запросов (что ты там наколдовал?)</li>
+<li>🚧 Ограничения при специфичных операциях СУБД</li>
+</ul></div>
+</section>
+
+<section>
+<h2>🔌 Синхронное и асинхронное подключение</h2>
 <div class="fragment"><h3>Синхронное подключение:</h3>
 <pre><code><span class="k">from</span> sqlalchemy <span class="k">import</span> create_engine
 <span class="k">from</span> sqlalchemy.orm <span class="k">import</span> sessionmaker
@@ -109,22 +109,22 @@ async_session = sessionmaker(engine, class_=<span class="n">AsyncSession</span>,
 </section>
 
 <section>
-<h2>Плюсы и минусы синхронной и асинхронной работы</h2>
-<div class="fragment"><h3>Синхронная работа:</h3>
+<h2>⚡ Плюсы и минусы синхронной и асинхронной работы</h2>
+<div class="fragment"><h3>🐢 Синхронная работа (старая добрая классика):</h3>
 <p><span class="check">✅</span> Простота, понятность, легкая отладка, совместимость</p>
-<p><span class="cross">❌</span> Блокировка потока, низкая производительность при I/O</p></div>
-<div class="fragment"><h3>Асинхронная работа:</h3>
-<p><span class="check">✅</span> Высокая производительность, масштабируемость</p>
-<p><span class="cross">❌</span> Сложность кода, сложная отладка, требует async-драйверов</p></div>
-<div class="fragment"><h3>Когда использовать:</h3>
+<p><span class="cross">❌</span> Блокировка потока, низкая производительность при I/O (ждём-с...)</p></div>
+<div class="fragment"><h3>🚀 Асинхронная работа (для крутых парней):</h3>
+<p><span class="check">✅</span> Высокая производительность, масштабируемость (летаем!)</p>
+<p><span class="cross">❌</span> Сложность кода, сложная отладка, требует async-драйверов (await await await...)</p></div>
+<div class="fragment"><h3>🤔 Когда использовать:</h3>
 <ul>
-<li><strong>Sync:</strong> Скрипты, CLI, простые приложения</li>
-<li><strong>Async:</strong> Веб-сервисы, высоконагруженные системы, микросервисы</li>
+<li><strong>Sync 🐢:</strong> Скрипты, CLI, простые приложения (когда спешить некуда)</li>
+<li><strong>Async 🚀:</strong> Веб-сервисы, высоконагруженные системы, микросервисы (когда нужна скорость!)</li>
 </ul></div>
 </section>
 
 <section>
-<h2>Определение моделей и создание таблиц</h2>
+<h2>🏗️ Определение моделей и создание таблиц</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="k">from</span> sqlalchemy <span class="k">import</span> <span class="n">Column</span>, <span class="n">Integer</span>, <span class="n">String</span>, create_engine
 <span class="k">from</span> sqlalchemy.ext.declarative <span class="k">import</span> declarative_base
@@ -148,7 +148,7 @@ engine = create_engine(<span class="s">'postgresql://user:pass@localhost/db'</sp
 </section>
 
 <section>
-<h2>Создание сессии</h2>
+<h2>🎫 Создание сессии (билет в БД)</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="k">from</span> sqlalchemy.orm <span class="k">import</span> sessionmaker, <span class="n">Session</span>
 
@@ -172,7 +172,7 @@ session = <span class="n">SessionLocal</span>()
 </section>
 
 <section>
-<h2>CREATE - Создание записи</h2>
+<h2>➕ CREATE - Создание записи</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="c"># Создание одного объекта</span>
 user = <span class="n">User</span>(name=<span class="s">'Иван Иванов'</span>, email=<span class="s">'ivan@example.com'</span>)
@@ -196,7 +196,7 @@ session.commit()</code></pre></div>
 </section>
 
 <section>
-<h2>READ - Чтение записей</h2>
+<h2>👀 READ - Чтение записей (подглядываем в БД)</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="c"># Получить все записи</span>
 users = session.query(<span class="n">User</span>).all()
@@ -222,7 +222,7 @@ users = session.query(<span class="n">User</span>).filter(
 </section>
 
 <section>
-<h2>UPDATE - Обновление записей</h2>
+<h2>✏️ UPDATE - Обновление записей (исправляем косяки)</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="c"># Обновление одного объекта</span>
 user = session.query(<span class="n">User</span>).filter(<span class="n">User</span>.id == 1).first()
@@ -241,7 +241,7 @@ session.commit()</code></pre></div>
 </section>
 
 <section>
-<h2>DELETE - Удаление записей</h2>
+<h2>🗑️ DELETE - Удаление записей (прощай, данные!)</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="c"># Удаление одного объекта</span>
 user = session.query(<span class="n">User</span>).filter(<span class="n">User</span>.id == 1).first()
@@ -257,7 +257,7 @@ session.commit()</code></pre></div>
 </section>
 
 <section>
-<h2>Дополнительные операции READ</h2>
+<h2>🔍 Дополнительные операции READ</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="c"># Сортировка</span>
 users = session.query(<span class="n">User</span>).order_by(<span class="n">User</span>.name).all()
@@ -280,7 +280,7 @@ exists = session.query(<span class="n">User</span>).filter(<span class="n">User<
 </section>
 
 <section>
-<h2>Отношение один-ко-многим</h2>
+<h2>👨‍👧‍👦 Отношение один-ко-многим (один родитель - много детей)</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="k">from</span> sqlalchemy <span class="k">import</span> <span class="n">ForeignKey</span>
 <span class="k">from</span> sqlalchemy.orm <span class="k">import</span> relationship
@@ -307,7 +307,7 @@ exists = session.query(<span class="n">User</span>).filter(<span class="n">User<
 </section>
 
 <section>
-<h2>CRUD для один-ко-многим</h2>
+<h2>✏️ CRUD для один-ко-многим</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="c"># Создание с отношением</span>
 user = <span class="n">User</span>(name=<span class="s">'Иван'</span>)
@@ -330,7 +330,7 @@ author = post.author</code></pre></div>
 </section>
 
 <section>
-<h2>Отношение многие-ко-многим</h2>
+<h2>👥 Отношение многие-ко-многим (все со всеми дружат)</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="k">from</span> sqlalchemy <span class="k">import</span> <span class="n">Table</span>
 
@@ -355,7 +355,7 @@ student_course = <span class="n">Table</span>(<span class="s">'student_course'</
 </section>
 
 <section>
-<h2>CRUD для многие-ко-многим</h2>
+<h2>✏️ CRUD для многие-ко-многим</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="c"># Создание связи</span>
 student = <span class="n">Student</span>(name=<span class="s">'Алиса'</span>)
@@ -380,7 +380,7 @@ session.commit()</code></pre></div>
 </section>
 
 <section>
-<h2>Операция MERGE (UPSERT)</h2>
+<h2>🔀 Операция MERGE (UPSERT) - обновить или создать</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="k">from</span> sqlalchemy.dialects.postgresql <span class="k">import</span> insert
 
@@ -404,8 +404,8 @@ session.commit()</code></pre></div>
 </section>
 
 <section>
-<h2>Что такое MERGE?</h2>
-<div class="fragment"><p><span class="k">MERGE</span> (также известный как UPSERT) позволяет объединять данные - вставлять новые записи или обновлять существующие в одной операции.</p></div>
+<h2>🤔 Что такое MERGE?</h2>
+<div class="fragment"><p><span class="k">MERGE</span> (также известный как UPSERT) позволяет объединять данные - вставлять новые записи или обновлять существующие в одной операции. 🎯<br><br>Проще говоря: "Если есть - обнови, если нет - создай" (универсальный солдат БД! 💪)</p></div>
 <div class="fragment"><h3>Синтаксис:</h3>
 <pre><code><span class="k">MERGE INTO</span> target_table 
 <span class="k">USING</span> source_table 
@@ -427,7 +427,7 @@ session.commit()</code></pre></div>
 </section>
 
 <section>
-<h2>Операции UNION, INTERSECT, EXCEPT</h2>
+<h2>🔗 Операции UNION, INTERSECT, EXCEPT (теория множеств в деле!)</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="k">from</span> sqlalchemy <span class="k">import</span> union, intersect, except_
 
@@ -467,7 +467,7 @@ result = union(query1, query2).union_all().all()</code></pre></div>
 </section>
 
 <section>
-<h2>Виды JOIN</h2>
+<h2>🤝 Виды JOIN (как подружить таблицы)</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="k">from</span> sqlalchemy.orm <span class="k">import</span> joinedload
 
@@ -507,7 +507,7 @@ result = session.query(<span class="n">User</span>).join(<span class="n">Post</s
 </section>
 
 <section>
-<h2>Работа с JSON полями</h2>
+<h2>📦 Работа с JSON полями (NoSQL в SQL - парадокс!)</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="k">from</span> sqlalchemy.dialects.postgresql <span class="k">import</span> <span class="n">JSON</span>, <span class="n">JSONB</span>
 
@@ -534,7 +534,7 @@ session.commit()</code></pre></div>
 </section>
 
 <section>
-<h2>Продвинутые JSON операции</h2>
+<h2>🎓 Продвинутые JSON операции</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="c"># Проверка существования ключа</span>
 products = session.query(<span class="n">Product</span>).filter(
@@ -557,7 +557,7 @@ products = session.query(<span class="n">Product</span>).filter(
 </section>
 
 <section>
-<h2>Агрегатные функции</h2>
+<h2>📊 Агрегатные функции (считаем всё подряд)</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="k">from</span> sqlalchemy <span class="k">import</span> func
 
@@ -583,7 +583,7 @@ result = session.query(<span class="n">User</span>.name, func.count(<span class=
 </section>
 
 <section>
-<h2>Подзапросы и CTE</h2>
+<h2>🎭 Подзапросы и CTE (запросы внутри запросов - inception!)</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="k">from</span> sqlalchemy <span class="k">import</span> select
 
@@ -606,7 +606,7 @@ cte = cte.union_all(
 </section>
 
 <section>
-<h2>Транзакции и блокировки</h2>
+<h2>🔒 Транзакции и блокировки (не трогай, это моё!)</h2>
 <div class="fragment"><h3>SQLAlchemy:</h3>
 <pre><code><span class="c"># Явная транзакция</span>
 <span class="k">with</span> session.begin():
@@ -633,29 +633,30 @@ user = session.query(<span class="n">User</span>).filter(<span class="n">User</s
 </section>
 
 <section>
-<h2>Best Practices и заключение</h2>
-<div class="fragment"><h3>Рекомендации:</h3>
+<h2>🎯 Best Practices и заключение</h2>
+<div class="fragment"><h3>💡 Рекомендации (слушайте дядю!):</h3>
 <ul style="font-size:1.2em">
-<li><strong>Connection pooling</strong> - повторное использование подключений к БД вместо создания новых</li>
-<li><strong>Eager loading</strong> - загрузка связанных данных одним запросом (избегаем N+1 проблему)</li>
-<li><strong>Индексы</strong> - ускоряют поиск по полям в WHERE, JOIN, ORDER BY</li>
-<li><strong>Batch операции</strong> - вставка/обновление множества записей за один запрос</li>
-<li><strong>Async</strong> - неблокирующая работа с БД для высокой производительности</li>
-<li><strong>Миграции (Alembic)</strong> - версионирование изменений структуры БД</li>
+<li><strong>🏊 Connection pooling</strong> - повторное использование подключений к БД вместо создания новых (экономим ресурсы!)</li>
+<li><strong>⚡ Eager loading</strong> - загрузка связанных данных одним запросом (избегаем N+1 проблему - враг №1!)</li>
+<li><strong>🚀 Индексы</strong> - ускоряют поиск по полям в WHERE, JOIN, ORDER BY (турбо-кнопка для БД!)</li>
+<li><strong>📦 Batch операции</strong> - вставка/обновление множества записей за один запрос (оптом дешевле!)</li>
+<li><strong>⚡ Async</strong> - неблокирующая работа с БД для высокой производительности (летаем быстрее!)</li>
+<li><strong>🔄 Миграции (Alembic)</strong> - версионирование изменений структуры БД (Git для базы данных!)</li>
 </ul></div>
-<div class="fragment"><h3>Типичные ошибки:</h3>
+<div class="fragment"><h3>⚠️ Типичные ошибки (не повторяйте!):</h3>
 <ul style="font-size:1.2em">
-<li><strong>Забывать commit()</strong> - изменения не сохранятся в БД</li>
-<li><strong>N+1 проблема</strong> - 1 запрос для списка + N запросов для связанных данных</li>
-<li><strong>Не закрывать сессии</strong> - утечка памяти и исчерпание пула подключений</li>
-<li><strong>Sync в async</strong> - блокировка event loop, падение производительности</li>
+<li><strong>😱 Забывать commit()</strong> - изменения не сохранятся в БД (классика жанра!)</li>
+<li><strong>💥 N+1 проблема</strong> - 1 запрос для списка + N запросов для связанных данных (БД плачет кровавыми слезами)</li>
+<li><strong>💧 Не закрывать сессии</strong> - утечка памяти и исчерпание пула подключений (медленная смерть приложения)</li>
+<li><strong>🐌 Sync в async</strong> - блокировка event loop, падение производительности (зачем тогда async?!)</li>
 </ul></div>
-<div class="fragment"><h3>Полезные ресурсы:</h3>
+<div class="fragment"><h3>📚 Полезные ресурсы (читать обязательно!):</h3>
 <ul style="font-size:1.2em">
-<li>Документация: <a href="https://docs.sqlalchemy.org" style="color:#4A90E2">docs.sqlalchemy.org</a></li>
-<li>Alembic: <a href="https://alembic.sqlalchemy.org" style="color:#4A90E2">alembic.sqlalchemy.org</a></li>
-<li>PostgreSQL: <a href="https://www.postgresql.org/docs/" style="color:#4A90E2">postgresql.org/docs</a></li>
+<li>📖 Документация: <a href="https://docs.sqlalchemy.org" style="color:#4A90E2">docs.sqlalchemy.org</a></li>
+<li>🔄 Alembic: <a href="https://alembic.sqlalchemy.org" style="color:#4A90E2">alembic.sqlalchemy.org</a></li>
+<li>🐘 PostgreSQL: <a href="https://www.postgresql.org/docs/" style="color:#4A90E2">postgresql.org/docs</a></li>
 </ul></div>
+<div class="fragment"><p style="font-size:2em;text-align:center;margin-top:40px">🎉 Спасибо за внимание! 🚀<br><span style="font-size:0.6em">Теперь идите и пишите красивый код! 💻✨</span></p></div>
 </section>
 
 </div>
