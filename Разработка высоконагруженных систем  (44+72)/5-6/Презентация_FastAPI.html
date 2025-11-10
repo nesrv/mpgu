@@ -37,6 +37,12 @@
             max-height: 650px;
             overflow-y: auto;
         }
+        .slide-45 pre code,
+        .slide-46 pre code,
+        .slide-46a pre code,
+        .slide-47 pre code {
+            font-size: 1.05em !important;
+        }
         pre {
             max-height: 650px;
             overflow-y: auto;
@@ -1106,6 +1112,145 @@ class Response[T](BaseModel):
                 </div>
             </section>
 
+            <!-- Слайд 45: Pydantic v2 -->
+            <section class="slide-45">
+                <h2>🚀 Pydantic v2 - Новое поколение</h2>
+                <div style="text-align: left; font-size: 1.09em; margin-top: 30px;">
+                    <p class="fragment">Pydantic v2 (выпущен в 2023) - полная переработка с ядром на Rust (pydantic-core)</p>
+                    
+                    <div class="fragment" style="margin: 20px 0; padding: 20px; background: rgba(231,76,60,0.2); border-left: 4px solid #e74c3c; border-radius: 5px;">
+                        <h4 style="color: #e74c3c; margin-top: 0;">💥 Ключевые улучшения:</h4>
+                        <ul>
+                            <li><strong>До 17x быстрее</strong> валидация данных</li>
+                            <li><strong>До 5x быстрее</strong> сериализация JSON</li>
+                            <li>Лучшая поддержка типов Python</li>
+                            <li>Улучшенные сообщения об ошибках</li>
+                            <li>Новые валидаторы и сериализаторы</li>
+                        </ul>
+                    </div>
+                    
+                    <pre class="fragment" style="font-size: 0.7em;"><code class="python">from pydantic import BaseModel, Field, field_validator
+
+class User(BaseModel):
+    name: str = Field(min_length=1, max_length=50)
+    age: int = Field(ge=0, le=120)
+    email: str
+    
+    @field_validator('email')
+    def validate_email(cls, v):
+        if '@' not in v:
+            raise ValueError('Некорректный email')
+        return v</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 46: Pydantic v2 - Computed Fields -->
+            <section data-background-color="#16213e" class="slide-46">
+                <h2 style="color: #FFD700;">📊 Computed Fields (Вычисляемые поля)</h2>
+                <div style="text-align: left; font-size: 0.95em; margin-top: 20px;">
+                    <div class="fragment" style="padding: 15px; background: rgba(52,152,219,0.2); border-left: 4px solid #3498db; border-radius: 5px; margin-bottom: 15px;">
+                        <p><strong>Что это?</strong> Поля, которые вычисляются динамически на основе других полей и автоматически включаются в сериализацию (JSON, dict).</p>
+                    </div>
+                    
+                    <pre class="fragment" style="font-size: 0.65em;"><code class="python">from pydantic import BaseModel, computed_field
+
+class User(BaseModel):
+    first_name: str
+    last_name: str
+    
+    @computed_field  # Декоратор для вычисляемого поля
+    @property        # Делаем его свойством класса
+    def full_name(self) -> str:
+        return f"{self.first_name} {self.last_name}"
+
+user = User(first_name="Иван", last_name="Иванов")
+print(user.full_name)  # Иван Иванов
+print(user.model_dump())  
+# {'first_name': 'Иван', 'last_name': 'Иванов', 'full_name': 'Иван Иванов'}</code></pre>
+                    
+                    <div class="fragment" style="margin-top: 12px;">
+                        <h4 style="color: #2ecc71; font-size: 0.95em;">💡 Преимущества:</h4>
+                        <ul style="font-size: 0.75em; line-height: 1.4;">
+                            <li>Автоматически включается в JSON/dict</li>
+                            <li>Кэшируется при первом обращении</li>
+                            <li>Типобезопасность и автодополнение в IDE</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 12px; padding: 10px; background: rgba(243,156,18,0.2); border-left: 4px solid #f39c12; border-radius: 5px;">
+                        <p style="margin: 0; font-size: 0.8em;"><strong>📌 Применение:</strong> полное имя, возраст из даты рождения, форматированные строки</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 46a: Pydantic v2 - Strict Mode -->
+            <section class="slide-46a">
+                <h2>🔒 Strict Mode (Строгий режим)</h2>
+                <div style="text-align: left; font-size: 0.95em; margin-top: 20px;">
+                    <div class="fragment" style="padding: 15px; background: rgba(231,76,60,0.2); border-left: 4px solid #e74c3c; border-radius: 5px; margin-bottom: 15px;">
+                        <p><strong>Что это?</strong> Режим, который отключает автоматическое преобразование типов. Принимаются только точные типы данных.</p>
+                    </div>
+                    
+                    <pre class="fragment" style="font-size: 0.65em;"><code class="python">from pydantic import BaseModel, Field, ValidationError
+
+class StrictUser(BaseModel):
+    age: int = Field(strict=True)        # Только int, не "25"
+    is_active: bool = Field(strict=True) # Только True/False, не 1/0
+
+# ✅ ОК: точные типы
+user = StrictUser(age=25, is_active=True)
+
+# ❌ Ошибка: строка "25" вместо числа 25
+try:
+    user = StrictUser(age="25", is_active=True)
+except ValidationError as e:
+    print("Ошибка валидации!")  # Pydantic выбросит исключение</code></pre>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h4 style="color: #e74c3c;">⚠️ Обычный режим vs Строгий режим:</h4>
+                        <table style="font-size: 0.8em; width: 100%; border-collapse: separate; border-spacing: 0 5px;">
+                            <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 8px;"><strong>Обычный:</strong></td><td style="padding: 8px;"><code>age: int</code> примет "25" и преобразует в 25</td></tr>
+                            <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 8px;"><strong>Строгий:</strong></td><td style="padding: 8px;"><code>age: int = Field(strict=True)</code> выбросит ошибку для "25"</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px; padding: 12px; background: rgba(46,204,113,0.2); border-left: 4px solid #2ecc71; border-radius: 5px;">
+                        <p style="margin: 0;"><strong>✅ Когда использовать:</strong> API с внешними клиентами, финансовые данные, критичные системы, где важна точность типов</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 47: Pydantic v2 - Миграция -->
+            <section class="slide-47">
+                <h2>🔄 Миграция на Pydantic v2</h2>
+                <div style="text-align: left; font-size: 1.09em; margin-top: 30px;">
+                    <div class="fragment" style="padding: 20px; background: rgba(52,152,219,0.2); border-left: 4px solid #3498db; border-radius: 5px;">
+                        <h4 style="color: #3498db; margin-top: 0;">Основные изменения:</h4>
+                        <ul>
+                            <li><code>@validator</code> → <code>@field_validator</code></li>
+                            <li><code>@root_validator</code> → <code>@model_validator</code></li>
+                            <li><code>Config</code> → <code>model_config</code></li>
+                            <li><code>.dict()</code> → <code>.model_dump()</code></li>
+                            <li><code>.json()</code> → <code>.model_dump_json()</code></li>
+                        </ul>
+                    </div>
+                    
+                    <pre class="fragment" style="margin-top: 20px; font-size: 0.7em;"><code class="python"># Pydantic v2
+from pydantic import BaseModel, ConfigDict
+
+class User(BaseModel):
+    model_config = ConfigDict(strict=True)
+    
+    name: str
+    age: int
+
+# Использование
+user = User(name="Иван", age=25)
+data = user.model_dump()  # Вместо .dict()
+json_str = user.model_dump_json()  # Вместо .json()</code></pre>
+                </div>
+            </section>
+
         </div>
     </div>
 
@@ -1185,7 +1330,7 @@ class Response[T](BaseModel):
         // Создаем кнопки навигации
         function createNavigationButtons() {
             const navGrid = document.getElementById('navGrid');
-            for (let i = 1; i <= 44; i++) {
+            for (let i = 1; i <= 48; i++) {
                 const button = document.createElement('div');
                 button.className = 'nav-button';
                 button.textContent = i;
