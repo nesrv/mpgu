@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐳 Docker: Контейнеризация для разработчиков</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#1a1a1a;overflow:hidden}
+.reveal{width:100%;height:100vh;position:relative}
+.slides{width:100%;height:100%;position:relative}
+section{display:none;position:absolute;width:100%;height:100%;padding:40px;color:#fff;overflow-y:auto}
+section.present{display:flex;flex-direction:column;justify-content:center;align-items:center;animation:fadeIn .5s}
+section>*{max-width:1200px;width:100%}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+h1{font-size:3.5em;margin-bottom:40px;color:#2496ED;text-align:center}
+h2{font-size:2.8em;margin:0 0 30px;color:#2496ED;text-align:center}
+h3{font-size:2em;margin:25px 0 15px;color:#64B5F6}
+.fragment{opacity:0;transition:opacity .5s}
+.fragment.visible{opacity:1}
+p,li{font-size:1.4em;line-height:1.8;margin:10px 0}
+ul{margin-left:30px}
+pre{background:#2d2d2d;padding:20px;border-radius:8px;overflow-x:auto;margin:15px 0;border-left:4px solid #2496ED;font-size:1.1em}
+code{font-family:'Courier New',monospace;color:#f8f8f2}
+.navigation{position:fixed;bottom:20px;left:20px;display:flex;gap:8px;z-index:100;overflow-x:auto;max-width:calc(100vw - 40px)}
+.nav-dot{width:32px;height:32px;background:rgba(36,150,237,.3);border:2px solid #2496ED;border-radius:5px;color:#fff;font-size:12px;cursor:pointer;transition:.3s;display:flex;align-items:center;justify-content:center;font-weight:bold}
+.nav-dot:hover{background:rgba(36,150,237,.6);transform:scale(1.1)}
+.nav-dot.active{background:#2496ED;box-shadow:0 0 10px #2496ED}
+.highlight{color:#ffd700}
+.check{color:#4caf50}
+.cross{color:#f44336}
+table{width:100%;border-collapse:collapse;margin:20px 0}
+th,td{border:1px solid #444;padding:12px;text-align:left;font-size:1.2em}
+th{background:#2496ED;color:#fff}
+.emoji{font-size:1.5em}
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<section class="present">
+<h1>🐳 Docker: Контейнеризация для разработчиков</h1>
+<p style="font-size:1.5em;margin-top:30px">Управление разработкой ПО</p>
+<p style="font-size:1.2em;margin-top:20px;color:#64B5F6">30 минут | 5 частей</p>
+</section>
+
+<section>
+<h2>📋 План лекции</h2>
+<div class="fragment">
+<ul style="font-size:1.6em;line-height:2">
+<li>🎯 <strong>Проблема и мотивация</strong> (5 мин)</li>
+<li>🔄 <strong>От VM к контейнерам</strong> (5 мин)</li>
+<li>🧩 <strong>Основные концепции Docker</strong> (7 мин)</li>
+<li>💻 <strong>Базовые команды</strong> (8 мин)</li>
+<li>🚀 <strong>Практический пример</strong> (5 мин)</li>
+</ul>
+</div>
+</section>
+
+<section>
+<h2>🎯 Проблема "У меня работает!"</h2>
+<div class="fragment"><h3>Ситуация 1: Разные окружения</h3>
+<pre>Разработчик: "У меня на ноутбуке работает!"
+DevOps: "А на сервере падает..."</pre>
+<p><strong>Причины:</strong></p>
+<ul>
+<li>Разные версии Python (3.8 vs 3.11)</li>
+<li>Разные библиотеки (requests 2.25 vs 2.31)</li>
+<li>Разные ОС (Windows vs Linux)</li>
+</ul></div>
+<div class="fragment"><h3>Ситуация 2: Конфликт зависимостей</h3>
+<pre>Проект A: требует Django 3.2
+Проект B: требует Django 4.2
+Один сервер: 😱</pre></div>
+</section>
+
+<section>
+<h2>✅ Что нужно?</h2>
+<div class="fragment">
+<ul style="font-size:1.6em;line-height:2.2">
+<li><span class="check">✅</span> <strong>Изоляция</strong> - каждое приложение в своём окружении</li>
+<li><span class="check">✅</span> <strong>Воспроизводимость</strong> - одинаково работает везде</li>
+<li><span class="check">✅</span> <strong>Портативность</strong> - легко переносить между машинами</li>
+<li><span class="check">✅</span> <strong>Эффективность</strong> - минимум накладных расходов</li>
+</ul>
+</div>
+<div class="fragment">
+<h1 style="margin-top:50px;color:#ffd700">Решение: Docker! 🐳</h1>
+</div>
+</section>
+
+<section>
+<h2>🔄 Эволюция изоляции</h2>
+<div class="fragment"><h3>1️⃣ Физические серверы (2000-е)</h3>
+<pre>Приложение A → Сервер 1 (простаивает 80% времени)
+Приложение B → Сервер 2 (простаивает 70% времени)
+Приложение C → Сервер 3 (простаивает 90% времени)</pre>
+<p><span class="cross">❌</span> Дорого | <span class="cross">❌</span> Неэффективно | <span class="cross">❌</span> Сложно масштабировать</p></div>
+<div class="fragment"><h3>2️⃣ Виртуальные машины (2010-е)</h3>
+<pre>Физический сервер
+├── VM 1: Ubuntu + App A (2 GB RAM, 20 GB диск)
+├── VM 2: CentOS + App B (2 GB RAM, 20 GB диск)
+└── VM 3: Debian + App C (2 GB RAM, 20 GB диск)</pre>
+<p><span class="check">✅</span> Изоляция | <span class="cross">❌</span> Тяжело | <span class="cross">❌</span> Долгий запуск</p>
+<p style="font-size:1.2em;color:#ffd700">Аналогия: Каждую коробку везём в отдельном грузовике 🚚🚚🚚</p></div>
+</section>
+
+<section>
+<h2>🐳 Контейнеры (сейчас)</h2>
+<div class="fragment">
+<pre>Хостовая ОС (Linux)
+├── Container 1: App A (50 MB, 100 MB RAM)
+├── Container 2: App B (80 MB, 150 MB RAM)
+└── Container 3: App C (60 MB, 120 MB RAM)</pre>
+</div>
+<div class="fragment">
+<h3>Преимущества:</h3>
+<ul style="font-size:1.5em">
+<li><span class="check">✅</span> Легковесные (мегабайты вместо гигабайт)</li>
+<li><span class="check">✅</span> Быстрый запуск (секунды)</li>
+<li><span class="check">✅</span> Общее ядро ОС (эффективность)</li>
+<li><span class="check">✅</span> Изоляция процессов</li>
+</ul>
+<p style="font-size:1.3em;color:#ffd700;margin-top:20px">Аналогия: Все коробки на одном корабле 🚢📦📦📦</p>
+</div>
+</section>
+
+<section>
+<h2>🧩 Основные концепции Docker</h2>
+<div class="fragment"><h3>1. Docker Image (Образ) 📦</h3>
+<p><strong>Что это?</strong> Шаблон, "снимок" приложения со всеми зависимостями.</p>
+<p><strong>Аналогия:</strong> Образ = ISO-файл ОС или класс в ООП</p>
+<pre>python:3.11-slim (базовый образ)
+├── Python 3.11
+├── pip
+└── минимальная Linux</pre></div>
+<div class="fragment"><h3>2. Docker Container (Контейнер) 🏃</h3>
+<p><strong>Что это?</strong> Запущенный экземпляр образа.</p>
+<p><strong>Аналогия:</strong> Контейнер = запущенная программа или объект класса</p>
+<pre>Image (класс)      Container (объект)
+python:3.11   →    running_app_1
+              →    running_app_2</pre></div>
+</section>
+
+<section>
+<h2>📝 Dockerfile</h2>
+<div class="fragment">
+<p style="font-size:1.4em"><strong>Что это?</strong> Рецепт для создания образа 👨‍🍳</p>
+<pre># Базовый образ
+FROM python:3.11-slim
+
+# Рабочая директория
+WORKDIR /app
+
+# Копируем зависимости
+COPY requirements.txt .
+
+# Устанавливаем зависимости
+RUN pip install -r requirements.txt
+
+# Копируем код
+COPY . .
+
+# Команда запуска
+CMD ["python", "app.py"]</pre>
+</div>
+</section>
+
+<section>
+<h2>🏪 Docker Registry</h2>
+<div class="fragment">
+<p style="font-size:1.5em"><strong>Что это?</strong> Хранилище образов (как GitHub для кода)</p>
+<h3>Docker Hub - публичный реестр:</h3>
+<ul style="font-size:1.5em">
+<li><code>python:3.11</code> - официальный образ Python</li>
+<li><code>nginx:latest</code> - веб-сервер Nginx</li>
+<li><code>postgres:15</code> - база данных PostgreSQL</li>
+</ul>
+</div>
+</section>
+
+<section>
+<h2>💻 Базовые команды: Образы</h2>
+<div class="fragment">
+<pre># Скачать образ
+docker pull python:3.11
+
+# Список локальных образов
+docker images
+
+# Удалить образ
+docker rmi python:3.11
+
+# Собрать свой образ
+docker build -t myapp:1.0 .</pre>
+</div>
+</section>
+
+<section>
+<h2>💻 Базовые команды: Контейнеры</h2>
+<div class="fragment">
+<pre># Запустить контейнер
+docker run python:3.11 python --version
+
+# Запустить в фоне с именем
+docker run -d --name myapp python:3.11 python app.py
+
+# Список запущенных контейнеров
+docker ps
+
+# Остановить контейнер
+docker stop myapp
+
+# Удалить контейнер
+docker rm myapp
+
+# Посмотреть логи
+docker logs myapp
+
+# Зайти внутрь контейнера
+docker exec -it myapp bash</pre>
+</div>
+</section>
+
+<section>
+<h2>💻 Полезные флаги</h2>
+<div class="fragment">
+<pre># Пробросить порты (хост:контейнер)
+docker run -p 8080:80 nginx
+
+# Примонтировать директорию
+docker run -v /host/path:/container/path myapp
+
+# Переменные окружения
+docker run -e DATABASE_URL=postgres://... myapp
+
+# Автоудаление после остановки
+docker run --rm myapp
+
+# Интерактивный режим
+docker run -it python:3.11 bash</pre>
+</div>
+</section>
+
+<section>
+<h2>🚀 Практический пример: FastAPI</h2>
+<div class="fragment"><h3>1. Создаём приложение</h3>
+<p><code>app.py</code>:</p>
+<pre>from fastapi import FastAPI
+import uvicorn
+
+app = FastAPI()
+
+@app.get("/")
+def hello():
+    return {"message": "Hello from Docker! 🐳"}
+
+if __name__ == '__main__':
+    uvicorn.run(app, host='0.0.0.0', port=8000)</pre>
+<p><code>requirements.txt</code>:</p>
+<pre>fastapi==0.109.0
+uvicorn==0.27.0</pre></div>
+</section>
+
+<section>
+<h2>🚀 Практический пример: Dockerfile</h2>
+<div class="fragment"><h3>2. Создаём Dockerfile</h3>
+<pre>FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app.py .
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]</pre></div>
+</section>
+
+<section>
+<h2>🚀 Практический пример: Запуск</h2>
+<div class="fragment"><h3>3. Собираем образ</h3>
+<pre>docker build -t fastapi-app:1.0 .</pre></div>
+<div class="fragment"><h3>4. Запускаем контейнер</h3>
+<pre>docker run -d -p 8000:8000 --name my-fastapi-app fastapi-app:1.0</pre></div>
+<div class="fragment"><h3>5. Проверяем</h3>
+<pre>curl http://localhost:8000
+# {"message":"Hello from Docker! 🐳"}
+
+# Автоматическая документация
+curl http://localhost:8000/docs</pre></div>
+</section>
+
+<section>
+<h2>🎓 Резюме: Основные концепции</h2>
+<div class="fragment">
+<table>
+<tr><th>Концепция</th><th>Описание</th><th>Аналогия</th></tr>
+<tr><td><strong>Image</strong></td><td>Шаблон приложения</td><td>Класс в ООП</td></tr>
+<tr><td><strong>Container</strong></td><td>Запущенный образ</td><td>Объект класса</td></tr>
+<tr><td><strong>Dockerfile</strong></td><td>Рецепт образа</td><td>Кулинарный рецепт</td></tr>
+<tr><td><strong>Registry</strong></td><td>Хранилище образов</td><td>GitHub для образов</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<h2>✅ Преимущества Docker</h2>
+<div class="fragment">
+<ul style="font-size:1.5em;line-height:2">
+<li><span class="check">✅</span> <strong>Изоляция</strong> - каждое приложение в своём окружении</li>
+<li><span class="check">✅</span> <strong>Портативность</strong> - "собрал один раз, запускай везде"</li>
+<li><span class="check">✅</span> <strong>Воспроизводимость</strong> - одинаково работает везде</li>
+<li><span class="check">✅</span> <strong>Эффективность</strong> - легковесные, быстрый запуск</li>
+<li><span class="check">✅</span> <strong>Масштабируемость</strong> - легко запустить 100 копий</li>
+<li><span class="check">✅</span> <strong>Версионирование</strong> - образы с тегами (v1.0, v2.0)</li>
+</ul>
+</div>
+</section>
+
+<section>
+<h2>🚀 Продвинутые возможности</h2>
+<div class="fragment"><h3>1️⃣ Docker Compose</h3>
+<p>Управление несколькими контейнерами одной командой</p>
+<pre>docker-compose up -d</pre></div>
+<div class="fragment"><h3>2️⃣ Docker Volumes</h3>
+<p>Постоянное хранение данных вне контейнера</p>
+<pre>docker run -v postgres_data:/var/lib/postgresql/data postgres:15</pre></div>
+<div class="fragment"><h3>3️⃣ Docker Networks</h3>
+<p>Сетевое взаимодействие между контейнерами</p>
+<pre>docker network create myapp-network</pre></div>
+</section>
+
+<section>
+<h2>🚀 Продвинутые возможности (2)</h2>
+<div class="fragment"><h3>4️⃣ Multi-stage builds</h3>
+<p>Оптимизация размера образов (1 GB → 200 MB)</p>
+<pre>FROM python:3.11 AS builder
+# ... сборка ...
+FROM python:3.11-slim
+COPY --from=builder /app /app</pre></div>
+<div class="fragment"><h3>5️⃣ Оркестрация</h3>
+<p><strong>Docker Swarm:</strong> простой, для малых проектов</p>
+<p><strong>Kubernetes:</strong> мощный, для enterprise</p></div>
+</section>
+
+<section>
+<h2>📊 Когда что использовать?</h2>
+<div class="fragment">
+<table>
+<tr><th>Проект</th><th>Решение</th></tr>
+<tr><td>1-5 контейнеров</td><td>Docker Compose</td></tr>
+<tr><td>5-50 контейнеров, 1-3 сервера</td><td>Docker Swarm</td></tr>
+<tr><td>50+ контейнеров, много серверов</td><td>Kubernetes</td></tr>
+<tr><td>Enterprise, микросервисы</td><td>Kubernetes</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<h2>❓ Частые вопросы</h2>
+<div class="fragment">
+<p style="font-size:1.3em"><strong>Q: Docker работает только на Linux?</strong></p>
+<p>A: Нет! Docker Desktop работает на Windows и macOS.</p>
+</div>
+<div class="fragment">
+<p style="font-size:1.3em"><strong>Q: Контейнер = виртуальная машина?</strong></p>
+<p>A: Нет! Контейнер легковеснее, использует ядро хостовой ОС.</p>
+</div>
+<div class="fragment">
+<p style="font-size:1.3em"><strong>Q: Данные в контейнере сохраняются?</strong></p>
+<p>A: Нет, если не использовать volumes. Контейнеры эфемерные.</p>
+</div>
+<div class="fragment">
+<p style="font-size:1.3em"><strong>Q: Docker бесплатный?</strong></p>
+<p>A: Да, Docker Engine бесплатный.</p>
+</div>
+</section>
+
+<section>
+<h2>📚 Полезные ресурсы</h2>
+<div class="fragment">
+<ul style="font-size:1.5em;line-height:2.2">
+<li>📖 Docker: <a href="https://docs.docker.com" style="color:#2496ED">docs.docker.com</a></li>
+<li>🐙 Docker Compose: <a href="https://docs.docker.com/compose" style="color:#2496ED">docs.docker.com/compose</a></li>
+<li>☸️ Kubernetes: <a href="https://kubernetes.io/docs" style="color:#2496ED">kubernetes.io/docs</a></li>
+<li>🎓 Docker Hub: <a href="https://hub.docker.com" style="color:#2496ED">hub.docker.com</a></li>
+<li>💡 Play with Docker: <a href="https://labs.play-with-docker.com" style="color:#2496ED">labs.play-with-docker.com</a></li>
+</ul>
+</div>
+</section>
+
+<section>
+<h2>🎯 Практическое задание</h2>
+<div class="fragment">
+<p style="font-size:1.4em"><strong>Задача:</strong> Создайте Docker-образ для вашего проекта</p>
+<ol style="font-size:1.4em;line-height:2">
+<li>Напишите Dockerfile</li>
+<li>Соберите образ</li>
+<li>Запустите контейнер</li>
+<li>Проверьте работу</li>
+<li>Опубликуйте образ на Docker Hub (опционально)</li>
+</ol>
+</div>
+<div class="fragment">
+<h3>Критерии успеха:</h3>
+<ul style="font-size:1.3em">
+<li><span class="check">✅</span> Образ собирается без ошибок</li>
+<li><span class="check">✅</span> Контейнер запускается</li>
+<li><span class="check">✅</span> Приложение работает корректно</li>
+<li><span class="check">✅</span> Размер образа оптимизирован</li>
+</ul>
+</div>
+</section>
+
+<section>
+<h1>🎉 Спасибо за внимание!</h1>
+<div class="fragment">
+<p style="font-size:1.8em;margin-top:50px;color:#ffd700">Docker - это не магия,<br>это просто умная изоляция процессов! 🐳</p>
+</div>
+<div class="fragment">
+<p style="font-size:1.6em;margin-top:40px;color:#64B5F6">Главное правило:<br>"Если работает в контейнере -<br>будет работать везде!" 🚀</p>
+</div>
+</section>
+
+</div>
+<div class="navigation"></div>
+</div>
+
+<script>
+const sections=document.querySelectorAll('section');
+const nav=document.querySelector('.navigation');
+let current=0,fragmentIndex=0;
+
+sections.forEach((_,i)=>{
+const btn=document.createElement('div');
+btn.className='nav-dot';
+btn.textContent=i+1;
+btn.onclick=()=>goTo(i);
+nav.appendChild(btn);
+});
+
+function goTo(n){
+if(n<0||n>=sections.length)return;
+sections[current].classList.remove('present');
+nav.children[current].classList.remove('active');
+current=n;
+fragmentIndex=0;
+sections[current].classList.add('present');
+nav.children[current].classList.add('active');
+showFragments();
+}
+
+function showFragments(){
+const fragments=sections[current].querySelectorAll('.fragment');
+fragments.forEach((f,i)=>f.classList.toggle('visible',i<fragmentIndex));
+}
+
+function nextFragment(){
+const fragments=sections[current].querySelectorAll('.fragment');
+if(fragmentIndex<fragments.length){fragmentIndex++;showFragments();return true}
+return false;
+}
+
+document.addEventListener('keydown',e=>{
+if(e.code==='Space'||e.code==='ArrowRight'){e.preventDefault();if(!nextFragment())goTo(current+1)}
+else if(e.code==='ArrowLeft'){e.preventDefault();if(fragmentIndex>0){fragmentIndex--;showFragments()}else goTo(current-1)}
+});
+
+goTo(0);
+</script>
+</body>
+</html>

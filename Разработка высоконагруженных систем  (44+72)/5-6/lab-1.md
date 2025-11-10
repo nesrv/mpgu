@@ -1,4 +1,4 @@
-# Лабораторная работа "Проектирование RESTful API"
+# Лабораторная работа "Изучение Pydantic для RESTful API"
 
 ## Описание
 
@@ -10,712 +10,489 @@
 
 ## Теория
 
-Проектирование RESTful включает в себя следующие основные компоненты:
+Pydantic:
 
-- **Ресурсы** - элементы данных, которыми управляет ваше приложение
-- **Идентификаторы** - уникальные идентификаторы ресурсов
-- **URL-адреса** - структурированные строки ресурсов и идентификаторов
-- **Глагольные операторы** или действия:
-  - **GET** - получение ресурса
-  - **POST** - создание нового ресурса
-  - **PUT** - полная замена ресурса
-  - **PATCH** - частичная замена ресурса
-  - **DELETE** - удаление ресурса
 
-### Шаблоны RESTful
+Пример 1. Простая модель
 
-Общие правила RESTful, касающиеся сочетания глаголов и URL-адресов:
+```py
+from pydantic import BaseModel
 
-- `verb/resource/` - применение глагольного оператора ко всем ресурсам типа resource
-- `verb/resource/id` - применение глагольного оператора к ресурсу с идентификатором id
+class User(BaseModel):
+    id: int
+    name: str
+    email: str
 
-### Параметры запросов
-
-Параметры для сортировки, пагинации и других функций могут передаваться:
-- Как параметры пути (после `/`)
-- Как параметры запроса (`var=val` после `?`)
-- В теле HTTP (для больших запросов)
-
----
-
-## Структура проекта
-
-### Макет каталогов
-
-Создайте каталог `fastapi` со следующей структурой:
+# Создание экземпляра
+user = User(id=1, name="John", email="john@example.com")
+print(user.model_dump())  # Конвертация в dict
 
 ```
-fastapi/
-├── src/
-│   ├── main.py
-│   ├── web/
-│   │   ├── __init__.py
-│   │   ├── student.py
-│   │   └── course.py
-│   ├── service/
-│   │   ├── __init__.py
-│   │   ├── student.py
-│   │   └── course.py
-│   ├── data/
-│   │   ├── __init__.py
-│   │   ├── student.py
-│   │   └── course.py
-│   ├── model/
-│   │   ├── __init__.py
-│   │   ├── student.py
-│   │   └── course.py
-│   └── fake/
-│       ├── __init__.py
-│       ├── student.py
-│       └── course.py
+
+Описание
+
+
+Пример 2. Простая модель
+
+```py
+from pydantic import BaseModel
+
+class User(BaseModel):
+    id: int
+    name: str
+    email: str
+    age: int | None = None
+
+# Создание экземпляра
+user = User(id=1, name="John", email="john@example.com")
+print(user.model_dump())  # Конвертация в dict
+
 ```
 
-### Настройка PYTHONPATH
 
-В Linux/macOS:
-```bash
-export PYTHONPATH=$PWD/src
+Описание
+
+
+Пример 3. 
+
+```py
+class User(BaseModel):
+    id: int
+    name: str
+    email: str
+    age: int | None = None
 ```
 
----
+Описание
 
-## Примеры кода
+Детальная настройка атрибутов и класс Field
 
-### Пример 1. Основная программа main.py
+Для более детальной настройки атрибутов модели применяется класс pydantic.Field. 
+Например, он позволяет задать значение по умолчанию и правила валдации значений с помощью следующих параметров конструктора:
 
-```python
-from fastapi import FastAPI
+* default: устанавливает значение по умолчанию
+* min_length: устанавливает минимальное количество символов в значении параметра
+* max_length: устанавливает максимальное количество символов в значении параметра
+* pattern: устанавливает регулярное выражение, которому должно соответствовать значение параметра
+* lt: значение параметра должно быть меньше определенного значения
+* le: значение параметра должно быть меньше или равно определенному значению
+* gt: значение параметра должно быть больше определенного значения
+* ge: значение параметра должно быть больше или равно определенному значению
 
-app = FastAPI()
 
-@app.get("/")
-def top():
-    return "Главная страница"
+Пример 4. Модель с валидацией
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", reload=True)
+```py
+from pydantic import BaseModel, Field, EmailStr
+
+class User(BaseModel):
+    id: int = Field(gt=0, description="ID должен быть положительным")
+    name: str = Field(min_length=2, max_length=50)
+    email: EmailStr
+    age: int = Field(ge=0, le=120, default=None)
+
+# Использование
+user = User(id=1, name="John", email="john@example.com")
 ```
 
-### Пример 2. Запуск основной программы
+Описание
 
-```bash
-$ python main.py &
-INFO: Will watch for changes in these directories: [.../fastapi']
-INFO: Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO: Started reloader process [92543] using StatReload
-INFO: Started server process [92551]
-INFO: Waiting for application startup.
-INFO: Application startup complete.
+
+Пример 5. 
+
+```py
+class Person(BaseModel):
+    name: str
+    languages: list = []
 ```
 
-### Пример 3. Тестирование основной программы
 
-```bash
-$ http localhost:8000
-HTTP/1.1 200 OK
-content-length: 8
-content-type: application/json
-date: Sun, 05 Feb 2023 03:54:29 GMT
-server: uvicorn
 
-"Главная страница"
-```
 
-### Пример 4. Добавление конечной точки в main.py
 
-```python
-from fastapi import FastAPI
+## 1. Базовое использование Pydantic
 
-app = FastAPI()
-
-@app.get("/")
-def top():
-    return "Главная страница"
-
-@app.get("/echo/{thing}")
-def echo(thing):
-    return f"Эхо: {thing}"
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", reload=True)
-```
-
-### Пример 5. Тестирование новой конечной точки
-
-```bash
-$ http -b localhost:8000/echo/argh
-"Эхо: argh"
-```
-
-### Пример 6. Заголовки HTTP-запросов и ответов
-
-```bash
-$ http -p HBh http://example.com/
-
-# ЗАПРОС (Request)
-GET / HTTP/1.1
-Accept: */*
-Accept-Encoding: gzip, deflate
-Connection: keep-alive
-Host: example.com
-User-Agent: HTTPie/3.2.1
-
-# ОТВЕТ (Response)
-HTTP/1.1 200 OK
-Age: 374045
-Cache-Control: max-age=604800
-Content-Type: text/html; charset=UTF-8
-Date: Sat, 04 Feb 2023 01:00:21 GMT
-Etag: "3147526947+gzip"
-Expires: Sat, 11 Feb 2023 01:00:21 GMT
-Last-Modified: Thu, 17 Oct 2019 07:18:26 GMT
-Server: ECS (cha/80E2)
-Vary: Accept-Encoding
-X-Cache: HIT
-```
-
-### Пример 7. Использование APIRouter в файле web/student.py
-
-```python
-from fastapi import APIRouter
-
-router = APIRouter(prefix="/student")
-
-@router.get("/")
-def top():
-    return "Корневой эндпоинт студентов"
-```
-
-### Пример 8. Подключение основного приложения к субмаршруту
-
-```python
-from fastapi import FastAPI
-from web import student
-
-app = FastAPI()
-
-app.include_router(student.router)
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", reload=True)
-```
-
-### Пример 9. Тестирование нового субмаршрута
-
-```bash
-$ http -b localhost:8000/student/
-"Корневой эндпоинт студентов"
-```
-
----
-
-## Определение моделей данных
-
-### Пример 10. Определение модели в файле model/student.py
-
+### Простая модель
 ```python
 from pydantic import BaseModel
 
-class Student(BaseModel):
+class User(BaseModel):
+    id: int
     name: str
-    group: str
-    specialty: str
-    year: int
+    email: str
+
+# Создание экземпляра
+user = User(id=1, name="John", email="john@example.com")
+print(user.model_dump())  # Конвертация в dict
 ```
 
-### Пример 11. Определение модели в файле model/course.py
-
+### Модель с валидацией
 ```python
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, EmailStr
 
-class Course(BaseModel):
-    name: str
-    credits: int
-    semester: int
-    description: str
-    instructor: str
+class User(BaseModel):
+    id: int = Field(gt=0, description="ID должен быть положительным")
+    name: str = Field(min_length=2, max_length=50)
+    email: EmailStr
+    age: int = Field(ge=0, le=120, default=None)
+
+# Использование
+user = User(id=1, name="John", email="john@example.com")
 ```
 
----
+## 2. FastAPI - Простой пример
 
-## Создание фиктивных данных
-
-### Пример 12. Новый модуль в файле fake/student.py
-
+### Базовое приложение
 ```python
-from model.student import Student
-
-# фиктивные данные
-_students = [
-    Student(
-        name="Иван Иванов",
-        group="ИСТ-401", 
-        specialty="Информационные системы",
-        year=4
-    ),
-    Student(
-        name="Мария Петрова",
-        group="ИСТ-402",
-        specialty="Информационные технологии",
-        year=4
-    ),
-]
-
-def get_all() -> list[Student]:
-    """Возврат всех студентов"""
-    return _students
-
-def get_one(name: str) -> Student | None:
-    """Получить одного студента по имени"""
-    for _student in _students:
-        if _student.name == name:
-            return _student
-    return None
-
-def create(student: Student) -> Student:
-    """Добавление студента"""
-    return student
-
-def modify(student: Student) -> Student:
-    """Частичное изменение записи студента"""
-    return student
-
-def replace(student: Student) -> Student:
-    """Полная замена записи студента"""
-    return student
-
-def delete(name: str) -> bool:
-    """Удаление записи студента"""
-    return None
-```
-
-### Пример 13. Новый модуль в файле fake/course.py
-
-```python
-from model.course import Course
-
-# фиктивные данные
-_courses = [
-    Course(
-        name="Разработка высоконагруженных систем",
-        credits=6,
-        semester=7, 
-        description="Проектирование и разработка масштабируемых систем",
-        instructor="Иванов И.И."
-    ),
-    Course(
-        name="Продвинутая веб-разработка",
-        credits=5,
-        semester=7,
-        description="Современные фреймворки и технологии веб-разработки",
-        instructor="Петров П.П."
-    ),
-]
-
-def get_all() -> list[Course]:
-    """Возврат всех курсов"""
-    return _courses
-
-def get_one(name: str) -> Course | None:
-    """Возврат одного курса"""
-    for _course in _courses:
-        if _course.name == name:
-            return _course
-    return None
-
-def create(course: Course) -> Course:
-    """Добавление курса"""
-    return course
-
-def modify(course: Course) -> Course:
-    """Частичное изменение записи курса"""
-    return course
-
-def replace(course: Course) -> Course:
-    """Полная замена записи курса"""
-    return course
-
-def delete(name: str) -> bool:
-    """Удаление записи курса"""
-    return None
-```
-
----
-
-## Создание веб-уровня
-
-### Пример 14. Новые конечные точки в файле web/student.py
-
-```python
-from fastapi import APIRouter
-from model.student import Student
-import fake.student as service
-
-router = APIRouter(prefix="/student")
-
-@router.get("/")
-def get_all() -> list[Student]:
-    return service.get_all()
-
-@router.get("/{name}")
-def get_one(name) -> Student | None:
-    return service.get_one(name)
-
-@router.post("/")
-def create(student: Student) -> Student:
-    return service.create(student)
-
-@router.patch("/")
-def modify(student: Student) -> Student:
-    return service.modify(student)
-
-@router.put("/")
-def replace(student: Student) -> Student:
-    return service.replace(student)
-
-@router.delete("/{name}")
-def delete(name: str):
-    return None
-```
-
-### Пример 15. Новые конечные точки в файле web/course.py
-
-```python
-from fastapi import APIRouter
-from model.course import Course
-import fake.course as service
-
-router = APIRouter(prefix="/course")
-
-@router.get("/")
-def get_all() -> list[Course]:
-    return service.get_all()
-
-@router.get("/{name}")
-def get_one(name) -> Course:
-    return service.get_one(name)
-
-@router.post("/")
-def create(course: Course) -> Course:
-    return service.create(course)
-
-@router.patch("/")
-def modify(course: Course) -> Course:
-    return service.modify(course)
-
-@router.put("/")
-def replace(course: Course) -> Course:
-    return service.replace(course)
-
-@router.delete("/{name}")
-def delete(name: str):
-    return service.delete(name)
-```
-
-### Пример 16. Добавление субмаршрутов в файл main.py
-
-```python
-import uvicorn
 from fastapi import FastAPI
-from web import student, course
+from pydantic import BaseModel
 
 app = FastAPI()
 
-app.include_router(student.router)
-app.include_router(course.router)
+class Item(BaseModel):
+    name: str
+    price: float
 
-if __name__ == "__main__":
-    uvicorn.run("main:app", reload=True)
+@app.get("/")
+def read_root():
+    return {"message": "Hello World"}
+
+@app.post("/items/")
+def create_item(item: Item):
+    return {"item": item}
 ```
 
----
+## 3. CRUD API с валидацией
 
-## Тестирование
-
-### Пример 17. Тестирование конечной точки Get All
-
-```bash
-$ http -b localhost:8000/student/
-[
-    {
-        "name": "Иван Иванов",
-        "group": "ИСТ-401",
-        "specialty": "Информационные системы",
-        "year": 4
-    },
-    {
-        "name": "Мария Петрова",
-        "group": "ИСТ-402",
-        "specialty": "Информационные технологии",
-        "year": 4
-    }
-]
-```
-
-### Пример 18. Тестирование конечной точки Get One
-
-```bash
-$ http -b localhost:8000/student/"Иван Иванов"
-{
-    "name": "Иван Иванов",
-    "group": "ИСТ-401",
-    "specialty": "Информационные системы",
-    "year": 4
-}
-```
-
-### Пример 19. Тестирование конечной точки Replace
-
-```bash
-$ http -b PUT localhost:8000/student/ name="Иван Иванов" group="ИСТ-401" specialty="Информационные системы" year=4
-{
-    "name": "Иван Иванов",
-    "group": "ИСТ-401",
-    "specialty": "Информационные системы",
-    "year": 4
-}
-```
-
-### Пример 20. Тестирование конечной точки Modify
-
-```bash
-$ http -b PATCH localhost:8000/student/ name="Иван Иванов" year=5
-{
-    "name": "Иван Иванов",
-    "group": "ИСТ-401",
-    "specialty": "Информационные системы",
-    "year": 5
-}
-```
-
-### Пример 21. Тестирование конечной точки Delete
-
-```bash
-$ http -b DELETE localhost:8000/student/Иван%20Иванов
-true
-
-$ http -b DELETE localhost:8000/student/Петр%20Сидоров
-false
-```
-
----
-
-## Источники данных в HTTP-запросах
-
-FastAPI позволяет получать данные из разных частей HTTP-сообщения:
-
-- **Header** - в HTTP-заголовке
-- **Path** - в пути URL
-- **Query** - после символа `?` в URL (параметры запроса)
-- **Body** - в теле HTTP-сообщения
-
-Другие источники:
-- Переменные окружения
-- Настройки конфигурации
-
-
-
-
-## Использование форм автоматизированного тестирования FastAPI
-
-Помимо выполняемых вручную тестов, FastAPI предоставляет автоматизированные формы тестирования в конечных точках `/docs` и `/redoc`. Это два разных стиля для одних и тех же сведений.
-
-FastAPI автоматически генерирует интерактивную документацию Swagger UI по адресу `/docs`, где можно:
-
-1. **Нажать стрелку вниз** под разделом GET `/student/` - откроется форма для тестирования
-2. **Нажать синюю кнопку "Execute"** для выполнения запроса
-3. **Просмотреть результаты** - код ответа, заголовки и тело ответа в формате JSON
-
-### Пример ответа для студентов
-
-В разделе Response body выводится текст в формате JSON, возвращаемый для фиктивных данных студентов:
-
-```json
-[
-    {
-        "name": "Иван Иванов",
-        "group": "ИСТ-401",
-        "specialty": "Информационные системы",
-        "year": 4
-    },
-    {
-        "name": "Мария Петрова",
-        "group": "ИСТ-402",
-        "specialty": "Информационные технологии",
-        "year": 4
-    }
-]
-```
-
-### Пример ответа для курсов
-
-```json
-[
-    {
-        "name": "Разработка высоконагруженных систем",
-        "credits": 6,
-        "semester": 7,
-        "description": "Проектирование и разработка масштабируемых систем",
-        "instructor": "Иванов И.И."
-    },
-    {
-        "name": "Продвинутая веб-разработка",
-        "credits": 5,
-        "semester": 7,
-        "description": "Современные фреймворки и технологии веб-разработки",
-        "instructor": "Петров П.П."
-    }
-]
-```
-
-## Общение с уровнями сервисов и данных
-
-Когда функциям на веб-уровне нужны данные, находящиеся под управлением уровня данных, она должна попросить уровень сервисов стать посредником. Это требует больше кода, но это хорошая практика:
-
-### Преимущества трехуровневой архитектуры
-
-- **Безопасность**: Веб-уровень работает с Интернетом, а уровень данных - с внешними хранилищами
-- **Тестируемость**: Уровни можно тестировать независимо друг от друга
-- **Изоляция**: Сервисный уровень определяет бизнес-логику и скрывает детали реализации от других уровней
-
-### Пример взаимодействия уровней
-
+### Полный пример
 ```python
-# web/student.py
-from model.student import Student
-import service.student as service
+from fastapi import FastAPI, HTTPException, status
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional
 
-@router.get("/")
-def get_all() -> list[Student]:
-    return service.get_all()  # Веб → Сервис
+app = FastAPI(title="User API")
 
-# service/student.py
-import data.student as data
+# Модели Pydantic
+class UserBase(BaseModel):
+    name: str = Field(..., min_length=2, max_length=50)
+    email: EmailStr
+    age: Optional[int] = Field(None, ge=0, le=120)
 
-def get_all() -> list[Student]:
-    return data.get_all()  # Сервис → Данные
+class UserCreate(UserBase):
+    password: str = Field(..., min_length=8)
 
-# data/student.py
-def get_all() -> list[Student]:
-    # Работа с БД
-    return _students
+class UserResponse(UserBase):
+    id: int
+    
+    class Config:
+        from_attributes = True
+
+# "База данных"
+users_db = []
+current_id = 1
+
+# Эндпоинты
+@app.post("/users/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+def create_user(user: UserCreate):
+    global current_id
+    user_data = user.model_dump()
+    user_data["id"] = current_id
+    users_db.append(user_data)
+    current_id += 1
+    return user_data
+
+@app.get("/users/", response_model=List[UserResponse])
+def get_users(skip: int = 0, limit: int = 10):
+    return users_db[skip:skip + limit]
+
+@app.get("/users/{user_id}", response_model=UserResponse)
+def get_user(user_id: int):
+    user = next((u for u in users_db if u["id"] == user_id), None)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
 ```
 
-## Пагинация и сортировка
+## 4. Расширенная валидация Pydantic
 
-В веб-интерфейсах часто требуется:
-- **Сортировка** - упорядочение результатов
-- **Пагинация** - возвращение части результатов за раз
-
-### Примеры параметров запроса для студентов
-
-```bash
-# Сортировка по группе
-GET /student?sort=group
-
-# Пагинация (позиции 10-19)
-GET /student?offset=10&size=10
-
-# Комбинированный запрос
-GET /student?sort=group&offset=10&size=10
-```
-
-### Примеры параметров запроса для курсов
-
-```bash
-# Сортировка по семестру
-GET /course?sort=semester
-
-# Фильтрация по семестру
-GET /course?semester=7
-
-# Поиск по названию
-GET /course?name=веб
-```
-
-### Реализация пагинации
-
+### Кастомные валидаторы
 ```python
-from fastapi import Query
+from pydantic import BaseModel, Field, validator
+import re
 
-@router.get("/")
-def get_all(
-    offset: int = Query(0, ge=0),
-    size: int = Query(10, ge=1, le=100)
-) -> list[Student]:
-    return service.get_all(offset=offset, size=size)
+class AdvancedUser(BaseModel):
+    username: str = Field(..., min_length=3, max_length=20)
+    password: str = Field(..., min_length=8)
+    phone: Optional[str] = None
+    
+    @validator('username')
+    def username_alphanumeric(cls, v):
+        if not re.match('^[a-zA-Z0-9_]+$', v):
+            raise ValueError('Имя пользователя должно содержать только буквы, цифры и подчеркивания')
+        return v
+    
+    @validator('password')
+    def password_strength(cls, v):
+        if not any(c.isupper() for c in v):
+            raise ValueError('Пароль должен содержать хотя бы одну заглавную букву')
+        if not any(c.isdigit() for c in v):
+            raise ValueError('Пароль должен содержать хотя бы одну цифру')
+        return v
+    
+    @validator('phone')
+    def phone_format(cls, v):
+        if v and not re.match(r'^\+?1?\d{9,15}$', v):
+            raise ValueError('Неверный формат телефона')
+        return v
 ```
 
+## 5. Сложные модели и отношения
 
+### Вложенные модели
+```python
+from typing import List, Optional
+from pydantic import BaseModel
 
-## Задания для самостоятельной работы
+class Address(BaseModel):
+    street: str
+    city: str
+    country: str
+    zip_code: str
 
-1. **Добавьте фильтрацию студентов по курсу обучения**
-   ```python
-   GET /student?year=4
-   ```
+class Product(BaseModel):
+    id: int
+    name: str
+    price: float
 
-2. **Реализуйте поиск курсов по преподавателю**
-   ```python
-   GET /course?instructor=Иванов
-   ```
+class OrderItem(BaseModel):
+    product: Product
+    quantity: int = Field(ge=1)
 
-3. **Добавьте сортировку студентов по имени**
-   ```python
-   GET /student?sort=name&order=asc
-   ```
+class Order(BaseModel):
+    id: int
+    user_id: int
+    items: List[OrderItem]
+    shipping_address: Address
+    total: float
+    
+    @validator('total')
+    def validate_total(cls, v, values):
+        if 'items' in values:
+            calculated_total = sum(item.product.price * item.quantity for item in values['items'])
+            if abs(v - calculated_total) > 0.01:
+                raise ValueError('Общая сумма не соответствует стоимости товаров')
+        return v
+```
 
-4. **Реализуйте подсчет количества студентов в группе**
-   ```python
-   GET /student/count?group=ИСТ-401
-   ```
+## 6. FastAPI с зависимостями
 
-5. **Добавьте валидацию для года обучения (1-6)**
-   ```python
-   from pydantic import Field
-   
-   class Student(BaseModel):
-       year: int = Field(ge=1, le=6)
-   ```
+### Dependency Injection
+```python
+from fastapi import FastAPI, Depends, HTTPException, status
+from pydantic import BaseModel
 
-## Заключение
+app = FastAPI()
 
-В этой лабораторной работе вы изучили:
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    # Логика аутентификации
+    user = authenticate_user(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return user
 
-1. **Автоматическое тестирование** через Swagger UI (`/docs`)
-2. **Трехуровневую архитектуру** (web → service → data)
-3. **Пагинацию и сортировку** для работы с большими объемами данных
-4. **Фильтрацию данных** через параметры запроса
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-На веб-уровне определяются конечные точки с помощью декораторов путей FastAPI, которые:
+@app.get("/users/me")
+def read_current_user(current_user: User = Depends(get_current_user)):
+    return current_user
 
-- Автоматически проверяют и подтверждают данные с помощью Pydantic
-- Собирают данные запроса из различных частей HTTP-сообщения
-- Передают аргументы соответствующим сервисным функциям
+@app.post("/items/")
+def create_item(
+    item: Item,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Логика создания item
+    return {"item": item, "user": current_user}
+```
 
-Это основа для построения масштабируемого и поддерживаемого веб-приложения с четким разделением ответственности между уровнями.
+## 7. Обработка ошибок и middleware
 
+### Кастомные обработчики ошибок
+```python
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
 
+app = FastAPI()
 
----
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": exc.errors(),
+            "body": exc.body
+        },
+    )
 
-## Задания для самостоятельной работы
+class CustomException(Exception):
+    def __init__(self, message: str):
+        self.message = message
 
-1. Добавьте валидацию для полей моделей (например, year должен быть от 1 до 6)
-2. Реализуйте поиск студентов по группе
-3. Добавьте эндпоинт для получения всех курсов определенного семестра
-4. Реализуйте связь многие-ко-многим между студентами и курсами
-5. Добавьте пагинацию для списка студентов
+@app.exception_handler(CustomException)
+async def custom_exception_handler(request: Request, exc: CustomException):
+    return JSONResponse(
+        status_code=400,
+        content={"message": exc.message},
+    )
+```
 
-## Выводы
+## 8. Фоновые задачи и WebSockets
 
-В этой лабораторной работе вы:
-1. Создали структуру RESTful API с использованием FastAPI
-2. Определили модели данных Student и Course с помощью Pydantic
-3. Реализовали CRUD операции для обеих сущностей
-4. Использовали маршрутизаторы для организации кода
-5. Протестировали API с помощью HTTPie
-6. Познакомились с трехуровневой архитектурой (web, service, data)
+### Фоновые задачи + WebSockets
+```python
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, BackgroundTasks
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class Notification(BaseModel):
+    message: str
+    user_id: int
+
+def send_notification(email: str, message: str):
+    # Логика отправки уведомления
+    print(f"Sending email to {email}: {message}")
+
+@app.post("/notify/{user_id}")
+def notify_user(
+    user_id: int,
+    notification: Notification,
+    background_tasks: BackgroundTasks
+):
+    background_tasks.add_task(
+        send_notification, 
+        f"user{user_id}@example.com", 
+        notification.message
+    )
+    return {"message": "Notification sent"}
+
+# WebSocket
+@app.websocket("/ws/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: int):
+    await websocket.accept()
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await websocket.send_text(f"Message received: {data}")
+    except WebSocketDisconnect:
+        print(f"Client {client_id} disconnected")
+```
+
+## 9. Тестирование FastAPI приложения
+
+### Тесты с pytest
+```python
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+client = TestClient(app)
+
+def test_create_user():
+    response = client.post(
+        "/users/",
+        json={
+            "name": "Test User",
+            "email": "test@example.com",
+            "password": "TestPass123"
+        }
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["name"] == "Test User"
+    assert "id" in data
+
+def test_get_user_not_found():
+    response = client.get("/users/999")
+    assert response.status_code == 404
+```
+
+## 10. Продвинутые фичи Pydantic
+
+### Generic модели и конфигурация
+```python
+from typing import Generic, TypeVar, List, Optional
+from pydantic import BaseModel, ConfigDict
+
+T = TypeVar('T')
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    items: List[T]
+    total: int
+    page: int
+    size: int
+    pages: int
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class User(BaseModel):
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'  # Запрещает дополнительные поля
+    )
+    
+    id: int
+    name: str
+    email: str
+
+# Использование
+users_response = PaginatedResponse[User](
+    items=[User(id=1, name="John", email="john@example.com")],
+    total=1,
+    page=1,
+    size=10,
+    pages=1
+)
+```
+
+## 11. Миграция на Pydantic v2
+
+### Основные изменения
+```python
+# Pydantic v1
+class UserV1(BaseModel):
+    class Config:
+        orm_mode = True
+        allow_population_by_field_name = True
+
+# Pydantic v2
+class UserV2(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True,  # замена orm_mode
+        populate_by_name=True,  # замена allow_population_by_field_name
+        str_strip_whitespace=True
+    )
+
+# Методы v1 vs v2
+user_v1.dict()          # -> user_v2.model_dump()
+user_v1.json()          # -> user_v2.model_dump_json()
+UserV1.parse_obj()      # -> UserV2.model_validate()
+UserV1.update_forward_refs()  # -> UserV2.model_rebuild()
+```
+
+## Быстрые команды для запуска
+
+### Установка
+```bash
+pip install "fastapi[all]" pydantic
+```
+
