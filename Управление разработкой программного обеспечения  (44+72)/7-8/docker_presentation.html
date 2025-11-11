@@ -146,24 +146,24 @@ python:3.11   →    running_app_1
 <section>
 <h2>📝 Dockerfile</h2>
 <div class="fragment">
-<p style="font-size:1.4em"><strong>Что это?</strong> Рецепт для создания образа 👨‍🍳</p>
-<pre># Базовый образ
-FROM python:3.11-slim
-
+<p style="font-size:1.82em"><strong>Что это?</strong> Рецепт для создания образа 👨‍🍳</p>
+<pre style="font-size:1.72em"><span class="fragment"># Базовый образ
+FROM python:3.11-slim</span>
+<span class="fragment">
 # Рабочая директория
-WORKDIR /app
-
+WORKDIR /app</span>
+<span class="fragment">
 # Копируем зависимости
-COPY requirements.txt .
-
+COPY requirements.txt .</span>
+<span class="fragment">
 # Устанавливаем зависимости
-RUN pip install -r requirements.txt
-
+RUN pip install -r requirements.txt</span>
+<span class="fragment">
 # Копируем код
-COPY . .
-
+COPY . .</span>
+<span class="fragment">
 # Команда запуска
-CMD ["python", "app.py"]</pre>
+CMD ["python", "app.py"]</span></pre>
 </div>
 </section>
 

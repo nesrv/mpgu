@@ -162,7 +162,7 @@ docker run my-hello
 
 **Ожидаемый результат:**
 ```
-Привет из моего контейнера!
+Hello from my custom container!
 ```
 
 
@@ -310,7 +310,7 @@ docker run -d -p 5000:5000 my-python-app
 Перейдите в браузере на `http://localhost:5000`. Вы увидите сообщение от вашего приложения!
 
 
-## Взаимодействие контейнеров. FastAPI и Redis
+## Дополнительные задания
 
 **Redis - что это и зачем нужно**
 
@@ -405,7 +405,6 @@ MGET user:1:name user:1:age user:1:city
 ```
 
 
-**Практические примеры использования:**
 
 **Шаг 1: Подключитесь к Redis CLI и попробуйте команды**
 
@@ -435,32 +434,6 @@ DEL user:2
 # Проверить все ключи
 KEYS user:*
 ```
-
-```bash
-# Пример 1: Кеширование данных пользователя
-SET user:123:profile '{"name":"Anna","email":"anna@mail.ru"}'
-EXPIRE user:123:profile 300  # Кеш на 5 минут
-GET user:123:profile
-
-# Пример 2: Счётчик просмотров
-SET post:456:views 0
-INCR post:456:views  # +1 просмотр
-INCR post:456:views  # +1 просмотр
-GET post:456:views   # Результат: 2
-
-# Пример 3: Сессия пользователя
-SET session:xyz789 "user_id:123"
-EXPIRE session:xyz789 1800  # Сессия на 30 минут
-GET session:xyz789
-
-# Пример 4: Поиск всех сессий
-KEYS session:*
-
-# Пример 5: Удаление всех ключей (ОСТОРОЖНО!)
-FLUSHALL  # Удаляет ВСЕ данные из Redis
-```
-
-
 
 **Шаг 2: Попробуйте команды через Python**
 
@@ -504,113 +477,232 @@ pip install redis
 python test_redis.py
 ```
 
-**Шаг 4: Coздайте FastAPI-сервер 'app.py' на основе test_redis.py **
-
-```py
-from fastapi import FastAPI, HTTPException
-import redis
-import json
-
-
-app = FastAPI()
-
-# r = redis.Redis(host='redis-server', port=6379, decode_responses=True)
-r = redis.Redis(host='localhost', port=6381, decode_responses=True)
-
-@app.get("/")
-def root():
-    return {"message": "FastAPI + Redis CRUD API"}
-
-@app.get("/health/redis")
-def test_redis():
-    try:
-        r.ping()
-        return {"status": "connected", "message": "Redis is working"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-# uvicorn app:app --reload
-```
-Протестируйте через сваггер работу локального фастапи с Redis-контейнером 
+**Шаг 4: Допишите в FastAPI-приложение дополнительные эндпоинты**
 
 Добавьте в `app.py` следующие функции:
 
 ```python
-# сохраняет в Redis: ключ = name, значение = value
-@app.post("/items")
-def test_post(name: str, value: str):
-    ...
-    return {"status": "saved", "name": name, "value": value}
-
-# эндпоинт для установления времени жизни
-@app.post("/items/expire")
-def test_post_with_ttl(name: str, value: str, ttl: int = 60):
-   ...
-    return {"status": "saved", "name": name, "value": value, "ttl": ttl}
-
-# эндпоинт для установки TTL существующему ключу
-@app.post("/items/{name}/expire")
-def set_ttl(name: str, seconds: int):
-    if not r.exists(name):
-        raise HTTPException(404, "Key not found")
-    ...
-    return {"name": name, "ttl": seconds}
-
-
- Получить количество всех элементов
+# 1. Получить количество всех элементов
 @app.get("/items/stats/count")
 def count_items():
-    ...
+    count = len(r.keys("*"))
     return {"total_items": count}
 
-# Очистить все данные
+# 2. Очистить все данные
 @app.delete("/items/clear")
 def clear_all():
-    ...
+    keys = r.keys("*")
+    if keys:
+        r.delete(*keys)
     return {"status": "cleared", "deleted": len(keys)}
 
+# 3. Установить время жизни для элемента (TTL)
+@app.post("/items/{item_id}/expire")
+def set_expire(item_id: str, seconds: int):
+    if not r.exists(item_id):
+        raise HTTPException(404, "Item not found")
+    r.expire(item_id, seconds)
+    return {"item_id": item_id, "expires_in": seconds}
 
-# Проверить время жизни элемента
+# 4. Проверить время жизни элемента
 @app.get("/items/{item_id}/ttl")
 def get_ttl(item_id: str):
-    ...
-    if ...:
+    ttl = r.ttl(item_id)
+    if ttl == -2:
         raise HTTPException(404, "Item not found")
     return {"item_id": item_id, "ttl": ttl}
 
 # 5. Поиск по паттерну
-# Pattern - это шаблон для поиска ключей:
-#   * - любое количество символов (пример: user:* найдёт user:1, user:2, user:abc)
-#   ? - один любой символ (пример: user:? найдёт user:1, user:a)
-#   [abc] - один из указанных символов (пример: user:[123] найдёт user:1, user:2, user:3)
- # Примеры использования:
-    # /items/search/* - найти все ключи
-    # /items/search/user:* - найти все ключи, начинающиеся с user:
-    # /items/search/user:1* - найти user:1, user:10, user:123
-
 @app.get("/items/search/{pattern}")
 def search_items(pattern: str):
     keys = r.keys(pattern)
     if not keys:
         return {}
-    return ...
+    return {key: json.loads(r.get(key)) for key in keys}
 
+```
+
+**Шаг 5: Протестируйте новые эндпоинты**
+
+```bash
+# Создать элементы
+curl -X POST "http://localhost:8000/items/1" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "test1", "value": "data1"}'
+
+curl -X POST "http://localhost:8000/items/2" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "test2", "value": "data2"}'
+
+# Подсчитать количество
+curl "http://localhost:8000/items/stats/count"
+
+# Установить время жизни (60 секунд)
+curl -X POST "http://localhost:8000/items/1/expire?seconds=60"
+
+# Проверить TTL
+curl "http://localhost:8000/items/1/ttl"
+
+# Поиск по паттерну
+curl "http://localhost:8000/items/search/*"
+
+# Очистить все
+curl -X DELETE "http://localhost:8000/items/clear"
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+**Как подключиться к Redis CLI:**
+
+```bash
+# Если Redis запущен в Docker
+docker exec -it redis-server redis-cli
+
+# Проверка подключения
+PING
+# Ответ: PONG
+
+# Выход из CLI
+exit
+```
+
+**Практические примеры использования:**
+
+```bash
+# Пример 1: Кеширование данных пользователя
+SET user:123:profile '{"name":"Anna","email":"anna@mail.ru"}'
+EXPIRE user:123:profile 300  # Кеш на 5 минут
+GET user:123:profile
+
+# Пример 2: Счётчик просмотров
+SET post:456:views 0
+INCR post:456:views  # +1 просмотр
+INCR post:456:views  # +1 просмотр
+GET post:456:views   # Результат: 2
+
+# Пример 3: Сессия пользователя
+SET session:xyz789 "user_id:123"
+EXPIRE session:xyz789 1800  # Сессия на 30 минут
+GET session:xyz789
+
+# Пример 4: Поиск всех сессий
+KEYS session:*
+
+# Пример 5: Удаление всех ключей (ОСТОРОЖНО!)
+FLUSHALL  # Удаляет ВСЕ данные из Redis
 ```
 
 ### Задание 6: Взаимодействие FastAPI и Redis (без docker-compose)
 Создайте два контейнера, которые взаимодействуют через сеть:
 
-**Шаг : Создайте `requirements.txt`:**
+**Шаг 1: Создайте FastAPI приложение с Redis (`app.py`):**
+```python
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import redis
+import json
+
+app = FastAPI()
+r = redis.Redis(host='redis-server', port=6379, decode_responses=True)
+
+class Item(BaseModel):
+    name: str
+    value: str
+
+@app.get("/")
+def root():
+    return {"message": "FastAPI + Redis CRUD API"}
+
+```
+
+**Шаг 2: Создайте `requirements.txt`:**
 ```
 fastapi==0.104.1
 uvicorn==0.24.0
 redis==5.0.1
 ```
 
-**Шаг : Запустите Redis:**
+**Шаг 3: Запустите Redis:**
 ```bash
 docker run -d -p 6379:6379 redis:latest
 ```
+
+
+
+**Шаг 4: Попробуйте сами дописать в Fastapi-приложение  CRUD для работы с Redis
+
+```py
+
+@app.get("/items/{item_id}")
+def read_item(item_id: str):
+    data = r.get(item_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return json.loads(data)
+
+@app.get("/items")
+def list_items():
+    keys = r.keys("*")
+    items = {}
+    for key in keys:
+        items[key] = json.loads(r.get(key))
+    return items
+    # return {key: json.loads(r.get(key)) for key in r.keys("*")}
+
+
+@app.post("/items/{item_id}")
+def create_item(item_id: str, item: Item):
+    r.set(item_id, json.dumps(item.model_dump()))
+    # r.set(item_id, item.model_dump_json())  # или сразу в JSON-строку
+
+    return {"item_id": item_id, "status": "created"}
+
+@app.get("/items/{item_id}")
+def read_item(item_id: str):
+    data = r.get(item_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return json.loads(data)
+
+@app.put("/items/{item_id}")
+def update_item(item_id: str, item: Item):
+    if not r.exists(item_id):
+        raise HTTPException(status_code=404, detail="Item not found")
+    r.set(item_id, json.dumps(item.model_dump()))
+    return {"item_id": item_id, "status": "updated"}
+
+@app.delete("/items/{item_id}")
+def delete_item(item_id: str):
+    if not r.delete(item_id):
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"item_id": item_id, "status": "deleted"}
+
+
+
+```
+
 
 
 Создайте `Dockerfile`:**
@@ -619,37 +711,20 @@ docker run -d -p 6379:6379 redis:latest
 - `docker run redis:latest` - запускает готовый образ без изменений
 - Dockerfile - создает кастомный образ с вашим кодом и зависимостями
 - Нам нужно упаковать FastAPI приложение + Python зависимости в один образ
-
 ```dockerfile
-FROM python:3.11-slim
+FROM python:3.9-slim
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 COPY . .
 EXPOSE 8000
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
-
-# Собрать образ
-docker build -t fastapi-app .
-
-# Запустить контейнер
-
-docker run -it -p 8000:8000 fastapi-app
-
-# Тестирование CRUD операций через Swagger UI:**
- Откройте браузер и перейдите на `http://localhost:8000/docs`
-
-
-Если нужно подключиться к Redis контейнеру, создайте сеть:
+**Шаг 5: Запустите контейнеры:**
 ```bash
-# Создать сеть (если не существует)
-docker network create app-network 2>/dev/null || true
-
-# Остановить и удалить старые контейнеры
-docker stop redis-server fastapi-app 2>/dev/null || true
-docker rm redis-server fastapi-app 2>/dev/null || true
+# Создать сеть (чтобы контейнеры могли обращаться друг к другу по имени)
+docker network create app-network
 
 # Запустить Redis
 docker run -d --name redis-server --network app-network redis:7-alpine
@@ -659,39 +734,64 @@ docker build -t fastapi-redis .
 docker run -d --name fastapi-app --network app-network -p 8000:8000 fastapi-redis
 ```
 
+**Шаг 6: Тестирование CRUD операций через Swagger UI:**
+1. Откройте браузер и перейдите на `http://localhost:8000/docs`
+2. Вы увидите автоматически сгенерированную документацию API
+3. Протестируйте операции в следующем порядке:
 
-** Тестирование CRUD операций через Swagger UI: **
+   - **POST /items/{item_id}** - создать элемент:
+     - item_id: `1`
+     - Request body: `{"name": "test", "value": "data"}`
+   
+   - **GET /items/{item_id}** - получить элемент:
+     - item_id: `1`
+   
+   - **GET /items** - получить все элементы
+   
+   - **PUT /items/{item_id}** - обновить элемент:
+     - item_id: `1`
+     - Request body: `{"name": "updated", "value": "new_data"}`
+   
+   - **DELETE /items/{item_id}** - удалить элемент:
+     - item_id: `1`
 
-Результаты работы студента:
+4. Альтернативно используйте ReDoc: `http://localhost:8000/redoc`
 
-Исходники
-```py
-# фастапи-сервер + CRUD для редис
-
-
-```
-
-
-
-Всю сеть можно поднять одной командой через docker-compose (создайте docker-compose.yml):
 
 ```bash
-services:
-  redis:
-    image: redis:7-alpine
-    container_name: redis-server
-  
-  app:
-    build: .
-    container_name: fastapi-app
-    ports:
-      - "8000:8000"
-    depends_on:
-      - redis
+# CREATE
+curl -X POST "http://localhost:8000/items/1" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "test", "value": "data"}'
 
+# READ
+curl "http://localhost:8000/items/1"
+
+# UPDATE
+curl -X PUT "http://localhost:8000/items/1" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "updated", "value": "new_data"}'
+
+# LIST ALL
+curl "http://localhost:8000/items"
+
+# DELETE
+curl -X DELETE "http://localhost:8000/items/1"
 ```
-Запуск:
 
-`docker-compose up -d --build`
+---
+
+### Задание 7: Практика CRUD операций с Redis
 
 
+
+**Дополнительные задачи для самостоятельной работы:**
+
+1. Добавьте эндпоинт для массового создания элементов (bulk create)
+2. Реализуйте пагинацию для списка элементов
+3. Добавьте счётчик просмотров для каждого элемента (INCR)
+4. Создайте эндпоинт для получения статистики (количество операций)
+5. Добавьте валидацию: запретить создание элементов с пустыми значениями
+6. Реализуйте обработку ошибок подключения к Redis
+
+---
