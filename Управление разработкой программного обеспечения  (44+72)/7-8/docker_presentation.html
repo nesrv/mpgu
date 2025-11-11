@@ -13,14 +13,14 @@ section{display:none;position:absolute;width:100%;height:100%;padding:40px;color
 section.present{display:flex;flex-direction:column;justify-content:center;align-items:center;animation:fadeIn .5s}
 section>*{max-width:1200px;width:100%}
 @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-h1{font-size:3.5em;margin-bottom:40px;color:#2496ED;text-align:center}
-h2{font-size:2.8em;margin:0 0 30px;color:#2496ED;text-align:center}
-h3{font-size:2em;margin:25px 0 15px;color:#64B5F6}
+h1{font-size:4.2em;margin-bottom:40px;color:#2496ED;text-align:center}
+h2{font-size:3.36em;margin:0 0 30px;color:#2496ED;text-align:center}
+h3{font-size:2.4em;margin:25px 0 15px;color:#64B5F6}
 .fragment{opacity:0;transition:opacity .5s}
 .fragment.visible{opacity:1}
-p,li{font-size:1.4em;line-height:1.8;margin:10px 0}
+p,li{font-size:1.68em;line-height:1.8;margin:10px 0}
 ul{margin-left:30px}
-pre{background:#2d2d2d;padding:20px;border-radius:8px;overflow-x:auto;margin:15px 0;border-left:4px solid #2496ED;font-size:1.1em}
+pre{background:#2d2d2d;padding:20px;border-radius:8px;overflow-x:auto;margin:15px 0;border-left:4px solid #2496ED;font-size:1.32em}
 code{font-family:'Courier New',monospace;color:#f8f8f2}
 .navigation{position:fixed;bottom:20px;left:20px;display:flex;gap:8px;z-index:100;overflow-x:auto;max-width:calc(100vw - 40px)}
 .nav-dot{width:32px;height:32px;background:rgba(36,150,237,.3);border:2px solid #2496ED;border-radius:5px;color:#fff;font-size:12px;cursor:pointer;transition:.3s;display:flex;align-items:center;justify-content:center;font-weight:bold}
@@ -30,7 +30,7 @@ code{font-family:'Courier New',monospace;color:#f8f8f2}
 .check{color:#4caf50}
 .cross{color:#f44336}
 table{width:100%;border-collapse:collapse;margin:20px 0}
-th,td{border:1px solid #444;padding:12px;text-align:left;font-size:1.2em}
+th,td{border:1px solid #444;padding:12px;text-align:left;font-size:1.44em}
 th{background:#2496ED;color:#fff}
 .emoji{font-size:1.5em}
 </style>
@@ -46,7 +46,7 @@ th{background:#2496ED;color:#fff}
 </section>
 
 <section>
-<h2>📋 План лекции</h2>
+<h2>📋 План занятия</h2>
 <div class="fragment">
 <ul style="font-size:1.6em;line-height:2">
 <li>🎯 <strong>Проблема и мотивация</strong> (5 мин)</li>
@@ -183,7 +183,7 @@ CMD ["python", "app.py"]</pre>
 <section>
 <h2>💻 Базовые команды: Образы</h2>
 <div class="fragment">
-<pre># Скачать образ
+<pre style="font-size:1.6em"># Скачать образ
 docker pull python:3.11
 
 # Список локальных образов
@@ -200,7 +200,7 @@ docker build -t myapp:1.0 .</pre>
 <section>
 <h2>💻 Базовые команды: Контейнеры</h2>
 <div class="fragment">
-<pre># Запустить контейнер
+<pre style="font-size:1.6em"># Запустить контейнер
 docker run python:3.11 python --version
 
 # Запустить в фоне с именем
@@ -226,7 +226,7 @@ docker exec -it myapp bash</pre>
 <section>
 <h2>💻 Полезные флаги</h2>
 <div class="fragment">
-<pre># Пробросить порты (хост:контейнер)
+<pre style="font-size:1.6em"># Пробросить порты (хост:контейнер)
 docker run -p 8080:80 nginx
 
 # Примонтировать директорию
@@ -247,7 +247,7 @@ docker run -it python:3.11 bash</pre>
 <h2>🚀 Практический пример: FastAPI</h2>
 <div class="fragment"><h3>1. Создаём приложение</h3>
 <p><code>app.py</code>:</p>
-<pre>from fastapi import FastAPI
+<pre style="font-size:1.6em">from fastapi import FastAPI
 import uvicorn
 
 app = FastAPI()
@@ -259,14 +259,14 @@ def hello():
 if __name__ == '__main__':
     uvicorn.run(app, host='0.0.0.0', port=8000)</pre>
 <p><code>requirements.txt</code>:</p>
-<pre>fastapi==0.109.0
+<pre style="font-size:1.6em">fastapi==0.109.0
 uvicorn==0.27.0</pre></div>
 </section>
 
 <section>
 <h2>🚀 Практический пример: Dockerfile</h2>
 <div class="fragment"><h3>2. Создаём Dockerfile</h3>
-<pre>FROM python:3.11-slim
+<pre style="font-size:1.6em">FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -283,11 +283,11 @@ CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]</pre></div>
 <section>
 <h2>🚀 Практический пример: Запуск</h2>
 <div class="fragment"><h3>3. Собираем образ</h3>
-<pre>docker build -t fastapi-app:1.0 .</pre></div>
+<pre style="font-size:1.6em">docker build -t fastapi-app:1.0 .</pre></div>
 <div class="fragment"><h3>4. Запускаем контейнер</h3>
-<pre>docker run -d -p 8000:8000 --name my-fastapi-app fastapi-app:1.0</pre></div>
+<pre style="font-size:1.6em">docker run -d -p 8000:8000 --name my-fastapi-app fastapi-app:1.0</pre></div>
 <div class="fragment"><h3>5. Проверяем</h3>
-<pre>curl http://localhost:8000
+<pre style="font-size:1.6em">curl http://localhost:8000
 # {"message":"Hello from Docker! 🐳"}
 
 # Автоматическая документация
@@ -325,20 +325,20 @@ curl http://localhost:8000/docs</pre></div>
 <h2>🚀 Продвинутые возможности</h2>
 <div class="fragment"><h3>1️⃣ Docker Compose</h3>
 <p>Управление несколькими контейнерами одной командой</p>
-<pre>docker-compose up -d</pre></div>
+<pre style="font-size:1.6em">docker-compose up -d</pre></div>
 <div class="fragment"><h3>2️⃣ Docker Volumes</h3>
 <p>Постоянное хранение данных вне контейнера</p>
-<pre>docker run -v postgres_data:/var/lib/postgresql/data postgres:15</pre></div>
+<pre style="font-size:1.6em">docker run -v postgres_data:/var/lib/postgresql/data postgres:15</pre></div>
 <div class="fragment"><h3>3️⃣ Docker Networks</h3>
 <p>Сетевое взаимодействие между контейнерами</p>
-<pre>docker network create myapp-network</pre></div>
+<pre style="font-size:1.6em">docker network create myapp-network</pre></div>
 </section>
 
 <section>
 <h2>🚀 Продвинутые возможности (2)</h2>
 <div class="fragment"><h3>4️⃣ Multi-stage builds</h3>
 <p>Оптимизация размера образов (1 GB → 200 MB)</p>
-<pre>FROM python:3.11 AS builder
+<pre style="font-size:1.6em">FROM python:3.11 AS builder
 # ... сборка ...
 FROM python:3.11-slim
 COPY --from=builder /app /app</pre></div>
@@ -381,39 +381,28 @@ COPY --from=builder /app /app</pre></div>
 </section>
 
 <section>
-<h2>📚 Полезные ресурсы</h2>
-<div class="fragment">
-<ul style="font-size:1.5em;line-height:2.2">
-<li>📖 Docker: <a href="https://docs.docker.com" style="color:#2496ED">docs.docker.com</a></li>
-<li>🐙 Docker Compose: <a href="https://docs.docker.com/compose" style="color:#2496ED">docs.docker.com/compose</a></li>
-<li>☸️ Kubernetes: <a href="https://kubernetes.io/docs" style="color:#2496ED">kubernetes.io/docs</a></li>
-<li>🎓 Docker Hub: <a href="https://hub.docker.com" style="color:#2496ED">hub.docker.com</a></li>
-<li>💡 Play with Docker: <a href="https://labs.play-with-docker.com" style="color:#2496ED">labs.play-with-docker.com</a></li>
-</ul>
+<h2>🏗️ Слоистая структура Docker</h2>
+<div style="position:relative;width:800px;height:500px;margin:0 auto">
+<div class="docker-layer fragment" data-layer="0" style="position:absolute;width:700px;height:80px;background:#1a1a1a;border:3px solid #2496ED;border-radius:10px;top:400px;left:50px;display:flex;align-items:center;justify-content:center;font-size:1.4em;color:#fff;transition:all 1.2s ease">
+<strong>FROM python:3.11-slim</strong> (базовый слой)
 </div>
-</section>
+<div class="docker-layer fragment" data-layer="1" style="position:absolute;width:700px;height:80px;background:#2d2d2d;border:3px solid #64B5F6;border-radius:10px;top:310px;left:50px;display:flex;align-items:center;justify-content:center;font-size:1.4em;color:#fff;transition:all 1.2s ease">
+<strong>WORKDIR /app</strong> (рабочая директория)
+</div>
+<div class="docker-layer fragment" data-layer="2" style="position:absolute;width:700px;height:80px;background:#3d3d3d;border:3px solid #81C784;border-radius:10px;top:220px;left:50px;display:flex;align-items:center;justify-content:center;font-size:1.4em;color:#fff;transition:all 1.2s ease">
+<strong>COPY requirements.txt .</strong> (копирование файлов)
+</div>
+<div class="docker-layer fragment" data-layer="3" style="position:absolute;width:700px;height:80px;background:#4d4d4d;border:3px solid #FFB74D;border-radius:10px;top:130px;left:50px;display:flex;align-items:center;justify-content:center;font-size:1.4em;color:#fff;transition:all 1.2s ease">
+<strong>RUN pip install -r requirements.txt</strong> (установка зависимостей)
+</div>
+<div class="docker-layer fragment" data-layer="4" style="position:absolute;width:700px;height:80px;background:#5d5d5d;border:3px solid #F06292;border-radius:10px;top:40px;left:50px;display:flex;align-items:center;justify-content:center;font-size:1.4em;color:#fff;transition:all 1.2s ease">
+<strong>COPY . .</strong> (копирование приложения)
+</div>
+<div style="position:absolute;top:10px;right:50px;font-size:1.2em;color:#ffd700">
+📦 Каждый слой = отдельный кэш
+</div>
+</div>
 
-<section>
-<h2>🎯 Практическое задание</h2>
-<div class="fragment">
-<p style="font-size:1.4em"><strong>Задача:</strong> Создайте Docker-образ для вашего проекта</p>
-<ol style="font-size:1.4em;line-height:2">
-<li>Напишите Dockerfile</li>
-<li>Соберите образ</li>
-<li>Запустите контейнер</li>
-<li>Проверьте работу</li>
-<li>Опубликуйте образ на Docker Hub (опционально)</li>
-</ol>
-</div>
-<div class="fragment">
-<h3>Критерии успеха:</h3>
-<ul style="font-size:1.3em">
-<li><span class="check">✅</span> Образ собирается без ошибок</li>
-<li><span class="check">✅</span> Контейнер запускается</li>
-<li><span class="check">✅</span> Приложение работает корректно</li>
-<li><span class="check">✅</span> Размер образа оптимизирован</li>
-</ul>
-</div>
 </section>
 
 <section>
