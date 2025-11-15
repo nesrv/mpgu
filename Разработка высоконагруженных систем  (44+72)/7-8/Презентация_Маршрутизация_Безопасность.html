@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAPI: Маршрутизация и Безопасность</title>
+    <link rel="stylesheet" href="../3-4/css/reveal.min.css">
+    <link rel="stylesheet" href="../3-4/css/black.min.css">
+    <link rel="stylesheet" href="../3-4/css/monokai.min.css">
+    <link rel="stylesheet" href="../3-4/css/presentation.css">
+    <style>
+        .reveal h1 { font-size: 1.5em !important; margin-top: 0 !important; margin-bottom: 0.3em !important; }
+        .reveal h2 { font-size: 1.25em !important; margin-top: 0 !important; margin-bottom: 0.3em !important; text-transform: none !important; }
+        .reveal h3 { font-size: 1em !important; margin-top: 0 !important; margin-bottom: 0.3em !important; text-transform: none !important; }
+        .reveal .slides section { padding-top: 5px !important; }
+        pre code { font-size: 1.1em !important; max-height: 650px; overflow-y: auto; }
+        pre { max-height: 650px; overflow-y: auto; }
+        .diagram { font-family: 'Courier New', monospace; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides" data-separator="^---$" data-separator-vertical="^--$">
+            
+            <!-- Слайд 1: Титульный -->
+            <section data-background-color="#1a1a2e">
+                <div style="background: rgba(22,33,62,0.9); padding: 40px; border: 8px solid #0f3460; box-shadow: 0 0 0 4px #16213e;">
+                    <h1 style="color: #FFD700; letter-spacing: 3px;">🚀 FastAPI</h1>
+                    <h2 style="color: #90EE90;">Маршрутизация, Архитектура и Безопасность</h2>
+                    <p style="color: #FFF; font-size: 1.2em; margin-top: 30px;">🏫 МПГУ, 2025</p>
+                </div>
+            </section>
+
+            <!-- Слайд 2: Содержание -->
+            <section>
+                <h2>📋 Что мы изучим</h2>
+                <div style="text-align: left; font-size: 0.9em;">
+                    <ul class="fragment">
+                        <li>🛣️ Продвинутая маршрутизация с APIRouter</li>
+                        <li>🏗️ Архитектурные паттерны и разделение на слои</li>
+                        <li>🔐 Аутентификация и авторизация (Basic Auth, OAuth2, JWT)</li>
+                        <li>🧪 Автоматизированное тестирование API</li>
+                    </ul>
+                    
+                    <div class="fragment" style="margin-top: 30px;">
+                        <h3 style="color: #2ecc71;">Почему это важно для высоконагруженных систем?</h3>
+                        <ul>
+                            <li>Правильная архитектура = масштабируемость</li>
+                            <li>Разделение на слои = легкость поддержки</li>
+                            <li>Безопасность = защита от атак</li>
+                            <li>Тестирование = стабильность в продакшене</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 3: Маршрутизация с APIRouter -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🛣️ Маршрутизация с APIRouter</h2>
+                <div style="text-align: left; font-size: 0.8em;">
+                    <div class="fragment">
+                        <h3 style="color: #e74c3c;">❌ Проблема монолитного приложения:</h3>
+                        <pre><code class="python">from fastapi import FastAPI
+app = FastAPI()
+
+@app.get("/users")
+def get_users(): ...
+
+@app.get("/products")
+def get_products(): ...
+# ... 100+ эндпоинтов</code></pre>
+                    </div>
+                    
+                    <div class="fragment">
+                        <h3 style="color: #2ecc71;">✅ Решение: модульная структура</h3>
+                        <pre><code class="python">from fastapi import FastAPI
+from routers import users, products
+
+app = FastAPI()
+app.include_router(users.router, prefix="/api/v1")
+app.include_router(products.router, prefix="/api/v1")</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 3: Структура проекта -->
+            <section>
+                <h2>📁 Структура проекта</h2>
+                <div class="fragment diagram">
+                    <pre>project/
+├── main.py
+├── routers/
+│   ├── __init__.py
+│   ├── users.py      # /api/v1/users
+│   ├── products.py   # /api/v1/products
+│   └── orders.py     # /api/v1/orders
+├── services/
+│   ├── user_service.py
+│   └── product_service.py
+└── models/
+    ├── user.py
+    └── product.py</pre>
+                </div>
+                
+                <div class="fragment" style="margin-top: 20px;">
+                    <h3>Пример роутера:</h3>
+                    <pre><code class="python">from fastapi import APIRouter
+
+router = APIRouter(prefix="/users", tags=["users"])
+
+@router.get("/")
+async def get_users():
+    return await user_service.get_all()
+
+@router.post("/", status_code=201)
+async def create_user(user: UserCreate):
+    return await user_service.create(user)</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 4: Архитектурные паттерны -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🏗️ Архитектурные паттерны</h2>
+                <div style="text-align: left; font-size: 0.85em;">
+                    <div class="fragment">
+                        <h3>MVC (Model-View-Controller)</h3>
+                        <div style="font-family: 'Courier New', monospace; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                            <div>User Request → Controller → Model → Database</div>
+                            <div style="text-align: center; margin-left: -350px;">↓</div>
+                            <div style="text-align: center; margin-left: -200px;">View → Response</div>
+                        </div>
+                    </div>
+                    
+                    <div class="fragment">
+                        <h3>MTV (Model-Template-View) - Django подход</h3>
+                        <ul style="font-size: 0.9em;">
+                            <li><strong>Model</strong> - данные</li>
+                            <li><strong>Template</strong> - шаблоны HTML</li>
+                            <li><strong>View</strong> - логика обработки</li>
+                        </ul>
+                    </div>
+                    
+
+                    
+                    <div class="fragment">
+                        <p><strong>Преимущества:</strong></p>
+                        <ul>
+                            <li>✅ Разделение ответственности</li>
+                            <li>✅ Легкое тестирование</li>
+                            <li>✅ Масштабируемость</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🏗️ Layered Architecture для FastAPI</h2>
+                <p style="font-size: 0.9em; margin-bottom: 10px;">Современный подход для API</p>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px;">
+                    <tr style="background: rgba(52,152,219,0.3);">
+                        <td style="padding: 15px; border: 2px solid rgba(255,255,255,0.3);">API Layer (Routers)</td>
+                        <td style="padding: 15px; border: 2px solid rgba(255,255,255,0.3); width: 250px;">← HTTP</td>
+                    </tr>
+                    <tr style="background: rgba(46,204,113,0.3);">
+                        <td style="padding: 15px; border: 2px solid rgba(255,255,255,0.3);">Service Layer (Business)</td>
+                        <td style="padding: 15px; border: 2px solid rgba(255,255,255,0.3);">← Логика</td>
+                    </tr>
+                    <tr style="background: rgba(155,89,182,0.3);">
+                        <td style="padding: 15px; border: 2px solid rgba(255,255,255,0.3);">Repository Layer (Data)</td>
+                        <td style="padding: 15px; border: 2px solid rgba(255,255,255,0.3);">← БД</td>
+                    </tr>
+                    <tr style="background: rgba(243,156,18,0.3);">
+                        <td style="padding: 15px; border: 2px solid rgba(255,255,255,0.3);">Database</td>
+                        <td style="padding: 15px; border: 2px solid rgba(255,255,255,0.3);">← Данные</td>
+                    </tr>
+                </table>
+                <div style="text-align: left; font-size: 0.8em;">
+                    <h3 style="color: #2ecc71; margin-bottom: 10px;">Преимущества:</h3>
+                    <ul style="margin: 0;">
+                        <li>✅ Разделение ответственности (SRP)</li>
+                        <li>✅ Легкое тестирование каждого слоя</li>
+                        <li>✅ Возможность замены компонентов</li>
+                        <li>✅ Масштабируемость</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <section id="slide-5">
+                <h2>🔄 Взаимодействие слоев</h2>
+                
+                <div style="font-size: 0.9em; line-height: 1.4;">
+                    <div class="fragment" style="background: rgba(52,152,219,0.3); padding: 8px; margin-bottom: 5px; border-radius: 5px;">
+                        <strong style="color: #3498db;">1️⃣ CLIENT</strong> → POST /api/users
+                    </div>
+                    
+                    <div style="text-align: center; font-size: 1.2em; color: #FFD700;">↓</div>
+                    
+                    <div class="fragment" style="background: rgba(52,152,219,0.3); padding: 8px; margin-bottom: 5px; border-radius: 5px;">
+                        <strong style="color: #3498db;">2️⃣ API LAYER</strong> → Валидация + Права
+                    </div>
+                    
+                    <div style="text-align: center; font-size: 1.2em; color: #FFD700;">↓</div>
+                    
+                    <div class="fragment" style="background: rgba(46,204,113,0.3); padding: 8px; margin-bottom: 5px; border-radius: 5px;">
+                        <strong style="color: #2ecc71;">3️⃣ SERVICE LAYER</strong> → Бизнес-логика
+                    </div>
+                    
+                    <div style="text-align: center; font-size: 1.2em; color: #FFD700;">↓</div>
+                    
+                    <div class="fragment" style="background: rgba(155,89,182,0.3); padding: 8px; margin-bottom: 5px; border-radius: 5px;">
+                        <strong style="color: #9b59b6;">4️⃣ REPOSITORY</strong> → SQL запросы
+                    </div>
+                    
+                    <div style="text-align: center; font-size: 1.2em; color: #FFD700;">↓</div>
+                    
+                    <div class="fragment" style="background: rgba(243,156,18,0.3); padding: 8px; border-radius: 5px;">
+                        <strong style="color: #f39c12;">5️⃣ DATABASE</strong> → INSERT INTO users
+                    </div>
+                </div>
+            </section>
+
+            <section id="slide-6" data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🔙 Обратный поток данных</h2>
+                <div class="diagram" style="font-size: 0.9em;">
+                    <pre>Database → Repository → Service → Router → Client
+   ↓           ↓          ↓         ↓        ↓
+  User      User DTO   UserOut   JSON    {"id": 1, ...}</pre>
+                </div>
+            </section>
+            </section>
+
+            <!-- Слайд 8: API Layer -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">1️⃣ API Layer (Router)</h2>
+                <pre class="fragment"><code class="python">from fastapi import APIRouter, Depends
+from services.user_service import UserService
+from schemas.user import UserCreate, UserOut
+
+router = APIRouter(prefix="/users", tags=["users"])
+
+@router.post("/", response_model=UserOut)
+async def create_user(
+    user_data: UserCreate,
+    service: UserService = Depends()
+):
+    return await service.create_user(user_data)
+
+@router.get("/{user_id}", response_model=UserOut)
+async def get_user(
+    user_id: int,
+    service: UserService = Depends()
+):
+    return await service.get_user(user_id)</code></pre>
+            </section>
+
+            <!-- Слайд 9: Service Layer -->
+            <section>
+                <h2>2️⃣ Service Layer (Business Logic)</h2>
+                <pre class="fragment"><code class="python">from repositories.user_repository import UserRepository
+from utils.security import hash_password
+
+class UserService:
+    def __init__(self, repo: UserRepository = Depends()):
+        self.repo = repo
+    
+    async def create_user(self, data: UserCreate):
+        # Бизнес-логика
+        if await self.repo.exists_by_email(data.email):
+            raise ValueError("Email already exists")
+        
+        # Хеширование пароля
+        hashed_pwd = hash_password(data.password)
+        
+        # Сохранение
+        user = await self.repo.create({
+            **data.dict(),
+            "password": hashed_pwd
+        })
+        
+        # Отправка welcome email
+        await send_welcome_email(user.email)
+        return user</code></pre>
+            </section>
+
+            <!-- Слайд 10: Repository Layer -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">3️⃣ Repository Layer (Data Access)</h2>
+                <pre class="fragment"><code class="python">from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from models.user import User
+
+class UserRepository:
+    def __init__(self, db: AsyncSession = Depends(get_db)):
+        self.db = db
+    
+    async def create(self, data: dict):
+        user = User(**data)
+        self.db.add(user)
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user
+    
+    async def get_by_id(self, user_id: int):
+        result = await self.db.execute(
+            select(User).where(User.id == user_id)
+        )
+        return result.scalar_one_or_none()
+    
+    async def exists_by_email(self, email: str) -> bool:
+        result = await self.db.execute(
+            select(User).where(User.email == email)
+        )
+        return result.scalar_one_or_none() is not None</code></pre>
+            </section>
+
+            <!-- Слайд 11: Model Layer -->
+            <section>
+                <h2>4️⃣ Model Layer (Database)</h2>
+                <pre class="fragment"><code class="python">from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.sql import func
+from database import Base
+
+class User(Base):
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True)
+    username = Column(String, unique=True)
+    password = Column(String)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())</code></pre>
+            </section>
+
+            <!-- Слайд 12: Аутентификация - Актуальность -->
+            <section data-background-color="#c0392b">
+                <h2>🔐 Аутентификация и Авторизация</h2>
+                <div style="text-align: left; font-size: 0.85em;">
+                    <div class="fragment">
+                        <h3>Статистика атак:</h3>
+                        <ul>
+                            <li>🔴 81% взломов связаны со слабыми паролями</li>
+                            <li>🔴 43% кибератак направлены на малый бизнес</li>
+                            <li>🔴 95% утечек данных можно было предотвратить</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 20px;">
+                        <h3>Разница между Authentication и Authorization:</h3>
+                        <div class="diagram">┌─────────────────────────────────┐
+│  AUTHENTICATION (Кто ты?)       │
+│  ✓ Проверка логина/пароля       │
+│  ✓ Проверка токена              │
+└─────────────────────────────────┘
+                ↓
+┌─────────────────────────────────┐
+│  AUTHORIZATION (Что можешь?)    │
+│  ✓ Проверка прав доступа        │
+│  ✓ Роли (admin, user)           │
+└─────────────────────────────────┘</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 13: Методы аутентификации -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🔑 Методы аутентификации</h2>
+                <div style="text-align: left; font-size: 0.75em;">
+                    <div class="fragment">
+                        <h3>1. HTTP Basic Authentication</h3>
+                        <p>Клиент: Authorization: Basic base64(username:password)</p>
+                        <p>✅ Простота | ❌ Небезопасно без HTTPS</p>
+                    </div>
+                    
+                    <div class="fragment">
+                        <h3>2. Session-Based</h3>
+                        <p>Сервер создает сессию → session_id в cookie</p>
+                        <p>✅ Безопасно | ❌ Не для микросервисов</p>
+                    </div>
+                    
+                    <div class="fragment">
+                        <h3>3. Token-Based (JWT)</h3>
+                        <p>Сервер создает JWT → клиент отправляет в заголовке</p>
+                        <p>✅ Stateless, для микросервисов | ❌ Нельзя отозвать</p>
+                    </div>
+                    
+                    <div class="fragment">
+                        <h3>4. OAuth 2.0</h3>
+                        <p>"Войти через Google" → authorization code → access token</p>
+                        <p>✅ Не нужно хранить пароли | ❌ Сложная реализация</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 14: HTTP Basic Auth -->
+            <section>
+                <h2>🔐 HTTP Basic Auth - Пример</h2>
+                <pre class="fragment"><code class="python">from fastapi import FastAPI, Depends, HTTPException
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+import secrets
+
+app = FastAPI()
+security = HTTPBasic()
+
+USERS = {"admin": "secret123", "user": "password456"}
+
+def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
+    username = credentials.username
+    password = credentials.password
+    
+    if username not in USERS:
+        raise HTTPException(401, "Incorrect credentials")
+    
+    if not secrets.compare_digest(password, USERS[username]):
+        raise HTTPException(401, "Incorrect credentials")
+    
+    return username
+
+@app.get("/protected")
+def protected(username: str = Depends(verify_credentials)):
+    return {"message": f"Hello, {username}!"}</code></pre>
+            </section>
+
+
+            <!-- Слайд 15: OAuth2 -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🔄 OAuth 2.0</h2>
+                <div style="text-align: left; font-size: 0.75em;">
+                    <div class="fragment">
+                        <h3>Роли в OAuth 2.0:</h3>
+                        <div class="diagram">Resource Owner (Пользователь)
+        ↓
+Client (Ваше приложение)
+        ↓
+Authorization Server (Google, GitHub)
+        ↓
+Resource Server (API с данными)</div>
+                    </div>
+                    
+                    <div class="fragment">
+                        <h3>Authorization Code Flow:</h3>
+                        <ol>
+                            <li>Редирект на сервер авторизации</li>
+                            <li>Пользователь логинится и разрешает доступ</li>
+                            <li>Получаем authorization code</li>
+                            <li>Обмениваем code на access token</li>
+                            <li>Используем token для API запросов</li>
+                        </ol>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 16: OAuth2 в FastAPI -->
+            <section>
+                <h2>OAuth2 в FastAPI</h2>
+                <pre class="fragment"><code class="python">from fastapi import FastAPI, Depends
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
+app = FastAPI()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+@app.post("/token")
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(401, "Incorrect credentials")
+    
+    access_token = create_access_token(data={"sub": user.username})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@app.get("/users/me")
+async def read_users_me(token: str = Depends(oauth2_scheme)):
+    user = decode_token(token)
+    return user</code></pre>
+            </section>
+
+            <!-- Слайд 17: JWT -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🎫 JWT (JSON Web Token)</h2>
+                <div style="text-align: left; font-size: 0.75em;">
+                    <div class="fragment">
+                        <h3>Структура JWT:</h3>
+                        <div class="diagram">eyJhbGc...  .  eyJzdWI...  .  SflKxw...
+├─ HEADER ─┤├─ PAYLOAD ─┤├─ SIGNATURE ─┤</div>
+                    </div>
+                    
+                    <div class="fragment">
+                        <h3>Header:</h3>
+                        <pre><code class="json">{"alg": "HS256", "typ": "JWT"}</code></pre>
+                    </div>
+                    
+                    <div class="fragment">
+                        <h3>Payload:</h3>
+                        <pre><code class="json">{
+  "sub": "1234567890",
+  "name": "John Doe",
+  "exp": 1516242622,
+  "role": "admin"
+}</code></pre>
+                    </div>
+                    
+                    <div class="fragment">
+                        <h3>Signature:</h3>
+                        <pre><code>HMACSHA256(
+  base64(header) + "." + base64(payload),
+  secret_key
+)</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 18: JWT в FastAPI -->
+            <section>
+                <h2>JWT в FastAPI</h2>
+                <pre class="fragment"><code class="python">from jose import JWTError, jwt
+from datetime import datetime, timedelta
+
+SECRET_KEY = "your-secret-key"
+ALGORITHM = "HS256"
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=30)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        if username is None:
+            raise HTTPException(401)
+        return username
+    except JWTError:
+        raise HTTPException(401)</code></pre>
+            </section>
+
+            <!-- Слайд 19: Авторизация RBAC -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">👥 Авторизация (RBAC)</h2>
+                <div style="text-align: left; font-size: 0.8em;">
+                    <div class="fragment">
+                        <h3>Role-Based Access Control:</h3>
+                        <pre><code class="python">ROLES = {
+    "admin": ["read", "write", "delete", "manage_users"],
+    "moderator": ["read", "write", "delete"],
+    "user": ["read", "write"],
+    "guest": ["read"]
+}</code></pre>
+                    </div>
+                    
+                    <div class="fragment">
+                        <h3>Dependency для проверки роли:</h3>
+                        <pre><code class="python">def require_role(required_role: Role):
+    def role_checker(current_user: User = Depends(get_current_user)):
+        if current_user.role != required_role:
+            raise HTTPException(403, "Access denied")
+        return current_user
+    return role_checker
+
+@app.delete("/posts/{post_id}")
+async def delete_post(
+    post_id: int,
+    user: User = Depends(require_role(Role.MODERATOR))
+):
+    return {"message": "Post deleted"}</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 20: Middleware -->
+            <section>
+                <h2>🔧 Middleware</h2>
+                <div style="text-align: left; font-size: 0.8em;">
+                    <div class="fragment">
+                        <h3>Что такое Middleware?</h3>
+                        <div class="diagram">Request → Middleware 1 → Middleware 2 → Handler
+                                              ↓
+Response ← Middleware 1 ← Middleware 2 ← Return</div>
+                    </div>
+                    
+                    <div class="fragment">
+                        <h3>Пример: Логирование запросов</h3>
+                        <pre><code class="python">import time
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    
+    response = await call_next(request)
+    
+    process_time = time.time() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    
+    return response</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 21: CORS -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🌐 CORS</h2>
+                <div style="text-align: left; font-size: 0.85em;">
+                    <div class="fragment">
+                        <h3>Проблема:</h3>
+                        <div class="diagram">Frontend (localhost:3000) → Backend (localhost:8000)
+                                    ↓
+                              ❌ CORS Error</div>
+                    </div>
+                    
+                    <div class="fragment">
+                        <h3>Решение:</h3>
+                        <pre><code class="python">from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "https://myapp.com"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 22: Rate Limiting -->
+            <section>
+                <h2>⏱️ Rate Limiting Middleware</h2>
+                <pre class="fragment"><code class="python">from collections import defaultdict
+import time
+
+request_counts = defaultdict(list)
+RATE_LIMIT = 10  # запросов
+TIME_WINDOW = 60  # секунд
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    client_ip = request.client.host
+    current_time = time.time()
+    
+    # Очистка старых запросов
+    request_counts[client_ip] = [
+        req_time for req_time in request_counts[client_ip]
+        if current_time - req_time < TIME_WINDOW
+    ]
+    
+    # Проверка лимита
+    if len(request_counts[client_ip]) >= RATE_LIMIT:
+        raise HTTPException(429, "Too many requests")
+    
+    request_counts[client_ip].append(current_time)
+    return await call_next(request)</code></pre>
+            </section>
+
+            <!-- Слайд 23: Тестирование -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🧪 Автоматизированное тестирование</h2>
+                <div style="text-align: left; font-size: 0.8em;">
+                    <div class="fragment">
+                        <h3>Зачем нужны тесты?</h3>
+                        <div class="diagram">Без тестов:
+Изменил код → Проверил вручную → 30 минут
+
+С тестами:
+Изменил код → pytest → 5 секунд ✅</div>
+                    </div>
+                    
+                    <div class="fragment">
+                        <h3>Типы тестов:</h3>
+                        <ul>
+                            <li><strong>Unit Tests</strong> - тестируют функции</li>
+                            <li><strong>Integration Tests</strong> - взаимодействие компонентов</li>
+                            <li><strong>E2E Tests</strong> - весь flow</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 24: Пример теста -->
+            <section>
+                <h2>Пример теста</h2>
+                <pre class="fragment"><code class="python">from fastapi.testclient import TestClient
+
+client = TestClient(app)
+
+def test_create_user():
+    response = client.post(
+        "/users",
+        json={"username": "test", "email": "test@example.com"}
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["username"] == "test"
+    assert "id" in data
+
+def test_login():
+    response = client.post(
+        "/token",
+        data={"username": "test", "password": "secret"}
+    )
+    assert response.status_code == 200
+    assert "access_token" in response.json()
+
+def test_protected_endpoint():
+    # Без токена
+    response = client.get("/users/me")
+    assert response.status_code == 401</code></pre>
+            </section>
+
+            <!-- Слайд 25: Заключение -->
+            <section data-background-color="#1a1a2e">
+                <h2 style="color: #FFD700;">🎯 Что мы изучили</h2>
+                <div style="text-align: left; font-size: 0.85em;">
+                    <ul class="fragment">
+                        <li>✅ <strong>Маршрутизация</strong> - APIRouter для модульной структуры</li>
+                        <li>✅ <strong>Архитектура</strong> - разделение на слои (API, Service, Repository)</li>
+                        <li>✅ <strong>Аутентификация</strong> - Basic Auth, OAuth2, JWT</li>
+                        <li>✅ <strong>Авторизация</strong> - RBAC, Permissions</li>
+                        <li>✅ <strong>Middleware</strong> - CORS, Rate Limiting, Logging</li>
+                        <li>✅ <strong>Тестирование</strong> - Unit, Integration, E2E</li>
+                    </ul>
+                    
+                    <div class="fragment" style="margin-top: 30px;">
+                        <h3 style="color: #2ecc71;">Best Practices:</h3>
+                        <ul>
+                            <li>🚀 Используйте async/await</li>
+                            <li>🔐 Всегда HTTPS в продакшене</li>
+                            <li>📊 Логируйте запросы</li>
+                            <li>🧪 Покрывайте код тестами (80%+)</li>
+                            <li>🔄 Используйте кеширование (Redis)</li>
+                            <li>🛡️ Защищайтесь от атак</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Навигационная панель -->
+    <div class="navigation-panel" id="navigationPanel">
+        <div class="nav-grid" id="navGrid"></div>
+    </div>
+
+    <style>
+        .navigation-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            background: rgba(22, 33, 62, 0.95);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            padding: 7px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            z-index: 1000;
+        }
+        
+        .nav-grid {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 2px;
+            overflow-x: auto;
+        }
+        
+        .nav-button {
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 3px;
+            font-size: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-button:hover {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            transform: scale(1.1);
+        }
+        
+        .nav-button.active {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+        }
+    </style>
+
+    <script src="../3-4/js/reveal.min.js"></script>
+    <script src="../3-4/js/notes.min.js"></script>
+    <script src="../3-4/js/markdown.min.js"></script>
+    <script src="../3-4/js/highlight.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            transition: 'slide',
+            controls: true,
+            progress: true,
+            slideNumber: false,
+            center: true,
+            plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+        });
+
+        function createNavigationButtons() {
+            const navGrid = document.getElementById('navGrid');
+            for (let i = 1; i <= 26; i++) {
+                const button = document.createElement('div');
+                button.className = 'nav-button';
+                button.textContent = i;
+                button.onclick = () => Reveal.slide(i - 1, 0);
+                navGrid.appendChild(button);
+            }
+        }
+
+        function updateActiveButton() {
+            const buttons = document.querySelectorAll('.nav-button');
+            const currentSlide = Reveal.getIndices().h;
+            buttons.forEach((button, index) => {
+                button.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        Reveal.on('ready', () => {
+            createNavigationButtons();
+            updateActiveButton();
+        });
+        
+        Reveal.on('slidechanged', updateActiveButton);
+    </script>
+</body>
+</html>

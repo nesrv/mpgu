@@ -1,3 +1,14 @@
+
+Сделай html-презентацию на основе Разработка высоконагруженных систем  (44+72)\7-8\lect.md
+
+шаблон используй Разработка высоконагруженных систем  (44+72)\5-6\Презентация_FastAPI.html.
+постарайся взять всю информацию из md файла и разместить ее на слайдах.
+на слайдах сделай появление блоков по пробелу.
+если тебе удобнее, то можно для каждого слайда сделать отдельный html-файл.
+
+
+
+
 Сделай презентацию по дисциплине "Управление разработкой"
 
 слайд 1 тема "Лидеры команды"
@@ -6,7 +17,6 @@
 тимлид
 техлид
 архитектор
-
 
 слайд 2:
 Схема
@@ -32,12 +42,7 @@ Hard Skills и Soft Skills лидеров
 Роль LLM в обучении
 Все мы теперь стали программистами
 
-
-
-
-
 Роли, обязанности и взаимодействие в команде лидеров
-
 
 Почему сокеты?
 
@@ -52,7 +57,6 @@ Hard Skills и Soft Skills лидеров
     IP (ОС)
        ↓
    Сетевая карта
-
 
 Абстракция - скрывают сложность сетевых протоколов
 
@@ -87,13 +91,13 @@ server.listen(1)
 while True:
     # Принимаем соединение (блокирующий вызов)
     client, addr = server.accept()  # client - сокет клиента, addr - его адрес
-    
+  
     # Читаем данные от клиента (до 1024 байт)
     data = client.recv(1024)
-    
+  
     # Отправляем HTTP-ответ
     client.send(b'HTTP/1.1 200 OK\r\n\r\nHello World')
-    
+  
     # Закрываем соединение с клиентом
     client.close()
 
@@ -104,7 +108,6 @@ while True:
 Не парсит HTTP-заголовки/методы
 Всегда возвращает одно и то же
 Нет маршрутизации
-
 
 ```py
 import socket
@@ -128,7 +131,6 @@ while True:
 Роутинг URL
 
 Парсинг запросов/ответов
-
 
 ```py
 from aiohttp import web
@@ -155,7 +157,6 @@ web.run_app(app, host='localhost', port=8080)
 
 Тест: curl localhost:8080
 
-
 ```py
 import asyncio
 
@@ -168,7 +169,7 @@ async def main():
     loop = asyncio.get_running_loop()
     transport, protocol = await loop.create_datagram_endpoint(
         UDPServer, local_addr=('localhost', 8080))
-    
+  
     try:
         await asyncio.sleep(3600)  # Работает час
     finally:
@@ -187,7 +188,6 @@ UDP = без соединений, HTTP = с соединениями
 web-api
 c картинкой
 img/image-2.png
-
 
 ```py
 from aiohttp import web
@@ -224,6 +224,7 @@ curl localhost:8080/users
 curl -X POST localhost:8080/users -d '{"name":"Alice"}' -H "Content-Type: application/json"
 
 ```
+
 чем fastapi лучше aiohttp ?
 
 ```py
@@ -240,6 +241,7 @@ async def create_user(user: User):  # Автовалидация
     return user
 
 ```
+
 Преимущества FastAPI:
 
 Автодокументация - Swagger UI из коробки
@@ -262,7 +264,6 @@ aiohttp лучше когда:
 
 FastAPI лучше для REST API, aiohttp - для сложных веб-приложений.
 
-
 aiohttp для каких- для сложных веб-приложений?
 aiohttp подходит для:
 
@@ -273,6 +274,7 @@ aiohttp подходит для:
 Сессии, куки, middleware
 
 WebSocket серверы
+
 ```py
 async def websocket_handler(request):
     ws = web.WebSocketResponse()
@@ -303,7 +305,6 @@ aiohttp = универсальный веб-фреймворк
 
 Если только REST → FastAPI
 Если сложнее → aiohttp
-
 
 Разработка высоконагруженных систем  (44+72)\2\Презентация.html переделай для
 
