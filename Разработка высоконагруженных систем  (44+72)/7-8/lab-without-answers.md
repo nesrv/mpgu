@@ -1,4 +1,4 @@
-# Лабораторная работа: FastAPI - Маршрутизация, Архитектура и Безопасность
+# Лабораторная работа: FastAPI - Маршрутизация, Архитектура, Иньекции зависимостей
 
 ## 🎯 Цель работы
 
@@ -12,7 +12,7 @@
 # main.py
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-from typing import Optional
+
 
 app = FastAPI()
 
@@ -26,7 +26,7 @@ class StudentUpdate(BaseModel):
     Модель для частичного обновления данных студента.
     Все поля являются опциональными - можно обновлять только нужные поля.
     Используется в PATCH-запросах.
-    Optional[str] = None - если поле не передано в запросе, его значение останется неизменным в БД
+    name: str | None = Field(default=None) - если поле не передано в запросе, его значение останется неизменным в БД
     """
     name: str | None = Field(default=None) # Имя студента
     group: str | None = Field(default=None)
@@ -78,6 +78,16 @@ def update(name: str, update: StudentUpdate) -> Student:
 # exclude_unset=True — означает, что в словарь попадут только те поля,
 # которые были явно заданы при создании объекта (не равные None по умолчанию)
 
+@app.patch("/students/{name}/year")
+def update_year(name: str, value: int = Field(ge=1, le=5)) -> Student:
+    for i, student in enumerate(_students):
+        if student.name == name:
+            _students[i] = student.model_copy(update={"year": value})
+            return _students[i]
+    raise HTTPException(404, "Student not found")
+# model_copy(update={...}) — более эффективный способ обновления отдельных полей в Pydantic
+
+
 @app.delete("/students/{name}")
 def delete(name: str):
     for i, student in enumerate(_students):
@@ -111,7 +121,7 @@ uvicorn main:app --reload
 project-simple/
 ├── main.py      # FastAPI app + router подключение
 ├── models.py    # Student, StudentUpdate модели
-└── students.py  # API endpoints + бизнес-логика
+└── students.py  # API endpoints + бизнес-логика (не SOLID !)
 
 ```
 
@@ -134,6 +144,7 @@ def get_all() -> list[Student]:
 
 @router.get("/{name}")
 def get_one(name: str) -> Student:
+    # генератор работает быстрее
     student = next((s for s in _students if s.name == name), None)
     if not student:
         raise HTTPException(404, "Student not found")
@@ -164,7 +175,7 @@ def delete(name: str):
 
 # models.py
 from pydantic import BaseModel, Field
-from typing import Optional
+
 
 class Student(BaseModel):
     name: str
@@ -214,18 +225,15 @@ uvicorn main:app --reload --port 8001
 ```py
 # models.py
 from pydantic import BaseModel, Field
-from typing import Optional
+
 
 class Student(BaseModel):
-    name: str
-    group: str
-    year: int = Field(ge=1, le=5)
+    ...
     courses: list[int] = []
+    
 
 class StudentUpdate(BaseModel):
-    name: str | None = Field(default=None)
-    group: str | None = Field(default=None)
-    year: int | None = Field(default=None, ge=1, le=5)
+    ...
     courses: list[int] | None = Field(default=None)
 
 class Course(BaseModel):
@@ -242,7 +250,7 @@ class CourseUpdate(BaseModel):
 # students.py
 from fastapi import APIRouter, HTTPException, Query
 from models import Student, StudentUpdate
-from typing import Optional
+
 import json
 
 router = APIRouter(prefix="/students", tags=["students"])
@@ -252,33 +260,19 @@ _students: list[Student] = []
 
 @router.get("/{name}")
 def get_one(name: str) -> Student:
-    student = next((s for s in _students if s.name == name), None)
-    if not student:
-        raise HTTPException(404, "Student not found")
-    return student
+    ...
 
 @router.post("/")
 def create(student: Student) -> Student:
-    _students.append(student)
-    return student
+   ...
 
 @router.patch("/{name}")
 def update(name: str, data: StudentUpdate) -> Student:
-    for i, s in enumerate(_students):
-        if s.name == name:
-            updated = s.model_dump()
-            updated.update(data.model_dump(exclude_unset=True))
-            _students[i] = Student(**updated)
-            return _students[i]
-    raise HTTPException(404, "Student not found")
+    ...
 
 @router.delete("/{name}")
 def delete(name: str):
-    for i, s in enumerate(_students):
-        if s.name == name:
-            _students.pop(i)
-            return {"message": "Deleted"}
-    raise HTTPException(404, "Student not found")
+   ...
 
 
 
@@ -297,41 +291,36 @@ _courses: list[Course] = [
 
 @router.get("/")
 def get_all() -> list[Course]:
-    return _courses
+    return ...
 
 @router.get("/{course_id}")
 def get_one(course_id: int) -> Course:
-    course = next((c for c in _courses if c.id == course_id), None)
+    course = ...
     if not course:
         raise HTTPException(404, "Course not found")
     return course
 
 @router.post("/")
 def create(course: Course) -> Course:
-    _courses.append(course)
+   ...
     return course
 
 @router.patch("/{course_id}")
 def update(course_id: int, data: CourseUpdate) -> Course:
     for i, c in enumerate(_courses):
-        if c.id == course_id:
-            updated = c.model_dump()
-            updated.update(data.model_dump(exclude_unset=True))
-            _courses[i] = Course(**updated)
-            return _courses[i]
+        ...
     raise HTTPException(404, "Course not found")
 
 @router.delete("/{course_id}")
 def delete(course_id: int):
     for i, c in enumerate(_courses):
-        if c.id == course_id:
-            _courses.pop(i)
+        ...
             return {"message": "Deleted"}
     raise HTTPException(404, "Course not found")
 
 @router.get("/{course_id}/students")
 def get_students(course_id: int) -> list[Student]:
-    return [s for s in students._students if course_id in s.courses]
+    return [...]
 
 # main.py
 from fastapi import FastAPI
@@ -343,8 +332,8 @@ app.include_router(students_router)
 app.include_router(courses_router)
 ```
 
-2. Самостоятельно. С
-* Создай маршрут и логику для работы с тестовыми данным в fixtures.json
+2. Самостоятельно. 
+* Создай маршрут для fixtures.py и логику для работы с тестовыми данным в fixtures.json
 ```json
 [
   {"name": "Иван Петров", "group": "ИВТ-21", "year": 2, "courses": [1, 2]},
@@ -388,10 +377,10 @@ def load_all_fixtures():
         data = json.load(f)
     
     # Загрузка студентов
-    students._students = [students.Student(**item) for item in data["students"]]
+    students._students = [...]
     
     # Загрузка курсов
-    courses._courses = [courses.Course(**item) for item in data["courses"]]
+    courses._courses = [...]
     
     return {
         "message": "All fixtures loaded successfully",
@@ -402,8 +391,7 @@ def load_all_fixtures():
 @router.delete("/clear-all")
 def clear_all_data():
     """Очистить все данные"""
-    students._students.clear()
-    courses._courses.clear()
+    ...
     
     return {"message": "All data cleared"}
 
@@ -432,25 +420,19 @@ def get_status():
 
 @router.post("/{name}/enroll/{course_id}")
 def enroll(name: str, course_id: int):
-    for student in _students:
-        if student.name == name:
-            if course_id not in student.courses:
-                student.courses.append(course_id)
+   ...
             return {"message": "Enrolled"}
     raise HTTPException(404, "Student not found")
 
 @router.delete("/{name}/unenroll/{course_id}")
 def unenroll(name: str, course_id: int):
-    for student in _students:
-        if student.name == name:
-            if course_id in student.courses:
-                student.courses.remove(course_id)
+    ...
             return {"message": "Unenrolled"}
     raise HTTPException(404, "Student not found")
 
 @router.get("/search")
 def search(query: str = Query(...)) -> list[Student]:
-    return [s for s in _students if query.lower() in s.name.lower()]
+    return [...]
 
 #GET /students?year=2&group=ИВТ-21
 @router.get("/")
@@ -460,9 +442,9 @@ def get_all(
 ) -> list[Student]:
     result = _students
     if year:
-        result = [s for s in result if s.year == year]
+        result = [...]
     if group:
-        result = [s for s in result if s.group == group]
+        result = [...]
     return result
 
 ```
@@ -514,75 +496,49 @@ project-pattern/
 **Решение:**
 
 ```python
-
-# main.py
 # main.py
 from fastapi import FastAPI
 from api import students, courses, fixtures
 
 app = FastAPI()
 app.include_router(students.router)
-app.include_router(courses.router)
-app.include_router(fixtures.router)
+...
 
 # models/student.py
 from pydantic import BaseModel, Field
 
 class Student(BaseModel):
-    name: str
-    group: str
-    year: int = Field(ge=1, le=5)
-    courses: list[int] = []
+ ...
 
 # models/course.py
 from pydantic import BaseModel
 
 class Course(BaseModel):
-    id: int
-    name: str
-    credits: int
-    semester: int
+    ...
 
 # schemas/student.py
 from pydantic import BaseModel, Field
 
 class StudentCreate(BaseModel):
-    name: str
-    group: str
-    year: int
-    courses: list[int] = []
+   ...
 
 class StudentUpdate(BaseModel):
-    name: str | None = None
-    group: str | None = None
-    year: int | None = Field(None, ge=1, le=5)
-    courses: list[int] | None = None
+    ...
 
 class StudentResponse(BaseModel):
-    name: str
-    group: str
-    year: int
-    courses: list[int]
+    ...
 
 # schemas/course.py
 from pydantic import BaseModel
 
 class CourseCreate(BaseModel):
-    id: int
-    name: str
-    credits: int
-    semester: int
+    ...
 
 class CourseUpdate(BaseModel):
-    name: str | None = None
-    credits: int | None = None
-    semester: int | None = None
+    ...
 
 class CourseResponse(BaseModel):
-    id: int
-    name: str
-    credits: int
-    semester: int
+  ...
 
 # repositories/student_repository.py
 from models.student import Student
@@ -842,38 +798,6 @@ def get_status():
         "courses_count": len(course_service.course_repository._courses)
     }
 
-# fixtures_full.json
-{
-  "students": [
-    {"name": "Иван Петров", "group": "ИВТ-21", "year": 2, "courses": [1, 2]},
-    {"name": "Мария Сидорова", "group": "ИВТ-21", "year": 2, "courses": [1]},
-    {"name": "Алексей Иванов", "group": "ИВТ-22", "year": 1, "courses": [2, 3]},
-    {"name": "Елена Козлова", "group": "ИВТ-21", "year": 2, "courses": [1, 3]},
-    {"name": "Дмитрий Смирнов", "group": "ИВТ-23", "year": 3, "courses": [2]},
-    {"name": "Анна Волкова", "group": "ИВТ-22", "year": 1, "courses": [1, 2, 3]},
-    {"name": "Сергей Морозов", "group": "ИВТ-21", "year": 2, "courses": [3]},
-    {"name": "Ольга Новикова", "group": "ИВТ-23", "year": 3, "courses": [1]},
-    {"name": "Павел Лебедев", "group": "ИВТ-22", "year": 1, "courses": [2, 3]},
-    {"name": "Татьяна Соколова", "group": "ИВТ-21", "year": 2, "courses": [1, 2]},
-    {"name": "Николай Попов", "group": "ИВТ-23", "year": 3, "courses": [3]},
-    {"name": "Виктория Орлова", "group": "ИВТ-22", "year": 1, "courses": [1, 3]},
-    {"name": "Андрей Михайлов", "group": "ИВТ-21", "year": 2, "courses": [2]},
-    {"name": "Светлана Федорова", "group": "ИВТ-23", "year": 3, "courses": [1, 2]},
-    {"name": "Максим Романов", "group": "ИВТ-22", "year": 1, "courses": [3]},
-    {"name": "Екатерина Жукова", "group": "ИВТ-21", "year": 2, "courses": [1]},
-    {"name": "Владимир Кузнецов", "group": "ИВТ-23", "year": 3, "courses": [2, 3]},
-    {"name": "Наталья Васильева", "group": "ИВТ-22", "year": 1, "courses": [1, 2]},
-    {"name": "Артем Петров", "group": "ИВТ-21", "year": 2, "courses": [3]},
-    {"name": "Юлия Александрова", "group": "ИВТ-23", "year": 3, "courses": [1, 2, 3]}
-  ],
-  "courses": [
-    {"id": 1, "name": "Программирование", "credits": 4, "semester": 1},
-    {"id": 2, "name": "Математика", "credits": 3, "semester": 1},
-    {"id": 3, "name": "Базы данных", "credits": 3, "semester": 2},
-    {"id": 4, "name": "Алгоритмы", "credits": 4, "semester": 2},
-    {"id": 5, "name": "Веб-разработка", "credits": 3, "semester": 3}
-  ]
-}
 
 
 ```
@@ -909,7 +833,12 @@ EXPOSE 5432
 docker build -t postgres-students .
 docker run -d -p 5432:5432 postgres-students
 ```
+после
+Задание 5: Dependency Injection
 
+добавь
+
+# Добавь зависимости
 
 ```txt
 # requirements.txt
@@ -1226,3 +1155,4 @@ def get_service(repo = Depends(get_repository), logger = Depends(get_logger)):
     return StudentService(repo, logger)
 ```
 
+## Заключение
