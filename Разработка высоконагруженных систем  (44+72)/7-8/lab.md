@@ -1,6 +1,7 @@
 # Лабораторная работа: FastAPI - Маршрутизация, Архитектура и Безопасность
 
 ## 🎯 Цель работы
+
 Изучить принципы построения масштабируемых API с использованием FastAPI, включая маршрутизацию, архитектурные паттерны и методы аутентификации.
 
 ## 📋 Исходный код
@@ -21,9 +22,23 @@ class Student(BaseModel):
     year: int = Field(ge=1, le=5)
 
 class StudentUpdate(BaseModel):
-    name: Optional[str] = None
-    group: Optional[str] = None
-    year: Optional[int] = None
+    """
+    Модель для частичного обновления данных студента.
+    Все поля являются опциональными - можно обновлять только нужные поля.
+    Используется в PATCH-запросах.
+    Optional[str] = None - если поле не передано в запросе, его значение останется неизменным в БД
+    """
+    
+    name: Optional[str] = None  # Имя студента (необязательное для обновления)
+    group: Optional[str] = None  
+    year: Optional[int] = None  
+
+# Можно обновить только имя
+update_data = {"name": "Новое имя"}
+# Или только группу
+update_data = {"group": "Новая группа"}
+# Или все поля сразу
+update_data = {"name": "Новое имя", "group": "Новая группа", "year": 2026}
 
 _students: list[Student] = []
 
@@ -62,145 +77,82 @@ def delete(name: str):
     raise HTTPException(404, "Student not found")
 ```
 
----
+проверьте 
+```sh
+uvicorn main:app --reload
+```
 
-## 📝 Задание 1: Маршрутизация с APIRouter
+## 📝 Задание 1: Маршрутизация с APIRouter и простыми слоями
 
 **Задача:** Разделить монолитный код на модули с использованием APIRouter.
 
-**Структура проекта:**
+* Эта структура FastAPI проекта не является классическим MVC или MVT.
+* Это слоистая архитектура (Layered Architecture) или трёхуровневая архитектура (3-tier architecture).
+
+Вот как правильно назвать каждый слой:
+
+* routers/ - Presentation Layer (слой представления) или API Layer
+* services/ - Business Logic Layer (слой бизнес-логики) или Service Layer
+* models/ - Data Access Layer (слой доступа к данным) или Model Layer
+
+**Реализуем простую структура проекта:**
+
 ```
-project/
-├── main.py
-├── routers/
-│   └── students.py
-├── models/
-│   └── student.py
-└── services/
-    └── student_service.py
+project-simple/
+├── main.py      # FastAPI app + router подключение
+├── models.py    # Student, StudentUpdate модели
+└── students.py  # API endpoints + бизнес-логика
+
 ```
+
 
 **Решение:**
 
 ```python
-# models/student.py
-from pydantic import BaseModel, Field
-from typing import Optional
-
-class Student(BaseModel):
-    name: str
-    group: str
-    year: int = Field(ge=1, le=5)
-
-class StudentUpdate(BaseModel):
-    name: Optional[str] = None
-    group: Optional[str] = None
-    year: Optional[int] = None
-
-# services/student_service.py
-from models.student import Student, StudentUpdate
-
-_students: list[Student] = []
-
-def get_all() -> list[Student]:
-    return _students
-
-def get_by_name(name: str) -> Student | None:
-    return next((s for s in _students if s.name == name), None)
-
-def create(student: Student) -> Student:
-    _students.append(student)
-    return student
-
-def update(name: str, data: StudentUpdate) -> Student | None:
-    for i, s in enumerate(_students):
-        if s.name == name:
-            updated = s.model_dump()
-            updated.update(data.model_dump(exclude_unset=True))
-            _students[i] = Student(**updated)
-            return _students[i]
-    return None
-
-def delete(name: str) -> bool:
-    for i, s in enumerate(_students):
-        if s.name == name:
-            _students.pop(i)
-            return True
-    return False
-
-# routers/students.py
+# students.py
 from fastapi import APIRouter, HTTPException
-from models.student import Student, StudentUpdate
-from services import student_service as service
+from models import Student, StudentUpdate
 
 router = APIRouter(prefix="/students", tags=["students"])
 
+# In-memory storage
+_students: list[Student] = []
+
 @router.get("/")
 def get_all() -> list[Student]:
-    return service.get_all()
+    return _students
 
 @router.get("/{name}")
 def get_one(name: str) -> Student:
-    student = service.get_by_name(name)
+    student = next((s for s in _students if s.name == name), None)
     if not student:
         raise HTTPException(404, "Student not found")
     return student
 
 @router.post("/")
 def create(student: Student) -> Student:
-    return service.create(student)
+    _students.append(student)
+    return student
 
 @router.patch("/{name}")
 def update(name: str, data: StudentUpdate) -> Student:
-    student = service.update(name, data)
-    if not student:
-        raise HTTPException(404, "Student not found")
-    return student
+    for i, s in enumerate(_students):
+        if s.name == name:
+            updated = s.model_dump()
+            updated.update(data.model_dump(exclude_unset=True))
+            _students[i] = Student(**updated)
+            return _students[i]
+    raise HTTPException(404, "Student not found")
 
 @router.delete("/{name}")
 def delete(name: str):
-    if not service.delete(name):
-        raise HTTPException(404, "Student not found")
-    return {"message": "Deleted"}
+    for i, s in enumerate(_students):
+        if s.name == name:
+            _students.pop(i)
+            return {"message": "Deleted"}
+    raise HTTPException(404, "Student not found")
 
-# main.py
-from fastapi import FastAPI
-from routers import students
-
-app = FastAPI()
-app.include_router(students.router)
-```
-
----
-
-## 📝 Задание 2: Layered Architecture
-
-**Задача:** Реорганизовать код согласно слоистой архитектуре:
-- API Layer (Routers) ← HTTP
-- Service Layer (Business) ← Логика
-- Repository Layer (Data) ← БД
-- Database ← Данные
-
-**Структура проекта:**
-```
-project/
-├── main.py
-├── api/
-│   └── students.py
-├── services/
-│   └── student_service.py
-├── repositories/
-│   └── student_repository.py
-├── models/
-│   └── student.py
-└── schemas/
-    └── student.py
-```
-
-**Решение:**
-
-```python
-# schemas/student.py
+# models.py
 from pydantic import BaseModel, Field
 from typing import Optional
 
@@ -212,26 +164,398 @@ class Student(BaseModel):
 class StudentUpdate(BaseModel):
     name: Optional[str] = None
     group: Optional[str] = None
-    year: Optional[int] = None
+    year: Optional[int] = Field(None, ge=1, le=5)
+
+# main.py
+from fastapi import FastAPI
+from students import router
+
+app = FastAPI()
+app.include_router(router)
+```
+
+
+проверьте 
+```sh
+uvicorn main:app --reload
+uvicorn main:app --reload --port 8001
+```
+
+## Особенности
+
+
+* Один тип сущности (Student)
+* Простая логика (CRUD)
+* Нет базы данных
+* Нет сложных бизнес-правил
+
+# Задачи к первой части
+
+1. добавь фикстуру на 20 студетов и эндпоинт для их загрузки 
+* cоздай эндпоинт для поиска студентов: GET /students/search?query=Иван
+* Добавить query параметры для фильтрации студентов:
+GET /students?year=2&group=ИВТ-21
+
+2. Модель "Курсы" (Courses)
+
+* Создать модель Course с полями: id, name, credits, semester
+* Добавить поле courses: list[int] в модель Student (ID курсов)
+* Создать роутер courses.py с CRUD операциями
+
+Добавить эндпоинты:
+
+* GET /courses/{course_id}/students - студенты на курсе
+* POST /students/{name}/enroll/{course_id} - записать на курс
+* DELETE /students/{name}/unenroll/{course_id} - отчислить с курса
+
+
+Решение 
+
+```py
+# models.py
+from pydantic import BaseModel, Field
+from typing import Optional
+
+class Student(BaseModel):
+    name: str
+    group: str
+    year: int = Field(ge=1, le=5)
+    courses: list[int] = []
+
+class StudentUpdate(BaseModel):
+    name: Optional[str] = None
+    group: Optional[str] = None
+    year: Optional[int] = Field(None, ge=1, le=5)
+    courses: Optional[list[int]] = None
+
+class Course(BaseModel):
+    id: int
+    name: str
+    credits: int
+    semester: int
+
+class CourseUpdate(BaseModel):
+    name: Optional[str] = None
+    credits: Optional[int] = None
+    semester: Optional[int] = None
+
+# fixtures.json
+[
+  {"name": "Иван Петров", "group": "ИВТ-21", "year": 2, "courses": [1, 2]},
+  {"name": "Мария Сидорова", "group": "ИВТ-21", "year": 2, "courses": [1]},
+  {"name": "Алексей Иванов", "group": "ИВТ-22", "year": 1, "courses": [2, 3]},
+  {"name": "Елена Козлова", "group": "ИВТ-21", "year": 2, "courses": [1, 3]},
+  {"name": "Дмитрий Смирнов", "group": "ИВТ-23", "year": 3, "courses": [2]},
+  {"name": "Анна Волкова", "group": "ИВТ-22", "year": 1, "courses": [1, 2, 3]},
+  {"name": "Сергей Морозов", "group": "ИВТ-21", "year": 2, "courses": [3]},
+  {"name": "Ольга Новикова", "group": "ИВТ-23", "year": 3, "courses": [1]},
+  {"name": "Павел Лебедев", "group": "ИВТ-22", "year": 1, "courses": [2, 3]},
+  {"name": "Татьяна Соколова", "group": "ИВТ-21", "year": 2, "courses": [1, 2]},
+  {"name": "Николай Попов", "group": "ИВТ-23", "year": 3, "courses": [3]},
+  {"name": "Виктория Орлова", "group": "ИВТ-22", "year": 1, "courses": [1, 3]},
+  {"name": "Андрей Михайлов", "group": "ИВТ-21", "year": 2, "courses": [2]},
+  {"name": "Светлана Федорова", "group": "ИВТ-23", "year": 3, "courses": [1, 2]},
+  {"name": "Максим Романов", "group": "ИВТ-22", "year": 1, "courses": [3]},
+  {"name": "Екатерина Жукова", "group": "ИВТ-21", "year": 2, "courses": [1]},
+  {"name": "Владимир Кузнецов", "group": "ИВТ-23", "year": 3, "courses": [2, 3]},
+  {"name": "Наталья Васильева", "group": "ИВТ-22", "year": 1, "courses": [1, 2]},
+  {"name": "Артем Петров", "group": "ИВТ-21", "year": 2, "courses": [3]},
+  {"name": "Юлия Александрова", "group": "ИВТ-23", "year": 3, "courses": [1, 2, 3]}
+]
+
+# students.py
+from fastapi import APIRouter, HTTPException, Query
+from models import Student, StudentUpdate
+from typing import Optional
+import json
+
+router = APIRouter(prefix="/students", tags=["students"])
+
+_students: list[Student] = []
+
+@router.post("/load-fixture")
+def load_fixture():
+    global _students
+    with open("fixtures.json", "r", encoding="utf-8") as f:
+        data = json.load(f)
+    _students = [Student(**item) for item in data]
+    return {"message": f"Loaded {len(_students)} students"}
+
+@router.get("/")
+def get_all(year: Optional[int] = None, group: Optional[str] = None) -> list[Student]:
+    result = _students
+    if year:
+        result = [s for s in result if s.year == year]
+    if group:
+        result = [s for s in result if s.group == group]
+    return result
+
+@router.get("/search")
+def search(query: str = Query(...)) -> list[Student]:
+    return [s for s in _students if query.lower() in s.name.lower()]
+
+@router.get("/{name}")
+def get_one(name: str) -> Student:
+    student = next((s for s in _students if s.name == name), None)
+    if not student:
+        raise HTTPException(404, "Student not found")
+    return student
+
+@router.post("/")
+def create(student: Student) -> Student:
+    _students.append(student)
+    return student
+
+@router.patch("/{name}")
+def update(name: str, data: StudentUpdate) -> Student:
+    for i, s in enumerate(_students):
+        if s.name == name:
+            updated = s.model_dump()
+            updated.update(data.model_dump(exclude_unset=True))
+            _students[i] = Student(**updated)
+            return _students[i]
+    raise HTTPException(404, "Student not found")
+
+@router.delete("/{name}")
+def delete(name: str):
+    for i, s in enumerate(_students):
+        if s.name == name:
+            _students.pop(i)
+            return {"message": "Deleted"}
+    raise HTTPException(404, "Student not found")
+
+@router.post("/{name}/enroll/{course_id}")
+def enroll(name: str, course_id: int):
+    for student in _students:
+        if student.name == name:
+            if course_id not in student.courses:
+                student.courses.append(course_id)
+            return {"message": "Enrolled"}
+    raise HTTPException(404, "Student not found")
+
+@router.delete("/{name}/unenroll/{course_id}")
+def unenroll(name: str, course_id: int):
+    for student in _students:
+        if student.name == name:
+            if course_id in student.courses:
+                student.courses.remove(course_id)
+            return {"message": "Unenrolled"}
+    raise HTTPException(404, "Student not found")
+
+# courses.py
+from fastapi import APIRouter, HTTPException
+from models import Course, CourseUpdate, Student
+import students
+
+router = APIRouter(prefix="/courses", tags=["courses"])
+
+_courses: list[Course] = [
+    Course(id=1, name="Программирование", credits=4, semester=1),
+    Course(id=2, name="Математика", credits=3, semester=1),
+    Course(id=3, name="Базы данных", credits=3, semester=2)
+]
+
+@router.get("/")
+def get_all() -> list[Course]:
+    return _courses
+
+@router.get("/{course_id}")
+def get_one(course_id: int) -> Course:
+    course = next((c for c in _courses if c.id == course_id), None)
+    if not course:
+        raise HTTPException(404, "Course not found")
+    return course
+
+@router.post("/")
+def create(course: Course) -> Course:
+    _courses.append(course)
+    return course
+
+@router.patch("/{course_id}")
+def update(course_id: int, data: CourseUpdate) -> Course:
+    for i, c in enumerate(_courses):
+        if c.id == course_id:
+            updated = c.model_dump()
+            updated.update(data.model_dump(exclude_unset=True))
+            _courses[i] = Course(**updated)
+            return _courses[i]
+    raise HTTPException(404, "Course not found")
+
+@router.delete("/{course_id}")
+def delete(course_id: int):
+    for i, c in enumerate(_courses):
+        if c.id == course_id:
+            _courses.pop(i)
+            return {"message": "Deleted"}
+    raise HTTPException(404, "Course not found")
+
+@router.get("/{course_id}/students")
+def get_students(course_id: int) -> list[Student]:
+    return [s for s in students._students if course_id in s.courses]
+
+# main.py
+from fastapi import FastAPI
+from students import router as students_router
+from courses import router as courses_router
+
+app = FastAPI()
+app.include_router(students_router)
+app.include_router(courses_router)
+
+
+```
+
+
+## 📝 Задание 3: Траснформация с сложную архитектуру
+### Repository + Service Pattern с разделением ответственности
+
+Далее нужно разделить слои по зонам ответственности
+
+* Routers - обработка HTTP запросов
+* Services - бизнес-логика
+* Repositories - работа с данными
+* Models - доменные сущности
+* Schemas - валидация API
+
+**Структура проекта:**
+
+```py
+project-pattern/
+├── main.py                    # Точка входа
+├── api/                   # API Уровень (Представление)
+│   ├── __init__.py
+│   ├── students.py           # REST эндпоинты студентов
+│   └── courses.py            # REST эндпоинты курсов
+│  
+├── services/                  # Уровень бизнес-логики
+│   ├── student_service.py    # Бизнес-логика студентов
+│   └── course_service.py     # Бизнес-логика курсов
+│  
+├── repositories/              # Уровень доступа к данным
+│   ├── student_repository.py # Операции с данными студентов
+│   └── course_repository.py  # Операции с данными курсов
+│  
+├── models/                    # Доменные модели
+│   ├── student.py            # Модель Student
+│   └── course.py             # Модель Course
+│  
+├── schemas/                   # Схемы API
+│   ├── student.py            # DTO студентов
+│   └── course.py             # DTO курсов
+│  
+├── database/                  # Конфигурация БД
+│   └── __init__.py           # Настройка БД (заглушка)
+└── fixtures.json             # Тестовые данные
+
+
+```
+
+**Решение:**
+
+```python
+
+# main.py
+from fastapi import FastAPI
+from api import students, courses
+
+app = FastAPI()
+app.include_router(students.router)
+app.include_router(courses.router)
+
+# models/student.py
+from pydantic import BaseModel, Field
+
+class Student(BaseModel):
+    name: str
+    group: str
+    year: int = Field(ge=1, le=5)
+    courses: list[int] = []
+
+# models/course.py
+from pydantic import BaseModel
+
+class Course(BaseModel):
+    id: int
+    name: str
+    credits: int
+    semester: int
+
+# schemas/student.py
+from pydantic import BaseModel, Field
+from typing import Optional
+
+class StudentCreate(BaseModel):
+    name: str
+    group: str
+    year: int
+    courses: list[int] = []
+
+class StudentUpdate(BaseModel):
+    name: Optional[str] = None
+    group: Optional[str] = None
+    year: Optional[int] = Field(None, ge=1, le=5)
+    courses: Optional[list[int]] = None
+
+class StudentResponse(BaseModel):
+    name: str
+    group: str
+    year: int
+    courses: list[int]
+
+# schemas/course.py
+from pydantic import BaseModel
+from typing import Optional
+
+class CourseCreate(BaseModel):
+    id: int
+    name: str
+    credits: int
+    semester: int
+
+class CourseUpdate(BaseModel):
+    name: Optional[str] = None
+    credits: Optional[int] = None
+    semester: Optional[int] = None
+
+class CourseResponse(BaseModel):
+    id: int
+    name: str
+    credits: int
+    semester: int
 
 # repositories/student_repository.py
-from schemas.student import Student
+from models.student import Student
+from typing import Optional
+import json
 
 class StudentRepository:
     def __init__(self):
         self._students: list[Student] = []
     
-    def get_all(self) -> list[Student]:
-        return self._students
+    def load_fixture(self):
+        with open("fixtures.json", "r", encoding="utf-8") as f:
+            data = json.load(f)
+        self._students = [Student(**item) for item in data]
     
-    def get_by_name(self, name: str) -> Student | None:
+    def get_all(self, year: Optional[int] = None, group: Optional[str] = None) -> list[Student]:
+        result = self._students
+        if year:
+            result = [s for s in result if s.year == year]
+        if group:
+            result = [s for s in result if s.group == group]
+        return result
+    
+    def search(self, query: str) -> list[Student]:
+        return [s for s in self._students if query.lower() in s.name.lower()]
+    
+    def get_by_name(self, name: str) -> Optional[Student]:
         return next((s for s in self._students if s.name == name), None)
     
     def create(self, student: Student) -> Student:
         self._students.append(student)
         return student
     
-    def update(self, name: str, data: dict) -> Student | None:
+    def update(self, name: str, data: dict) -> Optional[Student]:
         for i, s in enumerate(self._students):
             if s.name == name:
                 updated = s.model_dump()
@@ -246,87 +570,228 @@ class StudentRepository:
                 self._students.pop(i)
                 return True
         return False
+    
+    def enroll(self, name: str, course_id: int) -> bool:
+        student = self.get_by_name(name)
+        if student and course_id not in student.courses:
+            student.courses.append(course_id)
+            return True
+        return False
+    
+    def unenroll(self, name: str, course_id: int) -> bool:
+        student = self.get_by_name(name)
+        if student and course_id in student.courses:
+            student.courses.remove(course_id)
+            return True
+        return False
+    
+    def get_students_by_course(self, course_id: int) -> list[Student]:
+        return [s for s in self._students if course_id in s.courses]
+
+# repositories/course_repository.py
+from models.course import Course
+from typing import Optional
+
+class CourseRepository:
+    def __init__(self):
+        self._courses: list[Course] = [
+            Course(id=1, name="Программирование", credits=4, semester=1),
+            Course(id=2, name="Математика", credits=3, semester=1),
+            Course(id=3, name="Базы данных", credits=3, semester=2)
+        ]
+    
+    def get_all(self) -> list[Course]:
+        return self._courses
+    
+    def get_by_id(self, course_id: int) -> Optional[Course]:
+        return next((c for c in self._courses if c.id == course_id), None)
 
 # services/student_service.py
+from models.student import Student
+from schemas.student import StudentCreate, StudentUpdate
 from repositories.student_repository import StudentRepository
-from schemas.student import Student, StudentUpdate
+from typing import List, Optional
 
 class StudentService:
-    def __init__(self, repo: StudentRepository):
-        self.repo = repo
+    def __init__(self):
+        self.repository = StudentRepository()
     
-    def get_all(self) -> list[Student]:
-        return self.repo.get_all()
+    def load_fixture(self):
+        return self.repository.load_fixture()
     
-    def get_by_name(self, name: str) -> Student | None:
-        return self.repo.get_by_name(name)
+    def get_all(self, year: Optional[int] = None, group: Optional[str] = None) -> List[Student]:
+        return self.repository.get_all(year, group)
     
-    def create(self, student: Student) -> Student:
-        if self.repo.get_by_name(student.name):
-            raise ValueError("Student exists")
-        return self.repo.create(student)
+    def search(self, query: str) -> List[Student]:
+        return self.repository.search(query)
     
-    def update(self, name: str, data: StudentUpdate) -> Student | None:
-        return self.repo.update(name, data.model_dump(exclude_unset=True))
+    def get_by_name(self, name: str) -> Optional[Student]:
+        return self.repository.get_by_name(name)
+    
+    def create(self, student_data: StudentCreate) -> Student:
+        student = Student(**student_data.model_dump())
+        return self.repository.create(student)
+    
+    def update(self, name: str, student_data: StudentUpdate) -> Optional[Student]:
+        return self.repository.update(name, student_data.model_dump(exclude_unset=True))
     
     def delete(self, name: str) -> bool:
-        return self.repo.delete(name)
+        return self.repository.delete(name)
+    
+    def enroll(self, name: str, course_id: int) -> bool:
+        return self.repository.enroll(name, course_id)
+    
+    def unenroll(self, name: str, course_id: int) -> bool:
+        return self.repository.unenroll(name, course_id)
+
+# services/course_service.py
+from models.course import Course
+from repositories.course_repository import CourseRepository
+from repositories.student_repository import StudentRepository
+from typing import List, Optional
+
+class CourseService:
+    def __init__(self):
+        self.course_repository = CourseRepository()
+        self.student_repository = StudentRepository()
+    
+    def get_all(self) -> List[Course]:
+        return self.course_repository.get_all()
+    
+    def get_by_id(self, course_id: int) -> Optional[Course]:
+        return self.course_repository.get_by_id(course_id)
+    
+    def get_students_by_course(self, course_id: int):
+        return self.student_repository.get_students_by_course(course_id)
 
 # api/students.py
-from fastapi import APIRouter, HTTPException, Depends
-from schemas.student import Student, StudentUpdate
+from fastapi import APIRouter, HTTPException, Query
+from schemas.student import StudentCreate, StudentUpdate, StudentResponse
 from services.student_service import StudentService
-from repositories.student_repository import StudentRepository
-
-def get_service() -> StudentService:
-    return StudentService(StudentRepository())
+from typing import List, Optional
 
 router = APIRouter(prefix="/students", tags=["students"])
+service = StudentService()
 
-@router.get("/")
-def get_all(service: StudentService = Depends(get_service)) -> list[Student]:
-    return service.get_all()
+@router.post("/load-fixture")
+def load_fixture():
+    service.load_fixture()
+    return {"message": "Loaded students from fixture"}
 
-@router.get("/{name}")
-def get_one(name: str, service: StudentService = Depends(get_service)) -> Student:
+@router.get("/", response_model=List[StudentResponse])
+def get_all(year: Optional[int] = None, group: Optional[str] = None):
+    return service.get_all(year, group)
+
+@router.get("/search", response_model=List[StudentResponse])
+def search(query: str = Query(...)):
+    return service.search(query)
+
+@router.get("/{name}", response_model=StudentResponse)
+def get_one(name: str):
     student = service.get_by_name(name)
     if not student:
-        raise HTTPException(404, "Not found")
+        raise HTTPException(404, "Student not found")
     return student
 
-@router.post("/")
-def create(student: Student, service: StudentService = Depends(get_service)) -> Student:
-    try:
-        return service.create(student)
-    except ValueError:
-        raise HTTPException(400, "Student exists")
+@router.post("/", response_model=StudentResponse)
+def create(student: StudentCreate):
+    return service.create(student)
 
-@router.patch("/{name}")
-def update(name: str, data: StudentUpdate, service: StudentService = Depends(get_service)) -> Student:
+@router.patch("/{name}", response_model=StudentResponse)
+def update(name: str, data: StudentUpdate):
     student = service.update(name, data)
     if not student:
-        raise HTTPException(404, "Not found")
+        raise HTTPException(404, "Student not found")
     return student
 
 @router.delete("/{name}")
-def delete(name: str, service: StudentService = Depends(get_service)):
+def delete(name: str):
     if not service.delete(name):
-        raise HTTPException(404, "Not found")
+        raise HTTPException(404, "Student not found")
     return {"message": "Deleted"}
 
-# main.py
-from fastapi import FastAPI
-from api import students
+@router.post("/{name}/enroll/{course_id}")
+def enroll(name: str, course_id: int):
+    if not service.enroll(name, course_id):
+        raise HTTPException(404, "Student not found")
+    return {"message": "Enrolled"}
 
-app = FastAPI()
-app.include_router(students.router)
+@router.delete("/{name}/unenroll/{course_id}")
+def unenroll(name: str, course_id: int):
+    if not service.unenroll(name, course_id):
+        raise HTTPException(404, "Student not found")
+    return {"message": "Unenrolled"}
+
+# api/courses.py
+from fastapi import APIRouter, HTTPException
+from schemas.course import CourseResponse
+from schemas.student import StudentResponse
+from services.course_service import CourseService
+from typing import List
+
+router = APIRouter(prefix="/courses", tags=["courses"])
+service = CourseService()
+
+@router.get("/", response_model=List[CourseResponse])
+def get_all_courses():
+    return service.get_all()
+
+@router.get("/{course_id}", response_model=CourseResponse)
+def get_course(course_id: int):
+    course = service.get_by_id(course_id)
+    if not course:
+        raise HTTPException(404, "Course not found")
+    return course
+
+@router.get("/{course_id}/students", response_model=List[StudentResponse])
+def get_students_by_course(course_id: int):
+    return service.get_students_by_course(course_id)
+
 ```
 
----
+
+## Когда нужна сложная структура:
+
+* Много сущностей (User, Course, Grade, etc.)
+* Реальная БД (PostgreSQL, MongoDB)
+* Сложная бизнес-логика
+* Аутентификация/авторизация
 
 ## 📝 Задание 3: Подключение PostgreSQL
 
 **Задача:** Заменить in-memory хранилище на PostgreSQL в Docker контейнере.
+
+1. Поднять бд в докер контейнере
+
+```dockerfile
+# Dockerfile
+FROM postgres:18
+
+ENV POSTGRES_DB=students_db
+ENV POSTGRES_USER=student
+ENV POSTGRES_PASSWORD=password
+
+EXPOSE 5432
+```
+
+```bash
+# Команды для запуска
+
+docker build -t postgres-students .
+docker run -d -p 5432:5432 postgres-students
+```
+
+
+```txt
+# requirements.txt
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+```
+
+
+
 
 **Файлы конфигурации:**
 
@@ -360,42 +825,6 @@ def create_tables():
     Base.metadata.create_all(bind=engine)
 ```
 
-```dockerfile
-# Dockerfile
-FROM postgres:15
-ENV POSTGRES_DB=students_db
-ENV POSTGRES_USER=student
-ENV POSTGRES_PASSWORD=password
-EXPOSE 5432
-```
-
-```bash
-# Команды для запуска
-docker build -t my-postgres .
-docker run -d -p 5432:5432 my-postgres
-```
-
-```yaml
-# docker-compose.yml
-version: '3.8'
-services:
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: students_db
-      POSTGRES_USER: student
-      POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
-```
-
-```txt
-# requirements.txt
-fastapi
-uvicorn
-sqlalchemy
-psycopg2-binary
-```
 
 ---
 
@@ -414,26 +843,26 @@ from schemas.student import Student
 class StudentRepository:
     def __init__(self, db: Session):
         self.db = db
-    
+  
     def get_all(self) -> list[StudentModel]:
         return self.db.query(StudentModel).all()
-    
+  
     def get_by_name(self, name: str) -> StudentModel | None:
         return self.db.query(StudentModel).filter(StudentModel.name == name).first()
-    
+  
     def create(self, student: Student) -> StudentModel:
         db_student = StudentModel(**student.model_dump())
         self.db.add(db_student)
         self.db.commit()
         self.db.refresh(db_student)
         return db_student
-    
+  
     def update(self, db_student: StudentModel, data: dict) -> StudentModel:
         for key, value in data.items():
             setattr(db_student, key, value)
         self.db.commit()
         return db_student
-    
+  
     def delete(self, db_student: StudentModel):
         self.db.delete(db_student)
         self.db.commit()
@@ -441,17 +870,20 @@ class StudentRepository:
 # api/students.py (обновленная)
 from fastapi import Depends
 from sqlalchemy.orm import Session
-from database import get_db
+from database.database import get_db
 
-def get_repository(db: Session = Depends(get_db)):
+def get_repository(db: Session = Depends(get_db)) -> StudentRepository:
     return StudentRepository(db)
 
-@router.get("/")
-def get_all(repo = Depends(get_repository)):
+@router.get("/", response_model=List[StudentResponse])
+def get_all(repo: StudentRepository = Depends(get_repository)):
     return repo.get_all()
+
+# остальные эндпоинты самостоятельно обновить
+
 ```
 
----
+
 
 ## 📝 Задание 4б: DI для логирования
 
@@ -465,7 +897,7 @@ class Logger:
     def __init__(self):
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
-    
+  
     def info(self, msg: str):
         self.logger.info(msg)
 
@@ -477,7 +909,7 @@ class StudentService:
     def __init__(self, repo, logger):
         self.repo = repo
         self.logger = logger
-    
+  
     def create(self, student):
         self.logger.info(f"Creating: {student.name}")
         return self.repo.create(student)
@@ -494,6 +926,7 @@ def get_service(repo = Depends(get_repository), logger = Depends(get_logger)):
 ## 📝 Задание 5: Basic Authentication
 
 **Теория-шпаргалка:**
+
 - **Basic Auth** = логин:пароль в base64 в заголовке `Authorization: Basic <encoded>`
 - **Плюсы:** простота реализации
 - **Минусы:** пароль передается в каждом запросе, нужен HTTPS
@@ -502,6 +935,7 @@ def get_service(repo = Depends(get_repository), logger = Depends(get_logger)):
 **Задача:** Добавить базовую аутентификацию с использованием DI.
 
 **Вариант 1: Фиксированные пользователи**
+
 ```python
 # auth/basic_auth.py
 from fastapi import HTTPException, Depends
@@ -530,6 +964,7 @@ def delete(name: str, user: str = Depends(verify_user)):
 ```
 
 **Вариант 2: Любые данные через Swagger**
+
 ```python
 # auth/basic_auth.py
 from fastapi import HTTPException, Depends
@@ -558,6 +993,7 @@ def delete(name: str, user: str = Depends(verify_user)):
 ```
 
 **Как использовать:**
+
 1. Открыть Swagger UI: `http://localhost:8000/docs`
 2. Нажать кнопку "Authorize" в правом верхнем углу
 3. Ввести любой username и password (минимум 3 символа)
@@ -571,6 +1007,7 @@ def delete(name: str, user: str = Depends(verify_user)):
 **Задача:** Добавить систему ролей в Basic Auth.
 
 **Требования:**
+
 1. Создать 3 роли: `admin`, `teacher`, `student`
 2. Только `admin` может удалять студентов
 3. `admin` и `teacher` могут создавать студентов
@@ -578,6 +1015,7 @@ def delete(name: str, user: str = Depends(verify_user)):
 5. Роль определяется по username: `admin_*`, `teacher_*`, `student_*`
 
 **Подсказка:**
+
 ```python
 def get_role(username: str) -> str:
     if username.startswith("admin_"):
@@ -602,11 +1040,13 @@ def delete(name: str, user: str = Depends(require_role(["admin"]))):
 ```
 
 **Тестирование:**
+
 - `admin_john:pass` - может все
 - `teacher_mary:pass` - может создавать, но не удалять
 - `student_bob:pass` - только просмотр
 
 **Решение:**
+
 ```python
 # auth/basic_auth.py
 from fastapi import HTTPException, Depends
@@ -661,6 +1101,7 @@ def delete(name: str, user: str = Depends(require_role(["admin"]))):
 ## 📝 Задание 6: JWT Authentication
 
 **Теория-шпаргалка:**
+
 - **JWT** = JSON Web Token, состоит из 3 частей: `header.payload.signature`
 - **Header** - алгоритм подписи (HS256)
 - **Payload** - данные пользователя (username, role, exp)
@@ -672,11 +1113,13 @@ def delete(name: str, user: str = Depends(require_role(["admin"]))):
 **Задача:** Исследовать и реализовать JWT аутентификацию.
 
 ### Шаг 1: Установка
+
 ```bash
 pip install python-jose python-multipart
 ```
 
 ### Шаг 2: JWT утилиты
+
 ```python
 # auth/jwt_auth.py
 from datetime import datetime, timedelta
@@ -708,6 +1151,7 @@ def require_admin(user = Depends(get_current_user)):
 ```
 
 ### Шаг 3: Логин эндпоинт
+
 ```python
 # api/auth.py
 from fastapi import APIRouter, HTTPException, Depends
@@ -725,6 +1169,7 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
 ```
 
 ### Результат
+
 ```python
 # api/students.py (финальная)
 from auth.jwt_auth import get_current_user, require_admin
@@ -755,13 +1200,15 @@ app.include_router(students.router)
 **Задача:** Создать систему с разными временами жизни токенов для разных ролей.
 
 **Требования:**
+
 1. `admin` - токен живет 60 минут
-2. `teacher` - токен живет 30 минут  
+2. `teacher` - токен живет 30 минут
 3. `student` - токен живет 15 минут
 4. Добавить эндпоинт `/auth/refresh` для обновления токена
 5. Показывать время истечения токена в ответе
 
 **Подсказка:**
+
 ```python
 # auth/jwt_auth.py
 def get_token_lifetime(role: str) -> int:
@@ -780,7 +1227,7 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
     user = USERS.get(form.username)
     if not user or user["password"] != form.password:
         raise HTTPException(401, "Invalid credentials")
-    
+  
     token, expire_time = create_token(form.username, user["role"])
     return {
         "access_token": token,
@@ -797,6 +1244,7 @@ def refresh_token(current_user = Depends(get_current_user)):
 ```
 
 **Тестирование:**
+
 1. Войти как `admin:secret` - получить токен на 60 мин
 2. Войти как `student:pass` - получить токен на 15 мин
 3. Использовать `/auth/refresh` для обновления токена
