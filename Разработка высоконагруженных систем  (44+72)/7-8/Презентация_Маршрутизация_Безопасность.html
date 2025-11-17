@@ -13,8 +13,9 @@
         .reveal h2 { font-size: 1.25em !important; margin-top: 0 !important; margin-bottom: 0.3em !important; text-transform: none !important; }
         .reveal h3 { font-size: 1em !important; margin-top: 0 !important; margin-bottom: 0.3em !important; text-transform: none !important; }
         .reveal .slides section { padding-top: 5px !important; }
-        pre code { font-size: 1.1em !important; max-height: 650px; overflow-y: auto; }
-        pre { max-height: 650px; overflow-y: auto; }
+        pre code { font-size: 1.1em !important; max-height: none; overflow: hidden; }
+        pre { max-height: none; overflow: hidden; }
+        .slides section pre code { font-size: 1.3em !important; }
         .diagram { font-family: 'Courier New', monospace; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; }
     </style>
 </head>
@@ -332,7 +333,263 @@ class User(Base):
     updated_at = Column(DateTime, onupdate=func.now())</code></pre>
             </section>
 
-            <!-- Слайд 12: Аутентификация - Актуальность -->
+            <!-- Слайд 12: SOLID - Введение -->
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">🏛️ SOLID принципы</h2>
+                <div style="text-align: left; font-size: 0.8em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">Что такое SOLID?</h3>
+                        <p>5 принципов объектно-ориентированного программирования</p>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 20px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr style="background: rgba(52,152,219,0.3);">
+                                <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.2); width: 60px;"><strong>S</strong></td>
+                                <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.2);">Single Responsibility Principle</td>
+                            </tr>
+                            <tr style="background: rgba(46,204,113,0.3);">
+                                <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.2);"><strong>O</strong></td>
+                                <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.2);">Open/Closed Principle</td>
+                            </tr>
+                            <tr style="background: rgba(155,89,182,0.3);">
+                                <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.2);"><strong>L</strong></td>
+                                <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.2);">Liskov Substitution Principle</td>
+                            </tr>
+                            <tr style="background: rgba(241,196,15,0.3);">
+                                <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.2);"><strong>I</strong></td>
+                                <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.2);">Interface Segregation Principle</td>
+                            </tr>
+                            <tr style="background: rgba(231,76,60,0.3);">
+                                <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.2);"><strong>D</strong></td>
+                                <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.2);">Dependency Inversion Principle</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 13: SOLID - SRP & OCP -->
+            <section>
+                <h2>SOLID в FastAPI: S & O</h2>
+                <div style="text-align: left; font-size: 0.75em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">S - Single Responsibility</h3>
+                        <p>Каждый класс должен иметь одну ответственность</p>
+                        <pre><code class="python"># ✅ Правильно
+class UserRepository:  # Только работа с БД
+    def create(self, user): ...
+    def get_by_id(self, id): ...
+
+class EmailService:    # Только отправка email
+    def send_welcome(self, email): ...
+
+class UserService:     # Только бизнес-логика
+    def register(self, data):
+        user = self.repo.create(data)
+        self.email.send_welcome(user.email)</code></pre>
+                    </div>
+                    
+                    <div class="fragment">
+                        <h3 style="color: #2ecc71;">O - Open/Closed</h3>
+                        <p>Открыт для расширения, закрыт для изменения</p>
+                        <pre><code class="python">class BaseRepository(ABC):
+    @abstractmethod
+    def save(self, entity): ...
+
+class PostgresRepository(BaseRepository):
+    def save(self, entity): # PostgreSQL
+
+class MongoRepository(BaseRepository):
+    def save(self, entity): # MongoDB</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 14: SOLID - DIP -->
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">SOLID в FastAPI: D</h2>
+                <div style="text-align: left; font-size: 0.75em;">
+                    <div class="fragment">
+                        <h3 style="color: #e74c3c;">D - Dependency Inversion</h3>
+                        <p>Зависимость от абстракций, а не от реализаций</p>
+                        <pre><code class="python"># ❌ Плохо
+class UserService:
+    def __init__(self):
+        self.repo = PostgresRepository()  # Жесткая зависимость
+
+# ✅ Хорошо
+class UserService:
+    def __init__(self, repo: BaseRepository):  # Абстракция
+        self.repo = repo
+
+# FastAPI Dependency Injection
+@app.get("/users")
+async def get_users(
+    service: UserService = Depends(get_user_service)
+):
+    return await service.get_all()</code></pre>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #2ecc71;">Преимущества SOLID:</h3>
+                        <ul>
+                            <li>✅ Легкое тестирование (моки)</li>
+                            <li>✅ Простая замена компонентов</li>
+                            <li>✅ Масштабируемость</li>
+                            <li>✅ Поддерживаемость</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 15: SOLID - SRP в проекте -->
+            <section>
+                <h2>S - Single Responsibility в project-pattern</h2>
+                <div style="text-align: left; font-size: 0.85em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">Каждый класс - одна ответственность</h3>
+                        <pre><code class="python"># StudentRepository - только работа с данными
+class StudentRepository:
+    def get_all(self) -> list[Student]: ...
+    def create(self, student_data: dict) -> Student: ...
+    def update(self, name: str, data: dict) -> Student: ...
+
+# StudentService - только бизнес-логика
+class StudentService:
+    def get_all(self, year=None, group=None) -> list[Student]: ...
+    def search(self, query: str) -> list[Student]: ...
+
+# API Router - только HTTP обработка
+@router.get("/")
+def get_all(year: int | None = None):
+    return service.get_all(year, group)</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 16: SOLID - OCP в проекте -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">O - Open/Closed в project-pattern</h2>
+                <div style="text-align: left; font-size: 0.85em;">
+                    <div class="fragment">
+                        <h3 style="color: #2ecc71;">Расширение без изменения</h3>
+                        <pre><code class="python"># Можно добавить новые репозитории
+class FileStudentRepository(StudentRepository):
+    def get_all(self):
+        # Чтение из файла
+        with open("students.json") as f:
+            return json.load(f)
+
+class DatabaseStudentRepository(StudentRepository):
+    def get_all(self):
+        # Чтение из БД
+        return db.query(Student).all()
+
+class RedisStudentRepository(StudentRepository):
+    def get_all(self):
+        # Чтение из Redis
+        return redis.get("students")</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <p style="color: #2ecc71;">✅ Сервис не меняется при добавлении новых репозиториев!</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 17: SOLID - ISP в проекте -->
+            <section>
+                <h2>I - Interface Segregation в project-pattern</h2>
+                <div style="text-align: left; font-size: 0.85em;">
+                    <div class="fragment">
+                        <h3 style="color: #f39c12;">Разделенные схемы для разных операций</h3>
+                        <pre><code class="python"># Отдельные схемы для разных целей
+class StudentCreate(BaseModel):    # Только для создания
+    name: str
+    group: str
+    year: int
+    courses: list[int] = []
+
+class StudentUpdate(BaseModel):    # Только для обновления
+    name: str | None = None
+    group: str | None = None
+    year: int | None = None
+    courses: list[int] | None = None
+
+class StudentResponse(BaseModel):  # Только для ответа API
+    name: str
+    group: str
+    year: int
+    courses: list[int]</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <p style="color: #2ecc71;">✅ Клиент не зависит от ненужных полей!</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 18: SOLID - DIP в проекте -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">D - Dependency Inversion в project-pattern</h2>
+                <div style="text-align: left; font-size: 0.85em;">
+                    <div class="fragment">
+                        <h3 style="color: #e74c3c;">Зависимость от абстракций</h3>
+                        <pre><code class="python"># Сервис зависит от репозитория (абстракции)
+class StudentService:
+    def __init__(self):
+        self.repository = StudentRepository()  # Абстракция
+    
+    def get_all(self):
+        return self.repository.get_all()  # Делегирование
+
+# API зависит от сервиса
+service = StudentService()
+
+@router.get("/")
+def get_all():
+    return service.get_all()  # Зависимость от абстракции</code></pre>
+                    </div>
+                    <div class="fragment" style="margin-top: 15px;">
+                        <div class="diagram">API Layer → Service Layer → Repository Layer
+    ↓           ↓              ↓
+Абстракция  Абстракция     Абстракция</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 19: SOLID - Итог -->
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">🎯 Итог применения SOLID</h2>
+                <div style="text-align: left; font-size: 0.85em;">
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                        <tr style="background: rgba(46,204,113,0.3);">
+                            <td style="padding: 12px; border: 1px solid rgba(255,255,255,0.2); width: 60px;">✅ <strong>S</strong></td>
+                            <td style="padding: 12px; border: 1px solid rgba(255,255,255,0.2);">Разделение ответственности по слоям</td>
+                        </tr>
+                        <tr style="background: rgba(46,204,113,0.3);">
+                            <td style="padding: 12px; border: 1px solid rgba(255,255,255,0.2);">✅ <strong>O</strong></td>
+                            <td style="padding: 12px; border: 1px solid rgba(255,255,255,0.2);">Возможность расширения без изменений</td>
+                        </tr>
+                        <tr style="background: rgba(231,76,60,0.3);">
+                            <td style="padding: 12px; border: 1px solid rgba(255,255,255,0.2);">❌ <strong>L</strong></td>
+                            <td style="padding: 12px; border: 1px solid rgba(255,255,255,0.2);">Не применимо (нет наследования)</td>
+                        </tr>
+                        <tr style="background: rgba(46,204,113,0.3);">
+                            <td style="padding: 12px; border: 1px solid rgba(255,255,255,0.2);">✅ <strong>I</strong></td>
+                            <td style="padding: 12px; border: 1px solid rgba(255,255,255,0.2);">Разделенные схемы для разных операций</td>
+                        </tr>
+                        <tr style="background: rgba(46,204,113,0.3);">
+                            <td style="padding: 12px; border: 1px solid rgba(255,255,255,0.2);">✅ <strong>D</strong></td>
+                            <td style="padding: 12px; border: 1px solid rgba(255,255,255,0.2);">Зависимость от абстракций</td>
+                        </tr>
+                    </table>
+                    <div class="fragment" style="margin-top: 25px; text-align: center;">
+                        <h3 style="color: #2ecc71; font-size: 1.3em;">4 из 5 принципов SOLID применены! 🎉</h3>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 20: Аутентификация - Актуальность -->
             <section data-background-color="#c0392b">
                 <h2>🔐 Аутентификация и Авторизация</h2>
                 <div style="text-align: left; font-size: 0.85em;">
@@ -347,17 +604,25 @@ class User(Base):
                     
                     <div class="fragment" style="margin-top: 20px;">
                         <h3>Разница между Authentication и Authorization:</h3>
-                        <div class="diagram">┌─────────────────────────────────┐
-│  AUTHENTICATION (Кто ты?)       │
-│  ✓ Проверка логина/пароля       │
-│  ✓ Проверка токена              │
-└─────────────────────────────────┘
-                ↓
-┌─────────────────────────────────┐
-│  AUTHORIZATION (Что можешь?)    │
-│  ✓ Проверка прав доступа        │
-│  ✓ Роли (admin, user)           │
-└─────────────────────────────────┘</div>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                            <tr style="background: rgba(52,152,219,0.4);">
+                                <td style="padding: 20px; border: 2px solid rgba(255,255,255,0.3); text-align: center;">
+                                    <strong style="font-size: 1.2em;">AUTHENTICATION (Кто ты?)</strong><br><br>
+                                    ✓ Проверка логина/пароля<br>
+                                    ✓ Проверка токена
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px; text-align: center; font-size: 1.5em; color: #FFD700;">↓</td>
+                            </tr>
+                            <tr style="background: rgba(46,204,113,0.4);">
+                                <td style="padding: 20px; border: 2px solid rgba(255,255,255,0.3); text-align: center;">
+                                    <strong style="font-size: 1.2em;">AUTHORIZATION (Что можешь?)</strong><br><br>
+                                    ✓ Проверка прав доступа<br>
+                                    ✓ Роли (admin, user)
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
             </section>
@@ -395,6 +660,10 @@ class User(Base):
             <!-- Слайд 14: HTTP Basic Auth -->
             <section>
                 <h2>🔐 HTTP Basic Auth - Пример</h2>
+                <div class="fragment" style="text-align: left; font-size: 0.85em; margin-bottom: 15px;">
+                    <p><strong style="color: #3498db;">HTTPBasic</strong> - это объект, который говорит FastAPI: "Жди логин и пароль в заголовке"</p>
+                    <p><strong style="color: #2ecc71;">HTTPBasicCredentials</strong> - это контейнер с логином и паролем, которые пришли от клиента</p>
+                </div>
                 <pre class="fragment"><code class="python">from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 import secrets
@@ -428,13 +697,37 @@ def protected(username: str = Depends(verify_credentials)):
                 <div style="text-align: left; font-size: 0.75em;">
                     <div class="fragment">
                         <h3>Роли в OAuth 2.0:</h3>
-                        <div class="diagram">Resource Owner (Пользователь)
-        ↓
-Client (Ваше приложение)
-        ↓
-Authorization Server (Google, GitHub)
-        ↓
-Resource Server (API с данными)</div>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                            <tr style="background: rgba(52,152,219,0.3);">
+                                <td style="padding: 8px; border: 2px solid rgba(255,255,255,0.3); text-align: center; white-space: nowrap;">
+                                    <strong>1. Resource Owner (Пользователь)</strong>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 3px; text-align: center; font-size: 1.5em; color: #FFD700;">↓</td>
+                            </tr>
+                            <tr style="background: rgba(46,204,113,0.3);">
+                                <td style="padding: 8px; border: 2px solid rgba(255,255,255,0.3); text-align: center; white-space: nowrap;">
+                                    <strong>2. Client (Ваше приложение)</strong>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 3px; text-align: center; font-size: 1.5em; color: #FFD700;">↓</td>
+                            </tr>
+                            <tr style="background: rgba(155,89,182,0.3);">
+                                <td style="padding: 8px; border: 2px solid rgba(255,255,255,0.3); text-align: center; white-space: nowrap;">
+                                    <strong>3. Authorization Server (Google, GitHub)</strong>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 3px; text-align: center; font-size: 1.5em; color: #FFD700;">↓</td>
+                            </tr>
+                            <tr style="background: rgba(241,196,15,0.3);">
+                                <td style="padding: 8px; border: 2px solid rgba(255,255,255,0.3); text-align: center; white-space: nowrap;">
+                                    <strong>4. Resource Server (API с данными)</strong>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                     
                     <div class="fragment">
@@ -453,6 +746,18 @@ Resource Server (API с данными)</div>
             <!-- Слайд 16: OAuth2 в FastAPI -->
             <section>
                 <h2>OAuth2 в FastAPI</h2>
+                <div class="fragment" style="text-align: left; font-size: 0.75em; margin-bottom: 15px;">
+                    <p><strong style="color: #3498db;">Как работает:</strong></p>
+                    <ol style="line-height: 1.5;">
+                        <li><strong>/token</strong> - клиент отправляет логин/пароль → получает <span style="color: #2ecc71;">access_token</span></li>
+                        <li><strong>/users/me</strong> - клиент отправляет token в заголовке → получает данные</li>
+                    </ol>
+                    <p style="margin-top: 10px;"><strong style="color: #e74c3c;">Ключевые компоненты:</strong></p>
+                    <ul style="line-height: 1.5;">
+                        <li><strong style="color: #f39c12;">OAuth2PasswordBearer</strong> - автоматически извлекает token из заголовка "Authorization: Bearer xxx"</li>
+                        <li><strong style="color: #9b59b6;">OAuth2PasswordRequestForm</strong> - принимает логин/пароль из формы (username, password)</li>
+                    </ul>
+                </div>
                 <pre class="fragment"><code class="python">from fastapi import FastAPI, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
@@ -478,10 +783,27 @@ async def read_users_me(token: str = Depends(oauth2_scheme)):
             <section data-background-color="#16213e">
                 <h2 style="color: #FFD700;">🎫 JWT (JSON Web Token)</h2>
                 <div style="text-align: left; font-size: 0.75em;">
+                    <div class="fragment" style="margin-bottom: 15px;">
+                        <p style="color: #fff; line-height: 1.6;"><strong>JWT</strong> - это как электронный пропуск, который содержит информацию о пользователе и защищён от подделки цифровой подписью.</p>
+                    </div>
                     <div class="fragment">
-                        <h3>Структура JWT:</h3>
-                        <div class="diagram">eyJhbGc...  .  eyJzdWI...  .  SflKxw...
-├─ HEADER ─┤├─ PAYLOAD ─┤├─ SIGNATURE ─┤</div>
+                        <h3>Структура JWT:
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                            <tr>
+                                <td style="padding: 12px; border: 2px solid rgba(52,152,219,0.5); background: rgba(52,152,219,0.2); text-align: center; width: 33%;">
+                                    <div style="font-family: monospace; color: #3498db; margin-bottom: 8px;">eyJhbGc...</div>
+                                    <strong style="color: #3498db;">HEADER</strong>
+                                </td>
+                                <td style="padding: 12px; border: 2px solid rgba(46,204,113,0.5); background: rgba(46,204,113,0.2); text-align: center; width: 33%;">
+                                    <div style="font-family: monospace; color: #2ecc71; margin-bottom: 8px;">eyJzdWI...</div>
+                                    <strong style="color: #2ecc71;">PAYLOAD</strong>
+                                </td>
+                                <td style="padding: 12px; border: 2px solid rgba(231,76,60,0.5); background: rgba(231,76,60,0.2); text-align: center; width: 33%;">
+                                    <div style="font-family: monospace; color: #e74c3c; margin-bottom: 8px;">SflKxw...</div>
+                                    <strong style="color: #e74c3c;">SIGNATURE</strong>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                     
                     <div class="fragment">
@@ -512,6 +834,14 @@ async def read_users_me(token: str = Depends(oauth2_scheme)):
             <!-- Слайд 18: JWT в FastAPI -->
             <section>
                 <h2>JWT в FastAPI</h2>
+                <div class="fragment" style="text-align: left; font-size: 0.8em; margin-bottom: 15px;">
+                    <p><strong style="color: #3498db;">Как работает:</strong></p>
+                    <ul style="line-height: 1.6;">
+                        <li><strong style="color: #2ecc71;">create_access_token</strong> - создаёт токен с данными пользователя и сроком действия</li>
+                        <li><strong style="color: #e74c3c;">get_current_user</strong> - проверяет токен и достаёт из него имя пользователя</li>
+                        <li><strong style="color: #f39c12;">jwt.encode/decode</strong> - шифрует/расшифровывает токен с помощью секретного ключа</li>
+                    </ul>
+                </div>
                 <pre class="fragment"><code class="python">from jose import JWTError, jwt
 from datetime import datetime, timedelta
 
@@ -537,8 +867,17 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
             <!-- Слайд 19: Авторизация RBAC -->
             <section data-background-color="#16213e">
-                <h2 style="color: #FFD700;">👥 Авторизация (RBAC)</h2>
+                <h2 style="color: #FFD700;">👥 Авторизация RBAC<br><span style="font-size: 0.6em; color: #95a5a6;">(Role-Based Access Control)</span></h2>
                 <div style="text-align: left; font-size: 0.8em;">
+                    <div class="fragment" style="margin-bottom: 15px;">
+                        <p style="color: #fff; line-height: 1.6;"><strong>RBAC</strong> - это система ролей: каждой роли (админ, модератор, юзер) назначены свои права доступа.</p>
+                        <p style="color: #2ecc71; line-height: 1.6; margin-top: 10px;"><strong>Когда применяется:</strong></p>
+                        <ul style="line-height: 1.4; font-size: 0.75em;">
+                            <li>📝 <strong>Блог/Форум:</strong> admin может удалять посты, moderator - редактировать, user - только читать</li>
+                            <li>🛍️ <strong>E-commerce:</strong> admin управляет товарами, customer - покупает, guest - смотрит каталог</li>
+                            <li>🏫 <strong>Учебная система:</strong> teacher ставит оценки, student - сдаёт работы, parent - смотрит успеваемость</li>
+                        </ul>
+                    </div>
                     <div class="fragment">
                         <h3>Role-Based Access Control:</h3>
                         <pre><code class="python">ROLES = {
@@ -572,16 +911,45 @@ async def delete_post(
             <section>
                 <h2>🔧 Middleware</h2>
                 <div style="text-align: left; font-size: 0.8em;">
-                    <div class="fragment">
-                        <h3>Что такое Middleware?</h3>
-                        <div class="diagram">Request → Middleware 1 → Middleware 2 → Handler
-                                              ↓
-Response ← Middleware 1 ← Middleware 2 ← Return</div>
-                    </div>
-                    
-                    <div class="fragment">
-                        <h3>Пример: Логирование запросов</h3>
-                        <pre><code class="python">import time
+                    <div class="fragment" style="display: flex; gap: 20px;">
+                        <div style="flex: 1;">
+                            <h3>Что такое Middleware?</h3>
+                            <p style="margin-bottom: 10px; font-size: 0.85em;">Это "прослойка" между запросом и обработчиком</p>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8em;">
+                                <tr>
+                                    <td style="padding: 6px; border: 2px solid rgba(52,152,219,0.5); background: rgba(52,152,219,0.2); text-align: center;">
+                                        <strong style="color: #3498db;">Request</strong>
+                                    </td>
+                                </tr>
+                                <tr><td style="padding: 2px; text-align: center; font-size: 1.2em; color: #FFD700;">↓</td></tr>
+                                <tr>
+                                    <td style="padding: 6px; border: 2px solid rgba(155,89,182,0.5); background: rgba(155,89,182,0.2); text-align: center;">
+                                        <strong style="color: #9b59b6;">Middleware 1</strong>
+                                    </td>
+                                </tr>
+                                <tr><td style="padding: 2px; text-align: center; font-size: 1.2em; color: #FFD700;">↓</td></tr>
+                                <tr>
+                                    <td style="padding: 6px; border: 2px solid rgba(155,89,182,0.5); background: rgba(155,89,182,0.2); text-align: center;">
+                                        <strong style="color: #9b59b6;">Middleware 2</strong>
+                                    </td>
+                                </tr>
+                                <tr><td style="padding: 2px; text-align: center; font-size: 1.2em; color: #FFD700;">↓</td></tr>
+                                <tr>
+                                    <td style="padding: 6px; border: 2px solid rgba(46,204,113,0.5); background: rgba(46,204,113,0.2); text-align: center;">
+                                        <strong style="color: #2ecc71;">Handler</strong>
+                                    </td>
+                                </tr>
+                                <tr><td style="padding: 2px; text-align: center; font-size: 1.2em; color: #FFD700;">↓</td></tr>
+                                <tr>
+                                    <td style="padding: 6px; border: 2px solid rgba(231,76,60,0.5); background: rgba(231,76,60,0.2); text-align: center;">
+                                        <strong style="color: #e74c3c;">Response</strong>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div style="flex: 1;">
+                            <h3>Пример: Логирование</h3>
+                            <pre><code class="python">import time
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -593,6 +961,7 @@ async def log_requests(request: Request, call_next):
     response.headers["X-Process-Time"] = str(process_time)
     
     return response</code></pre>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -601,6 +970,14 @@ async def log_requests(request: Request, call_next):
             <section data-background-color="#16213e">
                 <h2 style="color: #FFD700;">🌐 CORS</h2>
                 <div style="text-align: left; font-size: 0.85em;">
+                    <div class="fragment" style="margin-bottom: 15px;">
+                        <p><strong style="color: #3498db;">Что такое CORS?</strong></p>
+                        <p>Cross-Origin Resource Sharing - механизм безопасности браузера</p>
+                        <p style="margin-top: 10px;"><strong style="color: #2ecc71;">Зачем нужен?</strong></p>
+                        <p>Защищает от атак: злонамеренный сайт не может украсть данные с вашего API</p>
+                        <p style="margin-top: 10px;"><strong style="color: #f39c12;">На каком уровне?</strong></p>
+                        <p>Работает на уровне <strong>HTTP заголовков</strong> между браузером и сервером</p>
+                    </div>
                     <div class="fragment">
                         <h3>Проблема:</h3>
                         <div class="diagram">Frontend (localhost:3000) → Backend (localhost:8000)
@@ -629,30 +1006,117 @@ app.add_middleware(
             <!-- Слайд 22: Rate Limiting -->
             <section>
                 <h2>⏱️ Rate Limiting Middleware</h2>
+                <div class="fragment" style="text-align: left; font-size: 0.75em; margin-bottom: 10px;">
+                    <p><strong style="color: #3498db;">Что это?</strong> Как охранник на входе - считает, сколько раз ты заходил за последний час.</p>
+                </div>
                 <pre class="fragment"><code class="python">from collections import defaultdict
 import time
 
-request_counts = defaultdict(list)
-RATE_LIMIT = 10  # запросов
-TIME_WINDOW = 60  # секунд
+request_counts = defaultdict(list)  # Словарь: IP → [время1, время2, ...]
+RATE_LIMIT = 10  # Максимум 10 запросов
+TIME_WINDOW = 60  # За 60 секунд
 
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
-    client_ip = request.client.host
-    current_time = time.time()
+    client_ip = request.client.host  # Кто пришёл?
+    current_time = time.time()       # Когда?
     
-    # Очистка старых запросов
+    # Шаг 1: Очистка истории - оставляем только последние 60 сек
     request_counts[client_ip] = [
         req_time for req_time in request_counts[client_ip]
         if current_time - req_time < TIME_WINDOW
     ]
     
-    # Проверка лимита
+    # Шаг 2: Проверка - если >= 10 запросов → блокируем
     if len(request_counts[client_ip]) >= RATE_LIMIT:
         raise HTTPException(429, "Too many requests")
     
+    # Шаг 3: Пропускаем - добавляем время и обрабатываем
     request_counts[client_ip].append(current_time)
     return await call_next(request)</code></pre>
+                <div class="fragment" style="text-align: left; font-size: 0.7em; margin-top: 10px;">
+                    <p><strong style="color: #2ecc71;">Пример:</strong> IP <code>192.168.1.1</code> → <code>[10:00:00, 10:00:05]</code> → добавляем <code>10:00:10</code> → пропускаем ✅</p>
+                </div>
+            </section>
+
+            <!-- Слайд 22.5: Rate Limiting - Подробное объяснение -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">⏱️ Rate Limiting - Как работает код</h2>
+                <div style="text-align: left; font-size: 0.75em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">Шаг 1: Очистка истории</h3>
+                        <pre><code class="python">request_counts[client_ip] = [
+    req_time for req_time in request_counts[client_ip]
+    if current_time - req_time < TIME_WINDOW
+]</code></pre>
+                        <p><strong>Что делает:</strong> Оставляем только запросы за последние 60 секунд</p>
+                        <p><strong>Пример:</strong> Было <code>[9:59:00, 10:00:00, 10:00:05]</code> → Стало <code>[10:00:00, 10:00:05]</code></p>
+                    </div>
+                    
+                    <div class="fragment">
+                        <h3 style="color: #e74c3c;">Шаг 2: Проверка лимита</h3>
+                        <pre><code class="python">if len(request_counts[client_ip]) >= RATE_LIMIT:
+    raise HTTPException(429, "Too many requests")</code></pre>
+                        <p><strong>Что делает:</strong> Считаем запросы. Если >= 10 → блокируем</p>
+                        <p><strong>Пример:</strong> <code>[10:00:00, ..., 10:00:10]</code> → 10 запросов → следующий заблокируем ❌</p>
+                    </div>
+                    
+                    <div class="fragment">
+                        <h3 style="color: #2ecc71;">Шаг 3: Пропускаем запрос</h3>
+                        <pre><code class="python">request_counts[client_ip].append(current_time)
+return await call_next(request)</code></pre>
+                        <p><strong>Что делает:</strong> Добавляем текущее время в список и обрабатываем запрос</p>
+                        <p><strong>Пример:</strong> <code>[10:00:00, 10:00:05]</code> → добавляем <code>10:00:10</code> → <code>[10:00:00, 10:00:05, 10:00:10]</code> ✅</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 22.6: Rate Limiting - Пример работы -->
+            <section>
+                <h2>⏱️ Rate Limiting - Пример работы</h2>
+                <div style="text-align: left; font-size: 0.85em;">
+                    <p style="margin-bottom: 20px;">Пользователь с IP <strong style="color: #3498db;">192.168.1.1</strong> отправляет запросы:</p>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr style="background: rgba(52,152,219,0.3);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>Время</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>Список запросов</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>Результат</strong></td>
+                        </tr>
+                        <tr style="background: rgba(46,204,113,0.2);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">10:00:00</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><code>[10:00:00]</code></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">✅ OK (1 запрос)</td>
+                        </tr>
+                        <tr style="background: rgba(46,204,113,0.2);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">10:00:05</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><code>[10:00:00, 10:00:05]</code></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">✅ OK (2 запроса)</td>
+                        </tr>
+                        <tr style="background: rgba(46,204,113,0.2);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">10:00:10</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><code>[10:00:00, ..., 10:00:10]</code></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">✅ OK (10 запросов - лимит)</td>
+                        </tr>
+                        <tr style="background: rgba(231,76,60,0.2);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">10:00:15</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><code>[10:00:00, ..., 10:00:10]</code></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">❌ 429 (уже 10!)</td>
+                        </tr>
+                        <tr style="background: rgba(46,204,113,0.2);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">10:01:01</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><code>[10:00:05, ..., 10:01:01]</code></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">✅ OK (старые удалены)</td>
+                        </tr>
+                    </table>
+                    <div class="fragment" style="margin-top: 20px;">
+                        <h3 style="color: #2ecc71;">Где применяется:</h3>
+                        <ul style="font-size: 0.9em;">
+                            <li>🔐 <strong>API ключи</strong> - ограничение по тарифу (100 req/час)</li>
+                            <li>🛡️ <strong>Защита от DDoS</strong> - блокировка массовых атак</li>
+                            <li>💰 <strong>Монетизация</strong> - Free: 100/час, Pro: 10000/час</li>
+                        </ul>
+                    </div>
+                </div>
             </section>
 
             <!-- Слайд 23: Тестирование -->
@@ -682,32 +1146,43 @@ async def rate_limit_middleware(request: Request, call_next):
             <!-- Слайд 24: Пример теста -->
             <section>
                 <h2>Пример теста</h2>
+                <div class="fragment" style="text-align: left; font-size: 0.75em; margin-bottom: 10px;">
+                    <p><strong style="color: #3498db;">TestClient</strong> - имитирует браузер, отправляет запросы к API без запуска сервера</p>
+                </div>
                 <pre class="fragment"><code class="python">from fastapi.testclient import TestClient
 
-client = TestClient(app)
+client = TestClient(app)  # Создаём тестовый клиент
 
 def test_create_user():
+    # Отправляем POST запрос на создание пользователя
     response = client.post(
         "/users",
         json={"username": "test", "email": "test@example.com"}
     )
+    # Проверяем: статус 201 (создан)
     assert response.status_code == 201
     data = response.json()
+    # Проверяем: username правильный
     assert data["username"] == "test"
+    # Проверяем: есть id
     assert "id" in data
 
 def test_login():
+    # Проверяем логин
     response = client.post(
         "/token",
         data={"username": "test", "password": "secret"}
     )
     assert response.status_code == 200
-    assert "access_token" in response.json()
+    assert "access_token" in response.json()  # Токен получен
 
 def test_protected_endpoint():
-    # Без токена
+    # Проверяем защищённый эндпоинт без токена
     response = client.get("/users/me")
-    assert response.status_code == 401</code></pre>
+    assert response.status_code == 401  # Должен вернуть ошибку</code></pre>
+                <div class="fragment" style="text-align: left; font-size: 0.7em; margin-top: 10px;">
+                    <p><strong style="color: #2ecc71;">Запуск:</strong> <code>pytest test_main.py</code> → проверяет все функции с <code>test_</code></p>
+                </div>
             </section>
 
             <!-- Слайд 25: Заключение -->
@@ -808,7 +1283,7 @@ def test_protected_endpoint():
 
         function createNavigationButtons() {
             const navGrid = document.getElementById('navGrid');
-            for (let i = 1; i <= 26; i++) {
+            for (let i = 1; i <= 34; i++) {
                 const button = document.createElement('div');
                 button.className = 'nav-button';
                 button.textContent = i;
