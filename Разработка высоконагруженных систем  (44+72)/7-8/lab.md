@@ -797,7 +797,7 @@ psycopg2-binary
 
 ```python
 # database.py
-from sqlalchemy import Column, Integer, String, create_engine
+from sqlalchemy import Column, Integer, String, create_engine, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
@@ -813,6 +813,14 @@ class StudentModel(Base):
     name = Column(String, unique=True)
     group = Column(String)
     year = Column(Integer)
+    courses = Column(JSON, default=[])
+
+class CourseModel(Base):
+    __tablename__ = "courses"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    credits = Column(Integer)
+    semester = Column(Integer)
 
 def get_db():
     db = SessionLocal()
@@ -826,7 +834,81 @@ def create_tables():
 ```
 
 
----
+# SQLAlchemy ШПАРГАЛКА для студентов
+
+```py
+
+
+# ============= ОСНОВНЫЕ ОПЕРАЦИИ =============
+
+# CREATE - Создать студента
+student = StudentModel(name="Иван", group="ИВТ-21", year=2, courses=[1,2])
+db.add(student)
+db.commit()
+
+# READ - Получить студентов
+db.query(StudentModel).all()                           # Все студенты
+db.query(StudentModel).first()                         # Первый студент
+db.query(StudentModel).filter(StudentModel.name == "Иван").first()  # По имени
+
+# UPDATE - Обновить студента
+student = db.query(StudentModel).filter(StudentModel.name == "Иван").first()
+student.year = 3
+db.commit()
+
+# DELETE - Удалить студента
+student = db.query(StudentModel).filter(StudentModel.name == "Иван").first()
+db.delete(student)
+db.commit()
+
+# ============= ФИЛЬТРАЦИЯ =============
+
+# По году
+db.query(StudentModel).filter(StudentModel.year == 2)
+
+# По группе
+db.query(StudentModel).filter(StudentModel.group == "ИВТ-21")
+
+# Несколько условий
+db.query(StudentModel).filter(StudentModel.year == 2, StudentModel.group == "ИВТ-21")
+
+# Поиск по имени (без учета регистра)
+db.query(StudentModel).filter(StudentModel.name.ilike("%иван%"))
+
+# Студенты на курсе (JSON поле)
+db.query(StudentModel).filter(StudentModel.courses.contains([1]))
+
+# ============= ПОЛЕЗНЫЕ КОМАНДЫ =============
+
+# Подсчет
+db.query(StudentModel).count()
+
+# Сортировка
+db.query(StudentModel).order_by(StudentModel.name)
+
+# Лимит
+db.query(StudentModel).limit(10)
+
+# Обновить после изменений
+db.refresh(student)
+
+# ============= РАБОТА С JSON (курсы) =============
+
+# Добавить курс
+courses = student.courses or []
+courses.append(course_id)
+student.courses = courses
+db.commit()
+
+# Удалить курс
+courses = student.courses or []
+courses.remove(course_id)
+student.courses = courses
+db.commit()
+
+
+```
+
 
 ## 📝 Задание 4а: Dependency Injection для БД
 
@@ -835,49 +917,139 @@ def create_tables():
 **Практика:**
 
 ```python
-# repositories/student_repository.py
-from sqlalchemy.orm import Session
-from database import StudentModel
-from schemas.student import Student
+# СРАВНЕНИЕ: project-pattern (in-memory) vs project-pattern-db (SQLAlchemy)
 
-class StudentRepository:
+# ============= REPOSITORIES COMPARISON =============
+
+# project-pattern: repositories/student_repository.py (IN-MEMORY)
+class StudentRepository_InMemory:
+    def __init__(self):
+        self._students: list[Student] = []
+    
+    def get_all(self, year: Optional[int] = None, group: Optional[str] = None) -> list[Student]:
+        result = self._students
+        if year:
+            result = [s for s in result if s.year == year]
+        if group:
+            result = [s for s in result if s.group == group]
+        return result
+    
+    def create(self, student_data: dict) -> Student:
+        student = Student(**student_data)
+        self._students.append(student)
+        return student
+
+# project-pattern-db: repositories/student_repository.py (SQLALCHEMY)
+class StudentRepository_DB:
     def __init__(self, db: Session):
         self.db = db
-  
-    def get_all(self) -> list[StudentModel]:
-        return self.db.query(StudentModel).all()
-  
-    def get_by_name(self, name: str) -> StudentModel | None:
-        return self.db.query(StudentModel).filter(StudentModel.name == name).first()
-  
-    def create(self, student: Student) -> StudentModel:
-        db_student = StudentModel(**student.model_dump())
+    
+    def get_all(self, year: Optional[int] = None, group: Optional[str] = None) -> list[Student]:
+        query = self.db.query(StudentModel)
+        if year:
+            query = query.filter(StudentModel.year == year)
+        if group:
+            query = query.filter(StudentModel.group == group)
+        
+        db_students = query.all()
+        return [Student(name=s.name, group=s.group, year=s.year, courses=s.courses or []) for s in db_students]
+    
+    def create(self, student_data: dict) -> Student:
+        db_student = StudentModel(**student_data)
         self.db.add(db_student)
         self.db.commit()
         self.db.refresh(db_student)
-        return db_student
-  
-    def update(self, db_student: StudentModel, data: dict) -> StudentModel:
-        for key, value in data.items():
-            setattr(db_student, key, value)
-        self.db.commit()
-        return db_student
-  
-    def delete(self, db_student: StudentModel):
-        self.db.delete(db_student)
-        self.db.commit()
+        return Student(name=db_student.name, group=db_student.group, year=db_student.year, courses=db_student.courses or [])
 
-# api/students.py (обновленная)
-from fastapi import Depends
-from sqlalchemy.orm import Session
-from database.database import get_db
+# ============= SERVICES COMPARISON =============
 
-def get_repository(db: Session = Depends(get_db)) -> StudentRepository:
-    return StudentRepository(db)
+# project-pattern: services/student_service.py (IN-MEMORY)
+class StudentService_InMemory:
+    def __init__(self):
+        self.repository = StudentRepository()  # Без БД сессии
 
-@router.get("/", response_model=List[StudentResponse])
-def get_all(repo: StudentRepository = Depends(get_repository)):
-    return repo.get_all()
+# project-pattern-db: services/student_service.py (SQLALCHEMY)
+class StudentService_DB:
+    def __init__(self, db: Session):
+        self.repository = StudentRepository(db)  # С БД сессией
+
+# ============= API COMPARISON =============
+
+# project-pattern: api/students.py (IN-MEMORY)
+router = APIRouter(prefix="/students", tags=["students"])
+service = StudentService()  # Глобальный сервис
+
+@router.get("/")
+def get_all(year: Optional[int] = None, group: Optional[str] = None):
+    return service.get_all(year, group)  # Прямой вызов
+
+# project-pattern-db: api/students.py (SQLALCHEMY)
+router = APIRouter(prefix="/students", tags=["students"])
+
+def get_service(db: Session = Depends(get_db)) -> StudentService:
+    return StudentService(db)  # Инъекция БД сессии
+
+@router.get("/")
+def get_all(year: Optional[int] = None, group: Optional[str] = None, service: StudentService = Depends(get_service)):
+    return service.get_all(year, group)  # Через зависимость
+
+# ============= MAIN APPLICATION COMPARISON =============
+
+# project-pattern: main.py (IN-MEMORY)
+from fastapi import FastAPI
+from api import students, courses
+
+app = FastAPI()
+app.include_router(students.router)
+app.include_router(courses.router)
+
+# project-pattern-db: main.py (SQLALCHEMY)
+from fastapi import FastAPI
+from api import students, courses
+from database.database import create_tables
+
+app = FastAPI()
+
+@app.on_event("startup")
+def startup_event():
+    create_tables()  # Создание таблиц при запуске
+
+app.include_router(students.router)
+app.include_router(courses.router)
+
+# ============= КЛЮЧЕВЫЕ ОТЛИЧИЯ =============
+
+"""
+1. ХРАНЕНИЕ ДАННЫХ:
+   - project-pattern: В памяти (списки Python)
+   - project-pattern-db: PostgreSQL база данных
+
+2. ЗАВИСИМОСТИ:
+   - project-pattern: Нет внешних зависимостей
+   - project-pattern-db: SQLAlchemy, PostgreSQL
+
+3. ИНЪЕКЦИЯ ЗАВИСИМОСТЕЙ:
+   - project-pattern: Глобальные сервисы
+   - project-pattern-db: FastAPI Depends для БД сессий
+
+4. ПЕРСИСТЕНТНОСТЬ:
+   - project-pattern: Данные теряются при перезапуске
+   - project-pattern-db: Данные сохраняются в БД
+
+5. МАСШТАБИРУЕМОСТЬ:
+   - project-pattern: Ограничена памятью сервера
+   - project-pattern-db: Масштабируется с БД
+
+6. КОНКУРЕНТНОСТЬ:
+   - project-pattern: Проблемы с многопользовательским доступом
+   - project-pattern-db: БД обеспечивает ACID транзакции
+
+7. ЗАПРОСЫ:
+   - project-pattern: Фильтрация в Python коде
+   - project-pattern-db: SQL запросы в БД
+"""
+
+
 
 # остальные эндпоинты самостоятельно обновить
 
