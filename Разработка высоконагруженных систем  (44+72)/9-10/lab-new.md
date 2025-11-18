@@ -1,3 +1,19 @@
+# Лабораторная работа: FastAPI - Архитектура и Безопасность (продолжение)
+
+## 🎯 Цель работы
+
+Изучить принципы построения масштабируемых API с использованием FastAPI, включая маршрутизацию, архитектурные паттерны и методы аутентификации.
+
+# Задание 1. Уменьшим структуру проекта для изучения методов аутентификации 
+(всего будет 2 эндпоинта)
+
+
+project-auth/
+├── main.py     
+├── api.py    
+├── models.py    
+├── schemas.py    
+└── service.py  
 
 ```py
 # main.py
@@ -64,6 +80,12 @@ class StudentResponse(BaseModel):
     data: dict
 
 # service.py
+from sqlalchemy.orm import Session
+from sqlalchemy import text, func
+from models import StudentModel, CourseModel, Base, engine
+from schemas import StudentResponse, StudentCreate
+import json
+
 class StudentService:
     def __init__(self, db: Session):
         self.db = db
@@ -92,7 +114,10 @@ class StudentService:
                 )
                 self.db.merge(course)
         
-        self.db.commit()
+        self.db.commit()        
+       # Сбрасываем последовательность чтобы новые студенты получали правильные ID  
+        max_id = self.db.query(func.max(StudentModel.id)).scalar() or 0
+        self.db.execute(func.setval('students_id_seq', max_id))
     
     def get_all(self) -> List[StudentResponse]:
         students = self.db.query(StudentModel).all()
@@ -123,11 +148,28 @@ def get_students(service: StudentService = Depends(get_service)):
     except Exception as e:
         return {"error": f"Failed to get students: {str(e)}"}
 
-
 ```
 
-# Сделаем для эндпоинта @router.get("/students/") аутентификацию HTTP Basic Auth
+* Запустите postgresql в контейнере `docker run -d -p 5432:5432 postgres-students`
 
+```sh
+FROM postgres:17
+
+ENV POSTGRES_DB=students_db
+ENV POSTGRES_USER=student
+ENV POSTGRES_PASSWORD=password
+
+EXPOSE 5432
+```
+
+* Протестируйте API
+
+
+
+# Задание 2. Изучение базовой аутентификации с помощью HTTP Basic Auth
+
+* Сделайте для эндпоинта @router.get("/students/") аутентификацию HTTP Basic Auth
+* Для этого в отдельном файле:
 
 ```py
 # auth.py - Модуль аутентификации для FastAPI приложения
@@ -166,11 +208,11 @@ def authenticate_user(credentials: HTTPBasicCredentials = Depends(security)):
     return credentials.username
 
 
+# Добавьте аутентификацию с помощью Depency Injection
+
 # api.py
 
 from auth import authenticate_user 
-
-
 
 @router.get("/students/")
 def get_students(
@@ -185,9 +227,12 @@ def get_students(
         return {"error": f"Failed to get students: {str(e)}"}
 
 ```
+* Проверяем
+
+# Задание 3. Добавьте аутентификацию с помощью OAuth 
 
 
-### добавь @router.post("/") и логику для него
+### Сначала создадим эндпоинт @router.post("/") и логику для него
 
 ```py
 #api.py
@@ -216,7 +261,6 @@ class StudentCreate(BaseModel):
 class StudentService:
     ...
 
-
      def create(self, student_data):
         student = StudentModel(name=student_data.name, data=student_data.data or {})
         self.db.add(student)
@@ -227,7 +271,7 @@ class StudentService:
 
 ```
 
-## Добавь OAuth для этого эндпоинта @router.post("/students/")
+## Настроим OAuth для этого эндпоинта @router.post("/students/")
 
 ```py
 
@@ -238,18 +282,18 @@ from fastapi.security import OAuth2PasswordBearer
 import secrets
 
 
-# Создаем объект для OAuth2
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# ========== НАСТРОЙКА OAUTH2 ==========
+# Создаем объект для Bearer Token (проще для Swagger)
+oauth2_scheme = HTTPBearer()
 
 # OAuth2 токен (в реальном проекте хранить в переменных окружения)
 VALID_TOKEN = "secret-oauth-token"
 
 # ========== ФУНКЦИЯ OAUTH2 АУТЕНТИФИКАЦИИ ==========
-def authenticate_oauth(token = Depends(oauth2_scheme)):
-
+def authenticate_oauth(credentials = Depends(oauth2_scheme)):
     # Проверяем токен с защитой от timing attacks
     is_valid_token = secrets.compare_digest(
-        token.encode("utf8"), VALID_TOKEN.encode("utf8")
+        credentials.credentials.encode("utf8"), VALID_TOKEN.encode("utf8")
     )
     
     if not is_valid_token:
@@ -266,7 +310,7 @@ def authenticate_oauth(token = Depends(oauth2_scheme)):
 
 from oauth import authenticate_oauth  # OAuth2 Bearer Token
 
-
+# Добавляем  аутентификацию с помощью Depency Injection
 @router.post("/students/")
 def create_student(
     student_data: StudentCreate,
@@ -279,43 +323,193 @@ def create_student(
 ```
 
 
-В Swagger UI для OAuth2 нужно ввести токен напрямую:
+## Тестирование
 
-Вариант 1 - Простой (используйте токен напрямую):
+### В Swagger UI для OAuth2 нужно ввести токен напрямую:
 
-В Swagger UI нажмите "Authorize" и введите:
-Token : secret-oauth-token
+#### Вариант 1 - Простой (используйте токен напрямую):
 
-Остальные поля оставьте пустыми
+* В Swagger UI нажмите "Authorize" и введите:
+* Token : secret-oauth-token
+* Остальные поля оставьте пустыми
 
-Вариант 1 Правильный 
-Шаг 1 - Получить токен:
-Найдите эндпоинт POST /token
 
-Нажмите "Try it out"
+#### Вариант 2 Создадим собственный сервер авторизации:
 
-Введите:
+```py
 
+# ========== OAUTH СЕРВЕР АВТОРИЗАЦИИ ==========
+
+def authenticate_user_for_token(username: str, password: str):
+    """Проверка пользователя для выдачи токена"""
+    # Заглушка - в реальности проверка в БД
+    if username == "admin" and password == "password":
+        return {"id": 1, "username": username}
+    return None
+
+
+@router.post("/oauth/token")
+def get_token(credentials: OAuth2PasswordRequestForm = Depends()):
+    # Проверка логина/пароля
+    user = authenticate_user_for_token(credentials.username, credentials.password)
+    if not user:
+        raise HTTPException(401, "Invalid credentials")
+    
+    # Выдача токена
+    access_token = create_access_token(data={"sub": user["id"]})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+
+# oauth.py
+
+# ========== ФУНКЦИЯ OAUTH2 АУТЕНТИФИКАЦИИ ==========
+def authenticate_oauth(credentials = Depends(oauth2_scheme)):
+    if VALID_TOKEN is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Токен не создан",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Проверяем токен с защитой от timing attacks
+    is_valid_token = secrets.compare_digest(
+        credentials.credentials.encode("utf8"), VALID_TOKEN.encode("utf8")
+    )
+    
+    if not is_valid_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Неверный токен",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    return "oauth_user"
+
+# ========== ФУНКЦИЯ СОЗДАНИЯ ПРОСТОГО ТОКЕНА ==========
+def create_access_token(data: dict):
+    """Создает простой UUID токен"""
+    global VALID_TOKEN
+    token = str(uuid.uuid4())
+    VALID_TOKEN = token  # Сохраняем токен для проверки
+    return token
+
+```
+
+## Тестирование
+
+### Шаг 1 - Получить токен:
+
+* Найдите эндпоинт POST /token
+* Нажмите "Try it out"
+* Введите:
+```
 username: admin
+password: password
+```
+* Нажмите "Execute"
+* Скопируйте access_token из ответа
 
-password: secret123
-
-Нажмите "Execute"
-
-Скопируйте access_token из ответа
-
-Шаг 2 - Авторизоваться:
-Нажмите кнопку "Authorize" вверху страницы
-
-В разделе OAuth2PasswordBearer введите:
-
+### Шаг 2 - Авторизоваться:
+* Нажмите кнопку "Authorize" вверху страницы
+* В разделе OAuth2PasswordBearer введите:
+```
 username: admin
+password: password
+```
+* Нажмите "Authorize"
+* Или просто введите токен
 
-password: secret123
-
-Нажмите "Authorize"
-
-Или просто введите токен:
-В поле авторизации можете сразу ввести: secret-oauth-token
 
 Теперь эндпоинт POST /students/ будет работать с OAuth2 аутентификацией через Swagger
+
+
+# Листинг измененного кода
+
+```py
+# ========== OAUTH СЕРВЕР АВТОРИЗАЦИИ ==========
+
+class TokenRequest(BaseModel):
+    username: str
+    password: str
+
+def authenticate_user_for_token(username: str, password: str):    
+    # Заглушка - в реальности проверка в БД
+    if username == "admin" and password == "password":
+        return {"id": 1, "username": username}
+    return None
+
+@router.post("/oauth/token")
+def get_token(credentials: TokenRequest):  
+    user = authenticate_user_for_token(credentials.username, credentials.password)
+    if not user:
+        raise HTTPException(401, "Invalid credentials")
+    
+    # Выдача токена
+    access_token = create_access_token(data={"sub": user["id"]})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/students/load-fixture")
+def load_fixture(service = Depends(get_service)):
+    ...
+
+@router.post("/students/")
+def create_student(
+    student_data: StudentCreate,
+    service = Depends(get_service),
+    current_user = Depends(authenticate_oauth)  # Требуем OAuth2 аутентификацию
+):
+   
+   ...
+
+@router.get("/students/")
+def get_students(
+    service = Depends(get_service),
+    current_user = Depends(authenticate_user)  # Требуем Basic Auth
+):
+   ...
+
+# oauth.py
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer
+import secrets
+import uuid
+
+# ========== НАСТРОЙКА OAUTH2 ==========
+# Создаем объект для Bearer Token (проще для Swagger)
+oauth2_scheme = HTTPBearer()
+
+# OAuth2 токен (в реальном проекте хранить в переменных окружения)
+VALID_TOKEN = None  # Будет установлен при создании токена
+
+# ========== ФУНКЦИЯ OAUTH2 АУТЕНТИФИКАЦИИ ==========
+def authenticate_oauth(credentials = Depends(oauth2_scheme)):
+    if VALID_TOKEN is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Токен не создан",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Проверяем токен с защитой от timing attacks
+    is_valid_token = secrets.compare_digest(
+        credentials.credentials.encode("utf8"), VALID_TOKEN.encode("utf8")
+    )
+    
+    if not is_valid_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Неверный токен",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    return "oauth_user"
+
+# ========== ФУНКЦИЯ СОЗДАНИЯ ПРОСТОГО ТОКЕНА ==========
+def create_access_token(data: dict):
+    """Создает простой UUID токен"""
+    global VALID_TOKEN
+    token = str(uuid.uuid4())
+    VALID_TOKEN = token  # Сохраняем токен для проверки
+    return token
+```

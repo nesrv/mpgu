@@ -1,0 +1,28 @@
+{
+  "students": [
+    {"id": 1, "name": "Иван Петров", "data": {"group": "ИВТ-21", "year": 2, "age": 19, "city": "Москва", "gpa": 4.2}},
+    {"id": 2, "name": "Мария Сидорова", "data": {"group": "ИВТ-21", "year": 2, "age": 20, "city": "СПб", "gpa": 4.8}},
+    {"id": 3, "name": "Алексей Иванов", "data": {"group": "ИВТ-22", "year": 1, "age": 18, "city": "Казань", "gpa": 3.9}},
+    {"id": 4, "name": "Елена Козлова", "data": {"group": "ИВТ-23", "year": 3, "age": 21, "city": "Москва", "gpa": 4.5}},
+    {"id": 5, "name": "Дмитрий Смирнов", "data": {"group": "ИВТ-21", "year": 2, "age": 19, "city": "Новосибирск", "gpa": 4.0}},
+    {"id": 6, "name": "Анна Волкова", "data": {"group": "ИВТ-22", "year": 1, "age": 18, "city": "Екатеринбург", "gpa": 4.7}},
+    {"id": 7, "name": "Сергей Морозов", "data": {"group": "ИВТ-23", "year": 3, "age": 22, "city": "СПб", "gpa": 3.8}},
+    {"id": 8, "name": "Ольга Новикова", "data": {"group": "ИВТ-21", "year": 2, "age": 20, "city": "Ростов", "gpa": 4.3}},
+    {"id": 9, "name": "Павел Лебедев", "data": {"group": "ИВТ-22", "year": 1, "age": 18, "city": "Москва", "gpa": 4.1}},
+    {"id": 10, "name": "Татьяна Соколова", "data": {"group": "ИВТ-23", "year": 3, "age": 21, "city": "Уфа", "gpa": 4.6}}
+  ],
+  "courses": [
+    {"id": 1, "name": "Математика", "data": {"credits": 5, "semester": 1}},
+    {"id": 2, "name": "Программирование", "data": {"credits": 6, "semester": 2}},
+    {"id": 3, "name": "Физика", "data": {"credits": 4, "semester": 1}}
+  ],
+  "enrollments": [
+    {"student_id": 1, "course_id": 1},
+    {"student_id": 1, "course_id": 2},
+    {"student_id": 2, "course_id": 1},
+    {"student_id": 3, "course_id": 3},
+    {"student_id": 4, "course_id": 1},
+    {"student_id": 4, "course_id": 3},
+    {"student_id": 5, "course_id": 2}
+  ]
+}
