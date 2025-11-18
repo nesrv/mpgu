@@ -1,84 +1,8 @@
-# Лабораторная работа: FastAPI - Архитектура и Безопасность
+# Лабораторная работа: FastAPI - Работа с бд
 
 ## 🎯 Цель работы
 
-Изучить принципы построения масштабируемых API с использованием FastAPI, включая маршрутизацию, архитектурные паттерны и методы аутентификации.
-
-## 📝 Задание 3: Подключение PostgreSQL
-
-**Задача:** Заменить in-memory хранилище на PostgreSQL в Docker контейнере.
-
-1. Поднять бд в докер контейнере
-
-```dockerfile
-# Dockerfile
-FROM postgres:18
-
-ENV POSTGRES_DB=students_db
-ENV POSTGRES_USER=student
-ENV POSTGRES_PASSWORD=password
-
-EXPOSE 5432
-```
-
-```bash
-# Команды для запуска
-
-docker build -t postgres-students .
-docker run -d -p 5432:5432 postgres-students
-```
-
-
-```txt
-# requirements.txt
-fastapi
-uvicorn
-sqlalchemy
-psycopg2-binary
-```
-
-
-
-**Файлы конфигурации:**
-
-```python
-# database.py
-from sqlalchemy import Column, Integer, String, create_engine, JSON
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
-
-DATABASE_URL = "postgresql://student:password@localhost:5432/students_db"
-
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(bind=engine)
-Base = declarative_base()
-
-class StudentModel(Base):
-    __tablename__ = "students"
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True)
-    group = Column(String)
-    year = Column(Integer)
-    courses = Column(JSON, default=[])
-
-class CourseModel(Base):
-    __tablename__ = "courses"
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    credits = Column(Integer)
-    semester = Column(Integer)
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-def create_tables():
-    Base.metadata.create_all(bind=engine)
-```
-
+Изучить работу FastAPI с СУБД PostgreSQL c помощью SQLAlchemy
 
 # SQLAlchemy ШПАРГАЛКА для студентов
 
