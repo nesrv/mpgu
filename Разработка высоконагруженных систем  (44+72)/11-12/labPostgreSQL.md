@@ -40,14 +40,15 @@ pip install fastapi uvicorn sqlalchemy psycopg2-binary
 
 ```python
 from sqlalchemy import create_engine, text
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
 DATABASE_URL = "postgresql://user:password@localhost/lab_db"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
 
 def get_db():
     db = SessionLocal()
@@ -60,69 +61,85 @@ def get_db():
 ### models.py
 
 ```python
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import String, Float, DateTime, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
 from datetime import datetime
 
 class Student(Base):
     __tablename__ = "students"
     
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=False)
-    email = Column(String(100), unique=True)
-    status = Column(String(20), default='active')
-    created_at = Column(DateTime, default=datetime.utcnow)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(100))
+    email: Mapped[str] = mapped_column(String(100), unique=True)
+    status: Mapped[str] = mapped_column(String(20), default='active')
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     
-    grades = relationship("Grade", back_populates="student")
+    grades: Mapped[list["Grade"]] = relationship(back_populates="student")
 
 class Course(Base):
     __tablename__ = "courses"
     
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(200), nullable=False)
-    credits = Column(Integer, default=3)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    title: Mapped[str] = mapped_column(String(200))
+    credits: Mapped[int] = mapped_column(default=3)
     
-    grades = relationship("Grade", back_populates="course")
+    grades: Mapped[list["Grade"]] = relationship(back_populates="course")
 
 class Grade(Base):
     __tablename__ = "grades"
     
-    id = Column(Integer, primary_key=True, index=True)
-    student_id = Column(Integer, ForeignKey("students.id"))
-    course_id = Column(Integer, ForeignKey("courses.id"))
-    grade = Column(Float, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey("students.id"))
+    course_id: Mapped[int] = mapped_column(ForeignKey("courses.id"))
+    grade: Mapped[float] = mapped_column(Float)
     
-    student = relationship("Student", back_populates="grades")
-    course = relationship("Course", back_populates="grades")
+    student: Mapped["Student"] = relationship(back_populates="grades")
+    course: Mapped["Course"] = relationship(back_populates="grades")
 ```
 
 ### schemas.py
 
 ```python
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
 class StudentBase(BaseModel):
     name: str
     email: str
-    status: Optional[str] = 'active'
+    status: str = 'active'
 
 class StudentResponse(StudentBase):
     id: int
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class GradeResponse(BaseModel):
     student_id: int
     course_id: int
     grade: float
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+# main.py
+# 
+rom fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
+from sqlalchemy import text, MetaData, Table, select
+from database import get_db, engine
+
+app = FastAPI()
+
+@app.get("/")
+def root():
+    return {"message": "Lab PostgreSQL API is running"}
+
+def get_active_students_table():
+    metadata = MetaData()
+    return Table('active_students_view', metadata, autoload_with=engine)
+    
 ```
 
 ---
@@ -238,7 +255,8 @@ def get_active_students_raw(db: Session = Depends(get_db)):
 ### Шаг 3: Работа через SQLAlchemy
 
 ```python
-from sqlalchemy import Table, MetaData
+from sqlalchemy import Table, MetaData, select
+from database import engine
 
 # Отражаем view как таблицу
 metadata = MetaData()
@@ -247,8 +265,6 @@ active_students_table = Table('active_students_view', metadata, autoload_with=en
 @app.get("/students/active/sqlalchemy")
 def get_active_students_sqlalchemy(db: Session = Depends(get_db)):
     """Получение активных студентов через SQLAlchemy"""
-    from sqlalchemy import select
-    
     stmt = select(active_students_table)
     result = db.execute(stmt)
     students = [dict(row._mapping) for row in result]
@@ -462,22 +478,21 @@ def export_students_with_cursor(batch_size: int = 1000):
 
 ```python
 from sqlalchemy import select
+from models import Student
 
 @app.get("/students/stream")
 def stream_students(limit: int = 100, db: Session = Depends(get_db)):
     """Потоковое чтение через SQLAlchemy"""
-    stmt = select(Student).execution_options(stream_results=True)
+    stmt = select(Student).execution_options(yield_per=limit)
     result = db.execute(stmt)
     
     students = []
-    for partition in result.partitions(limit):
-        for row in partition:
-            student = row[0]
-            students.append({
-                "id": student.id,
-                "name": student.name,
-                "email": student.email
-            })
+    for row in result.scalars():
+        students.append({
+            "id": row.id,
+            "name": row.name,
+            "email": row.email
+        })
     
     return {"count": len(students), "data": students[:10]}
 ```

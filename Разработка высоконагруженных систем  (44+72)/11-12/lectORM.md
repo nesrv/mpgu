@@ -316,7 +316,106 @@ EXECUTE FUNCTION update_modified_timestamp();
 
 ---
 
-## Слайд 18: Синтаксис — Raw SQL и транзакции
+## Слайд 18: Сложные запросы — Django Q vs SQLAlchemy
+
+### Django Q объекты (сложные условия)
+
+| Django ORM (Q объекты) | SQLAlchemy |
+|--------------------------------|------------|
+| `from django.db.models import Q`<br><br>**OR условие:**<br>`Student.objects.filter(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`Q(name__icontains='Ivan') \|`<br>&nbsp;&nbsp;&nbsp;&nbsp;`Q(email__icontains='ivan')`<br>`)` | `from sqlalchemy import or_, select`<br><br>**OR условие:**<br>`stmt = select(Student).where(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`or_(`<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Student.name.ilike('%Ivan%'),`<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Student.email.ilike('%ivan%')`<br>&nbsp;&nbsp;&nbsp;&nbsp;`)`<br>`)` |
+| **AND условие:**<br>`Student.objects.filter(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`Q(status='active') &`<br>&nbsp;&nbsp;&nbsp;&nbsp;`Q(grade__gte=80)`<br>`)` | `from sqlalchemy import and_`<br><br>**AND условие:**<br>`stmt = select(Student).where(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`and_(`<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Student.status == 'active',`<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Student.grade >= 80`<br>&nbsp;&nbsp;&nbsp;&nbsp;`)`<br>`)` |
+| **NOT условие:**<br>`Student.objects.filter(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`~Q(status='inactive')`<br>`)` | `from sqlalchemy import not_`<br><br>**NOT условие:**<br>`stmt = select(Student).where(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`not_(Student.status == 'inactive')`<br>`)` |
+| **Комбинированные:**<br>`Student.objects.filter(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`(`<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Q(name__startswith='A') \|`<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Q(name__startswith='B')`<br>&nbsp;&nbsp;&nbsp;&nbsp;`) &`<br>&nbsp;&nbsp;&nbsp;&nbsp;`Q(status='active')`<br>`)` | **Комбинированные:**<br>`stmt = select(Student).where(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`and_(`<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`or_(`<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Student.name.startswith('A'),`<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Student.name.startswith('B')`<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`),`<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Student.status == 'active'`<br>&nbsp;&nbsp;&nbsp;&nbsp;`)`<br>`)` |
+
+### 💡 Пример: Поиск студентов
+
+**Django:**
+```python
+from django.db.models import Q
+
+# Найти студентов с высоким GPA ИЛИ с отличным посещением
+students = Student.objects.filter(
+    Q(gpa__gte=3.5) | Q(attendance__gte=95)
+).filter(
+    status='active'
+)
+```
+
+**SQLAlchemy:**
+```python
+from sqlalchemy import select, or_, and_
+
+# Тот же запрос
+stmt = select(Student).where(
+    and_(
+        or_(
+            Student.gpa >= 3.5,
+            Student.attendance >= 95
+        ),
+        Student.status == 'active'
+    )
+)
+students = session.execute(stmt).scalars().all()
+```
+
+---
+
+## Слайд 19: Работа с полями — Django F vs SQLAlchemy
+
+### Django F объекты (операции с полями БД)
+
+| Django ORM (F объекты) | SQLAlchemy |
+|------------------------|------------|
+| `from django.db.models import F`<br><br>**Обновление через поле:**<br>`Student.objects.filter(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`status='active'`<br>`).update(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`grade=F('grade') + 10`<br>`)` | **Обновление через поле:**<br>`from sqlalchemy import update`<br><br>`stmt = update(Student).where(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`Student.status == 'active'`<br>`).values(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`grade=Student.grade + 10`<br>`)` |
+| **Сравнение полей:**<br>`Student.objects.filter(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`grade__gt=F('attendance')`<br>`)` | **Сравнение полей:**<br>`stmt = select(Student).where(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`Student.grade > Student.attendance`<br>`)` |
+| **Арифметика:**<br>`Student.objects.annotate(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`total=F('grade') + F('bonus')`<br>`).filter(total__gte=90)` | **Арифметика:**<br>`from sqlalchemy import column`<br><br>`stmt = select(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`Student,`<br>&nbsp;&nbsp;&nbsp;&nbsp;`(Student.grade + Student.bonus).label('total')`<br>`).where(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`Student.grade + Student.bonus >= 90`<br>`)` |
+| **Конкатенация строк:**<br>`Student.objects.update(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`full_name=Concat(`<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`F('first_name'),`<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Value(' '),`<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`F('last_name')`<br>&nbsp;&nbsp;&nbsp;&nbsp;`)`<br>`)` | **Конкатенация строк:**<br>`from sqlalchemy import func`<br><br>`stmt = update(Student).values(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`full_name=func.concat(`<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Student.first_name,`<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`' ',`<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Student.last_name`<br>&nbsp;&nbsp;&nbsp;&nbsp;`)`<br>`)` |
+
+### 💡 Пример: Увеличение баллов
+
+**Django:**
+```python
+from django.db.models import F
+
+# Увеличить баллы на 5 для всех активных студентов
+Student.objects.filter(status='active').update(
+    grade=F('grade') + 5
+)
+
+# Найти студентов, где балл больше посещаемости
+students = Student.objects.filter(
+    grade__gt=F('attendance')
+)
+```
+
+**SQLAlchemy:**
+```python
+from sqlalchemy import update, select
+
+# Увеличить баллы на 5 для всех активных студентов
+stmt = update(Student).where(
+    Student.status == 'active'
+).values(
+    grade=Student.grade + 5
+)
+session.execute(stmt)
+session.commit()
+
+# Найти студентов, где балл больше посещаемости
+stmt = select(Student).where(
+    Student.grade > Student.attendance
+)
+students = session.execute(stmt).scalars().all()
+```
+
+### ⚡ Преимущества F объектов
+- Операции выполняются на уровне БД (быстрее)
+- Избегание race conditions
+- Атомарные обновления
+
+---
+
+## Слайд 20: Синтаксис — Raw SQL и транзакции
 
 | SQLAlchemy | Django ORM |
 |------------|------------|
@@ -324,7 +423,7 @@ EXECUTE FUNCTION update_modified_timestamp();
 
 ---
 
-## Слайд 19: SQLAlchemy 1.x vs 2.x — Основные изменения
+## Слайд 21: SQLAlchemy 1.x vs 2.x — Основные изменения
 
 ### Ключевые отличия SQLAlchemy 2.0
 
@@ -346,7 +445,7 @@ EXECUTE FUNCTION update_modified_timestamp();
 
 ---
 
-## Слайд 20: SQLAlchemy 1.x vs 2.x — Сравнение синтаксиса
+## Слайд 22: SQLAlchemy 1.x vs 2.x — Сравнение синтаксиса
 
 | SQLAlchemy 1.x | SQLAlchemy 2.x |
 |----------------|----------------|
