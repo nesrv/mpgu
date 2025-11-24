@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PostgreSQL: Магия продвинутых возможностей</title>
+    <link rel="stylesheet" href="../3-4/css/reveal.min.css">
+    <link rel="stylesheet" href="../3-4/css/black.min.css">
+    <link rel="stylesheet" href="../3-4/css/monokai.min.css">
+    <link rel="stylesheet" href="../3-4/css/presentation.css">
+    <style>
+        .reveal .slides { width: 80% !important; height: 90% !important; transform: scale(1.2) !important; position: absolute !important; left: 50% !important; top: 5% !important; transform: translateX(calc(-50% + 15%)) scale(1.2) !important; transform-origin: top center !important; }
+        .reveal h1 { font-size: 1.8em !important; margin-top: 0 !important; margin-bottom: 0.4em !important; }
+        .reveal h2 { font-size: 1.4em !important; margin-top: 0 !important; margin-bottom: 0.4em !important; text-transform: none !important; }
+        .reveal h3 { font-size: 1.1em !important; margin-top: 0 !important; margin-bottom: 0.3em !important; text-transform: none !important; }
+        .reveal .slides section { padding: 15px !important; font-size: 1em !important; }
+        .reveal p, .reveal ul, .reveal ol { font-size: 0.9em !important; }
+        pre code { font-size: 0.85em !important; max-height: none; overflow: hidden; }
+        pre { max-height: none; overflow: hidden; margin: 10px 0 !important; }
+        table { font-size: 0.8em !important; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            
+            <section data-background-color="#1a1a2e">
+                <div style="background: rgba(22,33,62,0.9); padding: 40px; border: 8px solid #0f3460;">
+                    <h1 style="color: #FFD700;">🐘 PostgreSQL: Магия<br>продвинутых возможностей</h1>
+                    <h2 style="color: #90EE90;">Теория</h2>
+                    <p style="color: #FFF; font-size: 1em;">🏫 МПГУ, 4 курс, 2025</p>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 1: 🚀 Современные возможности PostgreSQL</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">Почему PostgreSQL — король среди СУБД?</h3>
+                        <p style="color: #f39c12; margin-left: 20px;"><strong>🎯 Топ-возможности:</strong></p>
+                        <ul style="margin-left: 40px;">
+                            <li>✅ <strong style="color: #2ecc71;">ACID-транзакции</strong> — надежность как в банке</li>
+                            <li>✅ <strong style="color: #2ecc71;">JSONB</strong> — NoSQL внутри SQL</li>
+                            <li>✅ <strong style="color: #2ecc71;">Full-Text Search</strong> — свой поисковик без Elasticsearch</li>
+                            <li>✅ <strong style="color: #2ecc71;">Расширения</strong> — PostGIS, TimescaleDB, pg_stat_statements</li>
+                            <li>✅ <strong style="color: #2ecc71;">Партиционирование</strong> — делим таблицы на части</li>
+                            <li>✅ <strong style="color: #2ecc71;">Параллельные запросы</strong> — используем все ядра CPU</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #e74c3c;">🔥 Что изучим сегодня:</h3>
+                        <ul style="margin-left: 40px; font-size: 0.95em;">
+                            <li><strong>Views</strong> — виртуальные таблицы для ленивых</li>
+                            <li><strong>Materialized Views</strong> — кэш на уровне БД</li>
+                            <li><strong>Cursors</strong> — читаем миллионы строк без паники</li>
+                            <li><strong>Procedures & Functions</strong> — логика прямо в базе</li>
+                            <li><strong>Custom Types</strong> — создаем свои типы данных</li>
+                            <li><strong>Rules</strong> — автоматизация на максималках</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 2: 👁️ Представления (Views)</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">Что такое View?</h3>
+                        <p style="margin-left: 20px;"><strong>View</strong> — это сохраненный SQL-запрос, который выглядит как таблица, но не хранит данные.</p>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #2ecc71;">💡 Зачем нужны?</h3>
+                        <ul style="margin-left: 40px;">
+                            <li>🔒 <strong>Безопасность</strong>: скрываем чувствительные колонки</li>
+                            <li>🎨 <strong>Упрощение</strong>: сложный запрос → простая таблица</li>
+                            <li>🔄 <strong>Переиспользование</strong>: один раз написал — используй везде</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <pre class="fragment" style="margin-top: 15px;"><code class="sql">-- Создаем представление
+CREATE VIEW active_students AS
+SELECT 
+    id,
+    name,
+    email,
+    course_name
+FROM students
+WHERE status = 'active'
+  AND graduation_year >= 2024;
+
+-- Используем как обычную таблицу
+SELECT * FROM active_students WHERE course_name = 'Python';</code></pre>
+                
+                <div class="fragment" style="text-align: center; margin-top: 10px;">
+                    <p style="color: #f39c12; font-size: 0.9em;"><strong>🎭 Магия:</strong> При каждом обращении к view выполняется исходный запрос!</p>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 3: 👁️ Views — Продвинутые фишки</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">🔄 Обновляемые представления</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">-- Простое представление можно обновлять
+CREATE VIEW student_emails AS
+SELECT id, name, email FROM students;
+
+-- Это работает! 🎉
+UPDATE student_emails SET email = 'new@example.com' WHERE id = 1;</code></pre>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #e74c3c;">⚠️ Когда view НЕ обновляемый?</h3>
+                        <ul style="margin-left: 40px;">
+                            <li>Есть JOIN с несколькими таблицами</li>
+                            <li>Используется GROUP BY, DISTINCT, UNION</li>
+                            <li>Есть агрегатные функции (COUNT, SUM, AVG)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #2ecc71;">🛡️ View для безопасности</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">-- Скрываем зарплаты от любопытных глаз
+CREATE VIEW public_employees AS
+SELECT 
+    id,
+    name,
+    position,
+    department
+    -- salary НЕ включаем!
+FROM employees;
+
+-- Даем доступ только к view
+GRANT SELECT ON public_employees TO intern_role;</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 4: 💎 Materialized Views — Кэш на стероидах</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #e74c3c;">Проблема обычных Views</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">-- Этот запрос выполняется КАЖДЫЙ РАЗ 😱
+CREATE VIEW sales_report AS
+SELECT 
+    product_id,
+    SUM(amount) as total_sales,
+    COUNT(*) as order_count
+FROM orders
+GROUP BY product_id;
+
+-- 1 миллион строк → 5 секунд на каждый запрос 🐌</code></pre>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #2ecc71;">Решение: Materialized View</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">-- Создаем материализованное представление
+CREATE MATERIALIZED VIEW sales_report_cached AS
+SELECT 
+    product_id,
+    SUM(amount) as total_sales,
+    COUNT(*) as order_count,
+    NOW() as last_updated
+FROM orders
+GROUP BY product_id;
+
+-- Теперь запрос мгновенный! ⚡
+SELECT * FROM sales_report_cached;</code></pre>
+                        <p style="color: #f39c12; margin-top: 10px; text-align: center;"><strong>🎯 Разница:</strong> Данные физически хранятся на диске!</p>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 5: 💎 Materialized Views — Обновление</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">🔄 Как обновлять кэш?</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">-- Полное обновление (пересчитываем все)
+REFRESH MATERIALIZED VIEW sales_report_cached;
+
+-- Конкурентное обновление (без блокировки чтения)
+REFRESH MATERIALIZED VIEW CONCURRENTLY sales_report_cached;</code></pre>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #9b59b6;">⚡ Автоматическое обновление через cron</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">-- Создаем функцию для обновления
+CREATE OR REPLACE FUNCTION refresh_sales_report()
+RETURNS void AS $$
+BEGIN
+    REFRESH MATERIALIZED VIEW CONCURRENTLY sales_report_cached;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Настраиваем обновление каждый час через pg_cron
+SELECT cron.schedule('refresh-sales', '0 * * * *', 
+    'SELECT refresh_sales_report()');</code></pre>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #f39c12;">📊 Когда использовать?</h3>
+                        <ul style="margin-left: 40px;">
+                            <li>✅ Тяжелые аналитические запросы</li>
+                            <li>✅ Отчеты, которые обновляются раз в час/день</li>
+                            <li>✅ Дашборды с метриками</li>
+                            <li>❌ Данные в реальном времени</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 6: 🎯 Курсоры (Cursors) — Читаем Big Data порциями</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #e74c3c;">Проблема: Миллион строк в памяти</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">-- Это убьет вашу память! 💀
+SELECT * FROM huge_table; -- 10 миллионов строк</code></pre>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #2ecc71;">Решение: Курсоры</h3>
+                        <p style="margin-left: 20px;"><strong>Курсор</strong> — это указатель на результат запроса, который читает данные порциями.</p>
+                        <pre style="margin-top: 10px;"><code class="sql">-- Начинаем транзакцию
+BEGIN;
+
+-- Объявляем курсор
+DECLARE student_cursor CURSOR FOR 
+    SELECT id, name, email FROM students;
+
+-- Читаем первые 100 строк
+FETCH 100 FROM student_cursor;
+
+-- Читаем следующие 100
+FETCH 100 FROM student_cursor;
+
+-- Закрываем курсор
+CLOSE student_cursor;
+COMMIT;</code></pre>
+                        <p style="color: #f39c12; margin-top: 10px; text-align: center;"><strong>🎯 Преимущество:</strong> Память не взрывается!</p>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 7: 🎯 Курсоры — Продвинутое использование</h2>
+                <div style="font-size: 0.65em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">🔄 Навигация по курсору</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">BEGIN;
+DECLARE my_cursor SCROLL CURSOR FOR SELECT * FROM students;
+
+-- Вперед
+FETCH NEXT FROM my_cursor;
+
+-- Назад
+FETCH PRIOR FROM my_cursor;
+
+-- К первой записи
+FETCH FIRST FROM my_cursor;
+
+-- К последней
+FETCH LAST FROM my_cursor;
+
+-- Пропустить 10 записей
+FETCH ABSOLUTE 10 FROM my_cursor;
+
+CLOSE my_cursor;
+COMMIT;</code></pre>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #9b59b6;">🐍 Использование в Python</h3>
+                        <pre style="margin-top: 10px;"><code class="python">import psycopg2
+
+conn = psycopg2.connect("dbname=mydb")
+cur = conn.cursor(name='my_cursor')  # Серверный курсор
+
+cur.execute("SELECT * FROM huge_table")
+
+# Читаем по 1000 строк
+while True:
+    rows = cur.fetchmany(1000)
+    if not rows:
+        break
+    process_batch(rows)  # Обрабатываем порцию
+
+cur.close()
+conn.close()</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 8: ⚙️ Хранимые процедуры</h2>
+                <div style="text-align: left; font-size: 0.65em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">Процедура vs Функция</h3>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                            <tr style="background: rgba(52,152,219,0.3);">
+                                <th style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Процедура (PROCEDURE)</th>
+                                <th style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Функция (FUNCTION)</th>
+                            </tr>
+                            <tr style="background: rgba(46,204,113,0.15);">
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Не возвращает значение</td>
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Возвращает значение</td>
+                            </tr>
+                            <tr style="background: rgba(155,89,182,0.15);">
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Может делать COMMIT</td>
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Не может делать COMMIT</td>
+                            </tr>
+                            <tr style="background: rgba(241,196,15,0.15);">
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Вызов: CALL proc()</td>
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Вызов: SELECT func()</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #2ecc71;">🎯 Создаем процедуру для зачисления студента</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">CREATE OR REPLACE PROCEDURE enroll_student(
+    p_student_id INT,
+    p_course_id INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Проверяем, есть ли места
+    IF (SELECT count(*) FROM enrollments 
+        WHERE course_id = p_course_id) >= 30 THEN
+        RAISE EXCEPTION 'Курс переполнен!';
+    END IF;
+    
+    -- Зачисляем студента
+    INSERT INTO enrollments (student_id, course_id, enrolled_at)
+    VALUES (p_student_id, p_course_id, NOW());
+    
+    COMMIT;  -- Процедура может делать commit!
+END;
+$$;
+
+-- Вызов
+CALL enroll_student(123, 456);</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 9: 🔧 Функции — Возвращаем результаты</h2>
+                <div style="font-size: 0.65em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">Простая функция</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">CREATE OR REPLACE FUNCTION get_student_gpa(p_student_id INT)
+RETURNS NUMERIC
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_gpa NUMERIC;
+BEGIN
+    SELECT AVG(grade) INTO v_gpa
+    FROM grades
+    WHERE student_id = p_student_id;
+    
+    RETURN COALESCE(v_gpa, 0);
+END;
+$$;
+
+-- Использование
+SELECT name, get_student_gpa(id) as gpa
+FROM students;</code></pre>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #2ecc71;">📊 Функция, возвращающая таблицу</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">CREATE OR REPLACE FUNCTION get_top_students(p_limit INT)
+RETURNS TABLE(
+    student_id INT,
+    student_name TEXT,
+    gpa NUMERIC
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        s.id,
+        s.name,
+        AVG(g.grade) as avg_grade
+    FROM students s
+    JOIN grades g ON s.id = g.student_id
+    GROUP BY s.id, s.name
+    ORDER BY avg_grade DESC
+    LIMIT p_limit;
+END;
+$$;
+
+-- Использование
+SELECT * FROM get_top_students(10);</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 10: 🔧 Функции — SQL vs PL/pgSQL</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">SQL функции (быстрее!)</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">-- Простая SQL функция
+CREATE OR REPLACE FUNCTION get_active_count()
+RETURNS BIGINT
+LANGUAGE sql
+AS $$
+    SELECT COUNT(*) FROM students WHERE status = 'active';
+$$;
+
+-- Inline в запросе!
+SELECT get_active_count();</code></pre>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #2ecc71;">🚀 Иммутабельные функции (для оптимизации)</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">CREATE OR REPLACE FUNCTION calculate_discount(price NUMERIC)
+RETURNS NUMERIC
+IMMUTABLE  -- Результат всегда одинаковый
+LANGUAGE sql
+AS $$
+    SELECT price * 0.9;
+$$;
+
+-- PostgreSQL может кэшировать результат!
+SELECT product_name, calculate_discount(price)
+FROM products;</code></pre>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #f39c12;">⚡ Типы стабильности функций</h3>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                            <tr style="background: rgba(52,152,219,0.3);">
+                                <th style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Тип</th>
+                                <th style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Описание</th>
+                                <th style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Пример</th>
+                            </tr>
+                            <tr style="background: rgba(46,204,113,0.15);">
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);"><strong>IMMUTABLE</strong></td>
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Всегда одинаковый результат</td>
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">calculate_discount(100)</td>
+                            </tr>
+                            <tr style="background: rgba(155,89,182,0.15);">
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);"><strong>STABLE</strong></td>
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Одинаковый в рамках запроса</td>
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">get_current_user()</td>
+                            </tr>
+                            <tr style="background: rgba(231,76,60,0.15);">
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);"><strong>VOLATILE</strong></td>
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Может меняться (по умолчанию)</td>
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">NOW(), random()</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 11: 🎨 Составные типы данных</h2>
+                <div style="text-align: left; font-size: 0.65em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">Зачем нужны кастомные типы?</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">-- Было: много параметров 😵
+CREATE FUNCTION create_order(
+    p_customer_name TEXT,
+    p_customer_email TEXT,
+    p_customer_phone TEXT,
+    p_product_id INT,
+    p_quantity INT
+) ...
+
+-- Стало: один параметр 😎
+CREATE TYPE customer_info AS (
+    name TEXT,
+    email TEXT,
+    phone TEXT
+);
+
+CREATE FUNCTION create_order(
+    p_customer customer_info,
+    p_product_id INT,
+    p_quantity INT
+) ...</code></pre>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #2ecc71;">🏗️ Создание составного типа</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">-- Определяем тип "Адрес"
+CREATE TYPE address AS (
+    street TEXT,
+    city TEXT,
+    postal_code TEXT,
+    country TEXT
+);
+
+-- Используем в таблице
+CREATE TABLE customers (
+    id SERIAL PRIMARY KEY,
+    name TEXT,
+    home_address address,
+    work_address address
+);
+
+-- Вставка данных
+INSERT INTO customers (name, home_address, work_address)
+VALUES (
+    'Иван Иванов',
+    ROW('Ленина 1', 'Москва', '101000', 'Россия')::address,
+    ROW('Пушкина 2', 'Москва', '102000', 'Россия')::address
+);
+
+-- Доступ к полям
+SELECT name, (home_address).city FROM customers;</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 12: 📜 Правила (Rules) — Автоматизация</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">Что такое Rules?</h3>
+                        <p style="margin-left: 20px;"><strong>Rule</strong> — это механизм перезаписи запросов на лету.</p>
+                        <p style="color: #e74c3c; margin-left: 20px;">⚠️ <strong>Внимание:</strong> Rules считаются устаревшими! Используйте триггеры вместо них.</p>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #2ecc71;">🔄 Пример: Перенаправление INSERT</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">-- Создаем архивную таблицу
+CREATE TABLE students_archive (
+    LIKE students INCLUDING ALL
+);
+
+-- Создаем правило: старые студенты → в архив
+CREATE RULE archive_old_students AS
+    ON INSERT TO students
+    WHERE NEW.graduation_year < 2020
+    DO INSTEAD
+        INSERT INTO students_archive VALUES (NEW.*);
+
+-- Теперь старые студенты автоматически попадают в архив
+INSERT INTO students (name, graduation_year)
+VALUES ('Петр', 2019);  -- Попадет в students_archive!</code></pre>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #9b59b6;">🎭 Правило для логирования</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">CREATE TABLE students_log (
+    operation TEXT,
+    student_id INT,
+    changed_at TIMESTAMP
+);
+
+CREATE RULE log_student_updates AS
+    ON UPDATE TO students
+    DO ALSO
+        INSERT INTO students_log (operation, student_id, changed_at)
+        VALUES ('UPDATE', NEW.id, NOW());</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 13: 📜 Rules vs Triggers</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">Сравнение</h3>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                            <tr style="background: rgba(52,152,219,0.3);">
+                                <th style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Аспект</th>
+                                <th style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Rules</th>
+                                <th style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Triggers</th>
+                            </tr>
+                            <tr style="background: rgba(46,204,113,0.15);">
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);"><strong>Когда выполняется</strong></td>
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">До выполнения запроса</td>
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">После/вместо запроса</td>
+                            </tr>
+                            <tr style="background: rgba(155,89,182,0.15);">
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);"><strong>Производительность</strong></td>
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Быстрее для массовых операций</td>
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Медленнее, но гибче</td>
+                            </tr>
+                            <tr style="background: rgba(241,196,15,0.15);">
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);"><strong>Гибкость</strong></td>
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Ограниченная</td>
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">Полная (можно писать код)</td>
+                            </tr>
+                            <tr style="background: rgba(231,76,60,0.15);">
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);"><strong>Рекомендация</strong></td>
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">❌ Устарели</td>
+                                <td style="padding: 10px; border: 2px solid rgba(255,255,255,0.3);">✅ Используйте их!</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #2ecc71;">✅ Современный подход: Триггеры</h3>
+                        <pre style="margin-top: 10px;"><code class="sql">-- Создаем функцию для триггера
+CREATE OR REPLACE FUNCTION log_student_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO students_log (operation, student_id, changed_at)
+    VALUES (TG_OP, NEW.id, NOW());
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Создаем триггер
+CREATE TRIGGER student_changes_trigger
+AFTER INSERT OR UPDATE OR DELETE ON students
+FOR EACH ROW
+EXECUTE FUNCTION log_student_changes();</code></pre>
+                        <p style="color: #f39c12; margin-top: 10px; text-align: center;"><strong>🎯 Вывод:</strong> Забудьте про Rules, используйте Triggers!</p>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#1a1a2e">
+                <h2 style="color: #FFD700;">Слайд 14: 🎓 Выводы и best practices</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment" style="background: rgba(52,152,219,0.2); padding: 20px; border-radius: 10px; border-left: 5px solid #3498db; margin-bottom: 20px;">
+                        <h3 style="color: #3498db; margin-top: 0;">📚 Что мы изучили:</h3>
+                        <ul style="line-height: 1.8;">
+                            <li>✅ <strong>Views</strong> — для упрощения сложных запросов</li>
+                            <li>✅ <strong>Materialized Views</strong> — для кэширования тяжелых отчетов</li>
+                            <li>✅ <strong>Cursors</strong> — для обработки больших объемов данных</li>
+                            <li>✅ <strong>Procedures & Functions</strong> — для бизнес-логики в БД</li>
+                            <li>✅ <strong>Custom Types</strong> — для структурирования данных</li>
+                            <li>✅ <strong>Rules</strong> — устарели, используйте Triggers</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="background: rgba(46,204,113,0.2); padding: 20px; border-radius: 10px; border-left: 5px solid #2ecc71;">
+                        <h3 style="color: #2ecc71; margin-top: 0;">🎯 Best Practices:</h3>
+                        <ul style="line-height: 1.8;">
+                            <li><strong>Views:</strong> используйте для безопасности и переиспользования</li>
+                            <li><strong>Materialized Views:</strong> обновляйте регулярно через cron</li>
+                            <li><strong>Cursors:</strong> только для больших данных (>100k строк)</li>
+                            <li><strong>Functions:</strong> помечайте IMMUTABLE/STABLE для оптимизации</li>
+                            <li><strong>Procedures:</strong> для транзакционной логики</li>
+                            <li><strong>Custom Types:</strong> для читаемости кода</li>
+                            <li><strong>Rules:</strong> НЕ используйте, только Triggers!</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 20px; text-align: center;">
+                        <h3 style="color: #f39c12;">🚀 Следующий шаг: Практика!</h3>
+                        <p style="color: #fff; font-size: 1.1em;">Создайте свою БД с views, functions и triggers.</p>
+                        <p style="color: #FFD700; font-size: 1.2em; margin-top: 20px;">Вопросы? 🙋♂️</p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="../3-4/js/reveal.min.js"></script>
+    <script src="../3-4/js/notes.min.js"></script>
+    <script src="../3-4/js/markdown.min.js"></script>
+    <script src="../3-4/js/highlight.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            transition: 'slide',
+            controls: true,
+            progress: true,
+            slideNumber: false,
+            center: false,
+            margin: 0.02,
+            plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+        });
+    </script>
+</body>
+</html>
