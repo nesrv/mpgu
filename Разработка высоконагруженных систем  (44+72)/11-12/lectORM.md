@@ -145,7 +145,107 @@
 
 ---
 
-## Слайд 7: SQL против ORM
+## Слайд 7: Хранилище данных — логическая структура
+
+### Data Warehouse — логическая архитектура
+
+**Слои хранилища данных:**
+
+1. **Staging Area (Промежуточная зона)**
+   - Временное хранение сырых данных из источников
+   - Минимальная обработка
+   - Используется для ETL процессов
+
+2. **ODS (Operational Data Store)**
+   - Оперативное хранилище
+   - Данные в реальном времени или близко к нему
+   - Интеграция данных из разных OLTP систем
+
+3. **Core DWH (Ядро хранилища)**
+   - Исторические данные
+   - Нормализованная или денормализованная структура
+   - Схемы: Star Schema, Snowflake Schema
+
+4. **Data Marts (Витрины данных)**
+   - Тематические подмножества данных
+   - Оптимизированы под конкретные отделы
+   - Быстрый доступ к агрегированным данным
+
+**Схемы данных:**
+- **Star Schema (Звезда)**: центральная таблица фактов + таблицы измерений
+- **Snowflake Schema (Снежинка)**: нормализованные таблицы измерений
+- **Galaxy Schema (Галактика)**: несколько таблиц фактов
+
+---
+
+## Слайд 8: Хранилище данных — физическая структура
+
+### Data Warehouse — физическая архитектура
+
+**Компоненты инфраструктуры:**
+
+1. **Источники данных**
+   - OLTP базы (PostgreSQL, MySQL)
+   - CRM/ERP системы (1C, SAP)
+   - Логи приложений (JSON, CSV)
+   - API внешних сервисов
+   - Файловые хранилища (S3, HDFS)
+
+2. **ETL сервер**
+   - Apache Airflow — оркестрация ETL
+   - Apache NiFi — потоковая обработка
+   - Loginom — российский ETL инструмент
+   - Talend, Pentaho — open source решения
+
+3. **Хранилище (Storage)**
+   - **OLAP СУБД**: ClickHouse, Greenplum, Vertica
+   - **Колоночное хранение**: Parquet, ORC
+   - **Распределенное хранилище**: HDFS, S3
+   - **Кэширование**: Redis, Memcached
+
+4. **Слой доступа**
+   - BI инструменты: Tableau, Power BI, Yandex DataLens
+   - SQL интерфейсы: DBeaver, DataGrip
+   - API для приложений: REST, GraphQL
+
+**Пример физической архитектуры:**
+```
+[PostgreSQL] ──┐
+[MySQL]      ──┤
+[API]        ──┼──> [ETL Server] ──> [ClickHouse] ──> [Data Marts] ──> [BI Tools]
+[Logs]       ──┤      (Airflow)         (DWH)          (Витрины)      (DataLens)
+[Files]      ──┘
+```
+
+**Витрина данных — физическая реализация:**
+- **Материализованные представления** (Materialized Views)
+- **Агрегированные таблицы** (Summary Tables)
+- **OLAP кубы** (Cubes)
+- **Индексы и партиционирование** для быстрого доступа
+
+**Пример витрины продаж:**
+```sql
+-- Материализованное представление для витрины
+CREATE MATERIALIZED VIEW sales_mart AS
+SELECT 
+    date_trunc('month', order_date) as month,
+    product_category,
+    region,
+    SUM(amount) as total_sales,
+    COUNT(*) as order_count,
+    AVG(amount) as avg_order_value
+FROM orders
+JOIN products ON orders.product_id = products.id
+JOIN customers ON orders.customer_id = customers.id
+GROUP BY month, product_category, region;
+
+-- Обновление витрины (ежедневно)
+REFRESH MATERIALIZED VIEW sales_mart;
+```
+
+---
+
+## Слайд 9: SQL против ORM
 
 ### Чистый SQL
 ✅ **Преимущества**:
@@ -171,7 +271,7 @@
 
 ---
 
-## Слайд 7: SQL + PL/pgSQL
+## Слайд 10: SQL + PL/pgSQL
 
 ### PL/pgSQL — процедурный язык PostgreSQL
 
@@ -198,7 +298,7 @@ SELECT get_student_count();
 
 ---
 
-## Слайд 8: SQL + PL/pgSQL (продолжение)
+## Слайд 11: SQL + PL/pgSQL (продолжение)
 
 ### Пример триггера
 
@@ -226,7 +326,7 @@ EXECUTE FUNCTION update_modified_timestamp();
 
 ---
 
-## Слайд 9: Современные ORM
+## Слайд 12: Современные ORM
 
 | Язык | ORM | Особенности |
 |------|-----|-------------|
@@ -242,7 +342,7 @@ EXECUTE FUNCTION update_modified_timestamp();
 
 ---
 
-## Слайд 10: Сравнение SQLAlchemy и Django ORM
+## Слайд 13: Сравнение SQLAlchemy и Django ORM
 
 ### SQLAlchemy
 - **Тип**: независимая библиотека
@@ -260,7 +360,7 @@ EXECUTE FUNCTION update_modified_timestamp();
 
 ---
 
-## Слайд 11: Синтаксис — Определение моделей
+## Слайд 14: Синтаксис — Определение моделей
 
 | SQLAlchemy | Django ORM |
 |------------|------------|
@@ -268,7 +368,7 @@ EXECUTE FUNCTION update_modified_timestamp();
 
 ---
 
-## Слайд 12: Синтаксис — Создание записей
+## Слайд 15: Синтаксис — Создание записей
 
 | SQLAlchemy | Django ORM |
 |------------|------------|
@@ -276,7 +376,7 @@ EXECUTE FUNCTION update_modified_timestamp();
 
 ---
 
-## Слайд 13: Синтаксис — Чтение данных
+## Слайд 16: Синтаксис — Чтение данных
 
 | SQLAlchemy | Django ORM |
 |------------|------------|
@@ -284,7 +384,7 @@ EXECUTE FUNCTION update_modified_timestamp();
 
 ---
 
-## Слайд 14: Синтаксис — Обновление и удаление
+## Слайд 17: Синтаксис — Обновление и удаление
 
 | SQLAlchemy | Django ORM |
 |------------|------------|
@@ -292,7 +392,7 @@ EXECUTE FUNCTION update_modified_timestamp();
 
 ---
 
-## Слайд 15: Синтаксис — Связи (Relationships)
+## Слайд 18: Синтаксис — Связи (Relationships)
 
 | SQLAlchemy | Django ORM |
 |------------|------------|
@@ -300,7 +400,7 @@ EXECUTE FUNCTION update_modified_timestamp();
 
 ---
 
-## Слайд 16: Синтаксис — Агрегация и группировка
+## Слайд 19: Синтаксис — Агрегация и группировка
 
 | SQLAlchemy | Django ORM |
 |------------|------------|
@@ -308,7 +408,7 @@ EXECUTE FUNCTION update_modified_timestamp();
 
 ---
 
-## Слайд 17: Синтаксис — JOIN и подгрузка связей
+## Слайд 20: Синтаксис — JOIN и подгрузка связей
 
 | SQLAlchemy | Django ORM |
 |------------|------------|
@@ -316,7 +416,7 @@ EXECUTE FUNCTION update_modified_timestamp();
 
 ---
 
-## Слайд 18: Сложные запросы — Django Q vs SQLAlchemy
+## Слайд 21: Сложные запросы — Django Q vs SQLAlchemy
 
 ### Django Q объекты (сложные условия)
 
@@ -360,7 +460,7 @@ students = session.execute(stmt).scalars().all()
 
 ---
 
-## Слайд 19: Работа с полями — Django F vs SQLAlchemy
+## Слайд 22: Работа с полями — Django F vs SQLAlchemy
 
 ### Django F объекты (операции с полями БД)
 
@@ -415,7 +515,7 @@ students = session.execute(stmt).scalars().all()
 
 ---
 
-## Слайд 20: Синтаксис — Raw SQL и транзакции
+## Слайд 23: Синтаксис — Raw SQL и транзакции
 
 | SQLAlchemy | Django ORM |
 |------------|------------|
@@ -423,7 +523,7 @@ students = session.execute(stmt).scalars().all()
 
 ---
 
-## Слайд 21: SQLAlchemy 1.x vs 2.x — Основные изменения
+## Слайд 24: SQLAlchemy 1.x vs 2.x — Основные изменения
 
 ### Ключевые отличия SQLAlchemy 2.0
 
@@ -445,7 +545,7 @@ students = session.execute(stmt).scalars().all()
 
 ---
 
-## Слайд 22: SQLAlchemy 1.x vs 2.x — Сравнение синтаксиса
+## Слайд 25: SQLAlchemy 1.x vs 2.x — Сравнение синтаксиса
 
 | SQLAlchemy 1.x | SQLAlchemy 2.x |
 |----------------|----------------|

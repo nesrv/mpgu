@@ -122,13 +122,17 @@ class GradeResponse(BaseModel):
     
     model_config = ConfigDict(from_attributes=True)
 
+class SQLQuery(BaseModel):
+    query: str
 
 # main.py
 # 
-rom fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import text, MetaData, Table, select
 from database import get_db, engine
+from pydantic import BaseModel
+from schemas import SQLQuery
 
 app = FastAPI()
 
@@ -139,7 +143,36 @@ def root():
 def get_active_students_table():
     metadata = MetaData()
     return Table('active_students_view', metadata, autoload_with=engine)
-    
+
+
+@app.post("/sql", summary="Execute SQL Query", description="Execute any SQL query and get results")
+def execute_sql_query(sql: SQLQuery, db: Session = Depends(get_db)):
+    try:
+        # Выполняем запрос (может быть многострочным)
+        result = db.execute(text(sql.query))
+        db.commit()  
+        return {"status": "success", "message": "Query executed successfully"}
+    except Exception as e:
+        db.rollback()
+        return {"status": "error", "message": str(e)}
+
+@app.post("/sql/file", summary="Execute SQL from file", description="Upload and execute SQL file")
+async def execute_sql_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    try:
+        content = await file.read()
+        sql_query = content.decode('utf-8')
+        
+        # Выполняем все запросы из файла
+        result = db.execute(text(sql_query))
+        db.commit()       
+       
+        return {"status": "success", "message": "SQL file executed successfully"}
+    except Exception as e:
+        db.rollback()
+        return {"status": "error", "message": str(e)}
+
+
+
 ```
 
 ---

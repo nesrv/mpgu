@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Продвинутая работа с базами данных</title>
+    <link rel="stylesheet" href="../3-4/css/reveal.min.css">
+    <link rel="stylesheet" href="../3-4/css/black.min.css">
+    <link rel="stylesheet" href="../3-4/css/monokai.min.css">
+    <link rel="stylesheet" href="../3-4/css/presentation.css">
+    <style>
+        .reveal .slides { width: 80% !important; height: 90% !important; transform: scale(1.2) !important; position: absolute !important; left: 50% !important; top: 5% !important; transform: translateX(calc(-50% + 15%)) scale(1.2) !important; transform-origin: top center !important; }
+        .reveal h1 { font-size: 1.8em !important; margin-top: 0 !important; margin-bottom: 0.4em !important; }
+        .reveal h2 { font-size: 1.4em !important; margin-top: 0 !important; margin-bottom: 0.4em !important; text-transform: none !important; }
+        .reveal h3 { font-size: 1.1em !important; margin-top: 0 !important; margin-bottom: 0.3em !important; text-transform: none !important; }
+        .reveal .slides section { padding: 15px !important; font-size: 1em !important; }
+        .reveal p, .reveal ul, .reveal ol { font-size: 0.9em !important; }
+        pre code { font-size: 0.85em !important; max-height: none; overflow: hidden; }
+        pre { max-height: none; overflow: hidden; margin: 10px 0 !important; }
+        .diagram { font-family: 'Courier New', monospace; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; font-size: 0.9em; }
+        table { font-size: 0.8em !important; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            
+            <section data-background-color="#1a1a2e">
+                <div style="background: rgba(22,33,62,0.9); padding: 40px; border: 8px solid #0f3460;">
+                    <h1 style="color: #FFD700;">🗄️ Продвинутая работа с базами данных</h1>
+                    <h2 style="color: #90EE90;">Лекция 11-12</h2>
+                    <p style="color: #FFF; font-size: 1em;">🏫 МПГУ, 4 курс, 2025</p>
+                </div>
+            </section>
+
+            <section>
+                <h2>Слайд 1: OLAP и OLTP</h2>
+                <div style="text-align: left; font-size: 0.75em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">OLTP (Online Transaction Processing)</h3>
+                        <ul><li>Обработка транзакций в реальном времени</li><li>INSERT, UPDATE, DELETE</li><li>Примеры: банки, интернет-магазины</li></ul>
+                    </div>
+                    <div class="fragment">
+                        <h3 style="color: #2ecc71;">OLAP (Online Analytical Processing)</h3>
+                        <ul><li>Аналитическая обработка данных</li><li>SELECT с агрегацией (SUM, AVG, GROUP BY)</li><li>Примеры: отчеты, BI-системы</li></ul>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 2: СУБД для OLAP и OLTP</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3>OLTP СУБД</h3>
+                        <p>PostgreSQL, MySQL/MariaDB, Oracle, MS SQL Server</p>
+                    </div>
+                    <div class="fragment">
+                        <h3>OLAP СУБД</h3>
+                        <p>ClickHouse, Apache Druid, Greenplum, Vertica</p>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Слайд 3: Российский рынок</h2>
+                <div style="text-align: left; font-size: 0.75em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">🇷🇺 Российские решения OLTP</h3>
+                        <ul>
+                            <li><strong style="color: #2ecc71;">PostgresPro</strong> — российская версия PostgreSQL</li>
+                            <li><strong style="color: #2ecc71;">Tarantool</strong> — in-memory СУБД</li>
+                            <li><strong style="color: #2ecc71;">YDB</strong> — распределенная СУБД от Yandex</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 20px;">
+                        <h3 style="color: #9b59b6;">📊 Российские решения OLAP</h3>
+                        <ul>
+                            <li><strong style="color: #e74c3c;">ClickHouse</strong> — разработка Yandex (open source)</li>
+                            <li><strong style="color: #e74c3c;">Greenplum</strong> — поддержка Arenadata</li>
+                            <li><strong style="color: #e74c3c;">1C:Enterprise</strong> — для бизнес-аналитики</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 20px;">
+                        <h3 style="color: #f39c12;">🔄 Импортозамещение</h3>
+                        <ul>
+                            <li>Oracle → <strong style="color: #2ecc71;">PostgresPro</strong></li>
+                            <li>MS SQL Server → <strong style="color: #2ecc71;">отечественные решения</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 4: PostgreSQL как OLAP или OLTP</h2>
+                <div style="text-align: left; font-size: 0.75em;">
+                    <div class="fragment">
+                        <h3 style="color: #2ecc71;">✅ PostgreSQL для OLTP</h3>
+                        <p style="color: #90EE90; margin-left: 20px;"><strong>Сильные стороны:</strong></p>
+                        <ul style="margin-left: 40px;">
+                            <li style="color: #fff;">ACID-транзакции</li>
+                            <li style="color: #fff;">Поддержка индексов (B-tree, Hash, GiST, GIN)</li>
+                            <li style="color: #fff;">Высокая надежность</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 20px;">
+                        <h3 style="color: #e74c3c;">⚠️ PostgreSQL для OLAP</h3>
+                        <p style="color: #ff6b6b; margin-left: 20px;"><strong>Ограничения:</strong></p>
+                        <ul style="margin-left: 40px;">
+                            <li style="color: #fff;">Строковое хранение (медленнее колоночного)</li>
+                            <li style="color: #fff;">Не оптимизирован для больших аналитических запросов</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 20px;">
+                        <h3 style="color: #f39c12;">💡 Решение: расширения</h3>
+                        <ul style="margin-left: 40px;">
+                            <li><strong style="color: #3498db;">Citus</strong> — горизонтальное масштабирование</li>
+                            <li><strong style="color: #9b59b6;">TimescaleDB</strong> — временные ряды</li>
+                            <li><strong style="color: #1abc9c;">pg_analytics</strong> — колоночное хранение</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 4.1: Расширения PostgreSQL</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">🔷 Citus — горизонтальное масштабирование</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Назначение:</strong> распределенная база данных для OLTP и OLAP</li>
+                            <li><strong>Как работает:</strong> шардирование таблиц по нескольким узлам</li>
+                            <li><strong>Применение:</strong> multi-tenant приложения, real-time аналитика</li>
+                            <li><strong>Пример:</strong> разделение данных по tenant_id на 10 серверов</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #9b59b6;">⏱️ TimescaleDB — временные ряды</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Назначение:</strong> оптимизация для time-series данных</li>
+                            <li><strong>Как работает:</strong> автоматическое партиционирование по времени</li>
+                            <li><strong>Применение:</strong> IoT, мониторинг, метрики, логи</li>
+                            <li><strong>Пример:</strong> хранение метрик сервера (CPU, RAM) за год</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #1abc9c;">📊 pg_analytics — колоночное хранение</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Назначение:</strong> ускорение аналитических запросов</li>
+                            <li><strong>Как работает:</strong> колоночное хранение вместо строкового</li>
+                            <li><strong>Применение:</strong> OLAP запросы, агрегации, отчеты</li>
+                            <li><strong>Пример:</strong> SELECT SUM(amount) GROUP BY region — в 10-100x быстрее</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 5: Хранилища и витрины данных</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">🏢 Data Warehouse (Хранилище данных)</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong style="color: #2ecc71;">Что это:</strong> централизованное хранилище для всех данных компании</li>
+                            <li><strong style="color: #2ecc71;">Особенности:</strong> интеграция из разных источников, исторические данные</li>
+                            <li><strong style="color: #2ecc71;">Зарубежные:</strong> Snowflake, Amazon Redshift, Google BigQuery</li>
+                            <li><strong style="color: #2ecc71;">Российские:</strong> Yandex DataLens + ClickHouse, Arenadata DB, Postgres Pro Enterprise</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #9b59b6;">🛒 Data Mart (Витрина данных)</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong style="color: #e74c3c;">Что это:</strong> подмножество хранилища для конкретного отдела</li>
+                            <li><strong style="color: #e74c3c;">Особенности:</strong> оптимизирована под задачи, быстрый доступ</li>
+                            <li><strong style="color: #e74c3c;">Примеры:</strong> витрина продаж (Яндекс.Маркет), витрина аналитики (Сбер)</li>
+                            <li><strong style="color: #e74c3c;">Отделы:</strong> продажи, маркетинг, финансы, HR</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #f39c12;">🔄 ETL процесс</h3>
+                        <div style="margin-left: 20px;">
+                            <p><strong style="color: #1abc9c;">Extract</strong> → извлечение из источников (PostgreSQL, API, файлы)</p>
+                            <p><strong style="color: #1abc9c;">Transform</strong> → преобразование и очистка данных</p>
+                            <p><strong style="color: #1abc9c;">Load</strong> → загрузка в хранилище (ClickHouse, Data Mart)</p>
+                            <p style="margin-top: 10px;"><strong>Инструменты:</strong> Apache NiFi, Apache Airflow, Loginom, Talend</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 5.1: Как устроен ClickHouse</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">🚀 Что такое ClickHouse?</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong style="color: #2ecc71;">Колоночная СУБД</strong> для OLAP от Yandex (open source)</li>
+                            <li><strong style="color: #2ecc71;">Скорость:</strong> обработка миллиардов строк за секунды</li>
+                            <li><strong style="color: #2ecc71;">Применение:</strong> аналитика, логи, метрики, real-time отчеты</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #9b59b6;">📊 Колоночное vs Строковое хранение</h3>
+                        <div style="margin-left: 20px;">
+                            <p><strong style="color: #e74c3c;">Строковое (PostgreSQL):</strong> [id=1, name="Иван", age=25] [id=2, name="Петр", age=30]</p>
+                            <p><strong style="color: #1abc9c;">Колоночное (ClickHouse):</strong> [id: 1,2,3...] [name: "Иван","Петр"...] [age: 25,30...]</p>
+                            <p style="margin-top: 10px;"><strong>Преимущество:</strong> SELECT AVG(age) — читаем только колонку age, а не все данные</p>
+                        </div>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #f39c12;">⚡ Ключевые особенности</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Сжатие данных:</strong> в 10-100 раз меньше места на диске</li>
+                            <li><strong>Векторизация:</strong> обработка данных блоками (SIMD)</li>
+                            <li><strong>Распределенность:</strong> шардирование и репликация</li>
+                            <li><strong>Движки таблиц:</strong> MergeTree, ReplicatedMergeTree, Distributed</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #e74c3c;">🎯 Когда использовать?</h3>
+                        <ul style="margin-left: 20px;">
+                            <li>✅ Аналитические запросы (GROUP BY, SUM, AVG)</li>
+                            <li>✅ Логи и метрики (миллионы записей в секунду)</li>
+                            <li>✅ Real-time дашборды и отчеты</li>
+                            <li>❌ OLTP (много UPDATE/DELETE)</li>
+                            <li>❌ Транзакции и JOIN по большим таблицам</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 6: Data Mart и ETL — детальный разбор</h2>
+                <div style="text-align: left; font-size: 0.65em;">
+                    <div class="fragment">
+                        <h3 style="color: #e74c3c;">🎯 Когда нужны Data Mart?</h3>
+                        <p style="margin-left: 20px;"><strong style="color: #ff6b6b;">Проблема:</strong> хранилище содержит терабайты данных, запросы медленные</p>
+                        <p style="margin-left: 20px;"><strong style="color: #2ecc71;">Решение:</strong> создать витрину для конкретного отдела</p>
+                        <div style="margin-left: 20px; margin-top: 10px;">
+                            <p><strong>Примеры использования:</strong></p>
+                            <ul style="font-size: 0.9em;">
+                                <li><strong style="color: #3498db;">Отдел продаж:</strong> витрина с данными о клиентах, заказах, выручке за последний год</li>
+                                <li><strong style="color: #9b59b6;">Маркетинг:</strong> витрина с метриками кампаний, конверсиями, ROI</li>
+                                <li><strong style="color: #f39c12;">Финансы:</strong> витрина с транзакциями, балансами, отчетностью</li>
+                                <li><strong style="color: #1abc9c;">HR:</strong> витрина с данными о сотрудниках, зарплатах, KPI</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #3498db;">🔄 ETL процесс — зачем и как?</h3>
+                        <div style="margin-left: 20px;">
+                            <p><strong style="color: #f39c12;">Зачем нужен ETL?</strong></p>
+                            <ul style="font-size: 0.85em;">
+                                <li>Данные разбросаны по разным системам (CRM, ERP, логи, Excel)</li>
+                                <li>Форматы данных различаются</li>
+                                <li>Нужна очистка от дубликатов и ошибок</li>
+                                <li>Требуется агрегация и расчет метрик</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 6.1: ETL — этапы процесса</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #2ecc71;">1️⃣ Extract (Извлечение)</h3>
+                        <ul style="margin-left: 20px;">
+                            <li>Из PostgreSQL (OLTP база) — заказы, клиенты</li>
+                            <li>Из API внешних сервисов — платежи, доставка</li>
+                            <li>Из файлов (CSV, JSON, XML) — прайс-листы</li>
+                            <li>Из логов приложений — клики, события</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #9b59b6;">2️⃣ Transform (Преобразование)</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Очистка:</strong> удаление дубликатов, исправление ошибок</li>
+                            <li><strong>Нормализация:</strong> приведение к единому формату (даты, валюты)</li>
+                            <li><strong>Обогащение:</strong> добавление справочных данных (регион по городу)</li>
+                            <li><strong>Агрегация:</strong> расчет сумм, средних, группировок</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #e74c3c;">3️⃣ Load (Загрузка)</h3>
+                        <ul style="margin-left: 20px;">
+                            <li>В ClickHouse (для аналитики)</li>
+                            <li>В витрины данных (Data Mart)</li>
+                            <li>Инкрементальная или полная загрузка</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #f39c12;">💡 Пример: Интернет-магазин</h3>
+                        <ul style="margin-left: 20px; font-size: 0.9em;">
+                            <li><strong>Extract:</strong> заказы из PostgreSQL, клики из логов, платежи из банка</li>
+                            <li><strong>Transform:</strong> объединение по ID клиента, расчет LTV, сегментация</li>
+                            <li><strong>Load:</strong> в витрину маркетинга для анализа эффективности рекламы</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 7: DWH — логическая структура</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">1️⃣ Staging Area (Промежуточная зона)</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Что это:</strong> временное хранение сырых данных из источников</li>
+                            <li><strong>Зачем:</strong> минимальная обработка, буфер для ETL</li>
+                            <li><strong>Пример:</strong> загрузили данные из PostgreSQL ночью, храним до обработки</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #2ecc71;">2️⃣ ODS (Operational Data Store)</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Что это:</strong> оперативное хранилище для текущих данных</li>
+                            <li><strong>Зачем:</strong> данные в реальном времени, интеграция из разных OLTP систем</li>
+                            <li><strong>Пример:</strong> объединенные данные о клиентах из CRM и ERP</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #9b59b6;">3️⃣ Core DWH (Ядро хранилища)</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Что это:</strong> исторические данные за все время</li>
+                            <li><strong>Зачем:</strong> анализ трендов, сравнение периодов</li>
+                            <li><strong>Схемы:</strong> Star Schema (звезда), Snowflake Schema (снежинка)</li>
+                            <li><strong>Пример:</strong> все заказы за 5 лет с историей изменений</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #e74c3c;">4️⃣ Data Marts (Витрины данных)</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Что это:</strong> тематические подмножества для отделов</li>
+                            <li><strong>Зачем:</strong> быстрый доступ к агрегированным данным</li>
+                            <li><strong>Пример:</strong> витрина продаж с выручкой по регионам</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 7.1: Схемы данных в DWH</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">⭐ Star Schema (Звезда)</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Структура:</strong> центральная таблица фактов + таблицы измерений</li>
+                            <li><strong>Преимущества:</strong> простота, быстрые запросы</li>
+                            <li><strong>Пример:</strong> Факты_Продаж → Товары, Клиенты, Время, Регион</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 20px;">
+                        <h3 style="color: #9b59b6;">❄️ Snowflake Schema (Снежинка)</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Структура:</strong> нормализованные таблицы измерений</li>
+                            <li><strong>Преимущества:</strong> меньше дублирования, экономия места</li>
+                            <li><strong>Недостатки:</strong> больше JOIN, медленнее запросы</li>
+                            <li><strong>Пример:</strong> Товары → Категории → Подкатегории</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 20px;">
+                        <h3 style="color: #f39c12;">🌌 Galaxy Schema (Галактика)</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Структура:</strong> несколько таблиц фактов с общими измерениями</li>
+                            <li><strong>Применение:</strong> сложные бизнес-процессы</li>
+                            <li><strong>Пример:</strong> Факты_Продаж + Факты_Возвратов → общие Товары, Клиенты</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 7.2: Визуализация схем</h2>
+                <div style="display: flex; gap: 15px; justify-content: space-between; font-size: 0.55em; margin-top: 10px; margin-left: -10%;">
+                    <div style="flex: 1;">
+                        <h3 style="color: #3498db; text-align: center;">⭐ Star</h3>
+                        <div style="background: rgba(52,152,219,0.2); padding: 10px; border-radius: 8px; border: 2px solid #3498db;">
+                            <pre style="margin: 0; font-size: 1em; line-height: 1.3;">
+  [Товары]
+      │
+[Клиенты]─[ФАКТЫ]─[Время]
+      │
+  [Регион]
+                            </pre>
+                        </div>
+                        <pre style="margin-top: 10px; font-size: 0.9em; text-align: left;"><code class="sql">-- Факты
+fact_sales (
+  product_id,
+  customer_id,
+  time_id,
+  region_id,
+  amount
+)
+
+-- Измерения
+dim_products
+dim_customers
+dim_time
+dim_regions</code></pre>
+                    </div>
+                    
+                    <div style="flex: 1;">
+                        <h3 style="color: #9b59b6; text-align: center;">❄️ Snowflake</h3>
+                        <div style="background: rgba(155,89,182,0.2); padding: 10px; border-radius: 8px; border: 2px solid #9b59b6;">
+                            <pre style="margin: 0; font-size: 0.9em; line-height: 1.2;">
+[Подкатег] [Страны]
+    │         │
+[Катег]   [Регион]
+    │         │
+[Товары]────┐
+           │
+[Клиенты]─[ФАКТЫ]─[Время]
+                            </pre>
+                        </div>
+                        <pre style="margin-top: 10px; font-size: 0.9em; text-align: left;"><code class="sql">-- Нормализация
+dim_products (
+  category_id
+)
+dim_categories (
+  subcategory_id
+)
+dim_subcategories
+
+dim_regions (
+  country_id
+)
+dim_countries</code></pre>
+                    </div>
+                    
+                    <div style="flex: 1;">
+                        <h3 style="color: #f39c12; text-align: center;">🌌 Galaxy</h3>
+                        <div style="background: rgba(243,156,18,0.2); padding: 10px; border-radius: 8px; border: 2px solid #f39c12;">
+                            <pre style="margin: 0; font-size: 0.85em; line-height: 1.2;">
+  [Товары]  [Товары]
+      │          │
+[Клиенты]─[ФАКТЫ_1]─[Время]
+      │     │
+      │ [Регион]
+      │
+[Клиенты]─[ФАКТЫ_2]─[Время]
+                            </pre>
+                        </div>
+                        <pre style="margin-top: 10px; font-size: 0.9em; text-align: left;"><code class="sql">-- Несколько фактов
+fact_sales (
+  product_id,
+  customer_id,
+  time_id,
+  region_id
+)
+
+fact_returns (
+  product_id,
+  customer_id,
+  time_id
+)</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 8: DWH — физическая архитектура</h2>
+                <div style="text-align: left; font-size: 0.65em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">1️⃣ Источники данных</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>OLTP базы:</strong> PostgreSQL, MySQL — транзакционные данные</li>
+                            <li><strong>CRM/ERP:</strong> 1C, SAP, Salesforce — бизнес-данные</li>
+                            <li><strong>Логи:</strong> JSON, CSV — события приложений</li>
+                            <li><strong>API:</strong> внешние сервисы (платежи, доставка)</li>
+                            <li><strong>Файлы:</strong> S3, HDFS — большие объемы</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #2ecc71;">2️⃣ ETL сервер</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Apache Airflow</strong> — оркестрация ETL, DAG, расписание</li>
+                            <li><strong>Apache NiFi</strong> — потоковая обработка данных</li>
+                            <li><strong>Loginom</strong> — российский ETL инструмент</li>
+                            <li><strong>Talend, Pentaho</strong> — open source решения</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #9b59b6;">3️⃣ Хранилище (Storage)</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>OLAP СУБД:</strong> ClickHouse, Greenplum, Vertica</li>
+                            <li><strong>Колоночное:</strong> Parquet, ORC — форматы файлов</li>
+                            <li><strong>Распределенное:</strong> HDFS, S3 — масштабируемое</li>
+                            <li><strong>Кэш:</strong> Redis, Memcached — ускорение</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #e74c3c;">4️⃣ Слой доступа</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>BI:</strong> Tableau, Power BI, Yandex DataLens</li>
+                            <li><strong>SQL:</strong> DBeaver, DataGrip</li>
+                            <li><strong>API:</strong> REST, GraphQL</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <div class="diagram" style="font-size: 0.9em;">
+                            <pre>[PostgreSQL] ──┐
+[MySQL]      ──┤
+[API]        ──┼──> [ETL Server] ──> [ClickHouse] ──> [Data Marts] ──> [BI Tools]
+[Logs]       ──┤      (Airflow)         (DWH)          (Витрины)      (DataLens)
+[Files]      ──┘</pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 8.1: BI инструменты и Power BI</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">📊 Что такое BI (Business Intelligence)?</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Определение:</strong> инструменты для визуализации и анализа данных</li>
+                            <li><strong>Задачи:</strong> дашборды, отчеты, графики, KPI</li>
+                            <li><strong>Пользователи:</strong> аналитики, менеджеры, руководители</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #2ecc71;">🛠️ Популярные BI инструменты</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong style="color: #f39c12;">Power BI</strong> (Microsoft) — интеграция с Excel, Azure</li>
+                            <li><strong style="color: #3498db;">Tableau</strong> — мощная визуализация</li>
+                            <li><strong style="color: #e74c3c;">Yandex DataLens</strong> — российское решение</li>
+                            <li><strong style="color: #9b59b6;">Apache Superset</strong> — open source</li>
+                            <li><strong style="color: #1abc9c;">Metabase</strong> — простой и бесплатный</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #f39c12;">💻 Power BI — особенности</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Интеграция:</strong> Excel, SQL Server, Azure, SharePoint</li>
+                            <li><strong>DAX:</strong> язык формул для расчетов</li>
+                            <li><strong>Визуализация:</strong> графики, карты, таблицы, фильтры</li>
+                            <li><strong>Power Query:</strong> ETL прямо в Power BI</li>
+                            <li><strong>Публикация:</strong> Power BI Service (облако), доступ по ссылке</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #e74c3c;">🎯 Пример использования</h3>
+                        <ul style="margin-left: 20px; font-size: 0.9em;">
+                            <li>1. Подключение к ClickHouse или PostgreSQL</li>
+                            <li>2. Создание дашборда с графиками продаж</li>
+                            <li>3. Добавление фильтров (дата, регион, категория)</li>
+                            <li>4. Публикация в Power BI Service</li>
+                            <li>5. Доступ для отдела продаж по ссылке</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Слайд 9: SQL против ORM</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3>SQL: ✅ Контроль, производительность | ❌ Больше кода, SQL-инъекции</h3>
+                        <h3>ORM: ✅ Объекты, безопасность | ❌ Overhead, абстракция</h3>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 9: SQL против ORM</h2>
+                <div style="font-size: 0.7em;">
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                        <tr style="background: rgba(52,152,219,0.3);">
+                            <th style="padding: 15px; border: 2px solid rgba(255,255,255,0.3); width: 20%;"></th>
+                            <th style="padding: 15px; border: 2px solid rgba(255,255,255,0.3); color: #3498db;">📝 Чистый SQL</th>
+                            <th style="padding: 15px; border: 2px solid rgba(255,255,255,0.3); color: #2ecc71;">🔗 ORM</th>
+                        </tr>
+                        <tr style="background: rgba(46,204,113,0.2);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>✅ Преимущества</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); text-align: left;">
+                                <ul style="margin: 0; padding-left: 20px; font-size: 0.9em;">
+                                    <li>Полный контроль над запросами</li>
+                                    <li>Максимальная производительность</li>
+                                    <li>Специфичные функции СУБД</li>
+                                </ul>
+                            </td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); text-align: left;">
+                                <ul style="margin: 0; padding-left: 20px; font-size: 0.9em;">
+                                    <li>Работа с объектами вместо SQL</li>
+                                    <li>Защита от SQL-инъекций</li>
+                                    <li>Быстрая разработка</li>
+                                </ul>
+                            </td>
+                        </tr>
+                        <tr style="background: rgba(231,76,60,0.2);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>❌ Недостатки</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); text-align: left;">
+                                <ul style="margin: 0; padding-left: 20px; font-size: 0.9em;">
+                                    <li>Больше кода</li>
+                                    <li>Риск SQL-инъекций</li>
+                                    <li>Сложность поддержки</li>
+                                </ul>
+                            </td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); text-align: left;">
+                                <ul style="margin: 0; padding-left: 20px; font-size: 0.9em;">
+                                    <li>Overhead производительности</li>
+                                    <li>Неэффективные сложные запросы</li>
+                                    <li>Абстракция скрывает детали</li>
+                                </ul>
+                            </td>
+                        </tr>
+                        <tr style="background: rgba(241,196,15,0.2);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>🎯 Когда использовать</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); text-align: left;">
+                                <ul style="margin: 0; padding-left: 20px; font-size: 0.9em;">
+                                    <li>Сложные аналитические запросы</li>
+                                    <li>Оптимизация производительности</li>
+                                    <li>Специфичные функции БД</li>
+                                </ul>
+                            </td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); text-align: left;">
+                                <ul style="margin: 0; padding-left: 20px; font-size: 0.9em;">
+                                    <li>Типовые CRUD операции</li>
+                                    <li>Быстрая разработка</li>
+                                    <li>Прототипирование</li>
+                                </ul>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <div class="fragment" style="margin-top: 20px; text-align: center;">
+                        <h3 style="color: #f39c12;">💡 Рекомендация: используйте ORM для типовых операций, SQL для сложных запросов</h3>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 10: PL/pgSQL</h2>
+                <pre class="fragment"><code class="sql">CREATE OR REPLACE FUNCTION get_student_count()
+RETURNS INTEGER AS $$
+DECLARE student_count INTEGER;
+BEGIN
+    SELECT COUNT(*) INTO student_count FROM students;
+    RETURN student_count;
+END;
+$$ LANGUAGE plpgsql;</code></pre>
+            </section>
+
+            <section>
+                <h2>Слайд 11: PL/pgSQL триггеры</h2>
+                <pre class="fragment"><code class="sql">CREATE OR REPLACE FUNCTION update_modified_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER student_update_trigger
+BEFORE UPDATE ON students
+FOR EACH ROW
+EXECUTE FUNCTION update_modified_timestamp();</code></pre>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 12: Современные ORM</h2>
+                <div style="font-size: 0.7em; margin-left: -10%;">
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                        <tr style="background: rgba(52,152,219,0.3);">
+                            <th style="padding: 15px; border: 2px solid rgba(255,255,255,0.3); color: #3498db;">💻 Язык</th>
+                            <th style="padding: 15px; border: 2px solid rgba(255,255,255,0.3); color: #2ecc71;">🔗 ORM</th>
+                            <th style="padding: 15px; border: 2px solid rgba(255,255,255,0.3); color: #f39c12;">✨ Особенности</th>
+                        </tr>
+                        <tr style="background: rgba(46,204,113,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong style="color: #3498db;">Python</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">SQLAlchemy, Django ORM</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); font-size: 0.9em;">Гибкий, мощный, поддержка SQL</td>
+                        </tr>
+                        <tr style="background: rgba(241,196,15,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong style="color: #f39c12;">JavaScript</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">Prisma, TypeORM</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); font-size: 0.9em;">Типобезопасность, TypeScript</td>
+                        </tr>
+                        <tr style="background: rgba(231,76,60,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong style="color: #e74c3c;">Java</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">Hibernate</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); font-size: 0.9em;">Стандарт JPA, кэширование</td>
+                        </tr>
+                        <tr style="background: rgba(155,89,182,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong style="color: #9b59b6;">C#</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">Entity Framework</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); font-size: 0.9em;">Интеграция с .NET, LINQ</td>
+                        </tr>
+                        <tr style="background: rgba(231,76,60,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong style="color: #c0392b;">Ruby</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">ActiveRecord</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); font-size: 0.9em;">Convention over configuration</td>
+                        </tr>
+                        <tr style="background: rgba(52,152,219,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong style="color: #3498db;">Go</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">GORM</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); font-size: 0.9em;">Простой API, миграции</td>
+                        </tr>
+                        <tr style="background: rgba(155,89,182,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong style="color: #8e44ad;">PHP</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">Eloquent</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); font-size: 0.9em;">Часть Laravel, выразительный</td>
+                        </tr>
+                    </table>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 13: SQLAlchemy vs Django ORM</h2>
+                <div style="font-size: 0.7em; margin-left: -10%;">
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                        <tr style="background: rgba(52,152,219,0.3);">
+                            <th style="padding: 15px; border: 2px solid rgba(255,255,255,0.3);"></th>
+                            <th style="padding: 15px; border: 2px solid rgba(255,255,255,0.3); color: #3498db;">🔧 SQLAlchemy</th>
+                            <th style="padding: 15px; border: 2px solid rgba(255,255,255,0.3); color: #2ecc71;">🌿 Django ORM</th>
+                        </tr>
+                        <tr style="background: rgba(46,204,113,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>📦 Тип</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">Независимая библиотека</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">Часть Django framework</td>
+                        </tr>
+                        <tr style="background: rgba(155,89,182,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>🎯 Подход</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">Data Mapper pattern</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">Active Record pattern</td>
+                        </tr>
+                        <tr style="background: rgba(241,196,15,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>🔄 Гибкость</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">Высокая, поддержка сырого SQL</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">Средняя, ориентирован на простоту</td>
+                        </tr>
+                        <tr style="background: rgba(231,76,60,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>📊 Сложность</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">Выше, больше контроля</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">Ниже, быстрый старт</td>
+                        </tr>
+                        <tr style="background: rgba(52,152,219,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>🚀 Использование</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">Любые Python-проекты</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">Django-проекты</td>
+                        </tr>
+                        <tr style="background: rgba(46,204,113,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>✅ Плюсы</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); font-size: 0.9em;">Полный контроль, мощь, async</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); font-size: 0.9em;">Простота, быстрота, интеграция</td>
+                        </tr>
+                    </table>
+                    
+                    <div class="fragment" style="margin-top: 20px; text-align: center;">
+                        <h3 style="color: #f39c12;">💡 SQLAlchemy — для сложных проектов | Django ORM — для быстрой разработки</h3>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 14: Определение моделей</h2>
+                <pre class="fragment"><code class="python"># SQLAlchemy
+class Student(Base):
+    __tablename__ = 'students'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100))
+
+# Django ORM
+class Student(models.Model):
+    name = models.CharField(max_length=100)</code></pre>
+            </section>
+
+            <section>
+                <h2>Слайд 15: Создание записей</h2>
+                <pre class="fragment"><code class="python"># SQLAlchemy
+student = Student(name="Иван")
+session.add(student)
+session.commit()
+
+# Django ORM
+student = Student.objects.create(name="Иван")</code></pre>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 16: Чтение данных</h2>
+                <pre class="fragment"><code class="python"># SQLAlchemy
+students = session.query(Student).all()
+student = session.query(Student).filter(
+    Student.email == "ivan@example.com"
+).first()
+
+# Django ORM
+students = Student.objects.all()
+student = Student.objects.filter(
+    email="ivan@example.com"
+).first()</code></pre>
+            </section>
+
+            <section>
+                <h2>Слайд 17: Обновление и удаление</h2>
+                <pre class="fragment"><code class="python"># SQLAlchemy
+student = session.query(Student).filter_by(id=1).first()
+student.name = "Петр"
+session.commit()
+
+# Django ORM
+Student.objects.filter(id=1).update(name="Петр")
+Student.objects.filter(id=1).delete()</code></pre>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 18: Связи</h2>
+                <pre class="fragment"><code class="python"># SQLAlchemy
+class Student(Base):
+    course_id = Column(Integer, ForeignKey('courses.id'))
+    course = relationship("Course")
+
+# Django ORM
+class Student(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)</code></pre>
+            </section>
+
+            <section>
+                <h2>Слайд 19: Агрегация</h2>
+                <pre class="fragment"><code class="python"># SQLAlchemy
+from sqlalchemy import func
+count = session.query(func.count(Student.id)).scalar()
+
+# Django ORM
+from django.db.models import Count
+count = Student.objects.count()</code></pre>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 20: JOIN и Eager Loading</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #e74c3c;">⚠️ Проблема N+1</h3>
+                        <p style="margin-left: 20px;">При получении 100 студентов с курсами: 1 запрос студентов + 100 запросов курсов = 101 запрос</p>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #2ecc71;">✅ Решение: Eager Loading</h3>
+                        <p style="margin-left: 20px;">Загрузка связей одним запросом через JOIN</p>
+                    </div>
+                </div>
+                <pre class="fragment" style="margin-top: 15px;"><code class="python"># SQLAlchemy - joinedload (для ForeignKey)
+from sqlalchemy.orm import joinedload
+students = session.query(Student).options(
+    joinedload(Student.course)  # 1 запрос с JOIN
+).all()
+
+# Django ORM
+# select_related - для ForeignKey, OneToOne
+students = Student.objects.select_related('course')
+
+# prefetch_related - для ManyToMany
+courses = Course.objects.prefetch_related('students')</code></pre>
+                <div class="fragment" style="text-align: left; font-size: 0.65em; margin-top: 10px;">
+                    <p style="color: #f39c12;"><strong>💡 Результат:</strong> 101 запрос → 1-2 запроса (ускорение в 50-100 раз)</p>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 21: Сложные условия (Q объекты)</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">🎯 Зачем нужны Q объекты?</h3>
+                        <p style="margin-left: 20px;">Для создания сложных условий с OR, AND, NOT</p>
+                        <ul style="margin-left: 40px; font-size: 0.9em;">
+                            <li><strong>OR:</strong> найти по имени ИЛИ email</li>
+                            <li><strong>AND:</strong> активные И с оценкой > 80</li>
+                            <li><strong>NOT:</strong> все кроме неактивных</li>
+                        </ul>
+                    </div>
+                </div>
+                <pre class="fragment" style="margin-top: 15px;"><code class="python"># Django Q - OR условие
+from django.db.models import Q
+students = Student.objects.filter(
+    Q(name__icontains='Ivan') | Q(email__icontains='ivan')
+)  # Найти по имени ИЛИ email
+
+# SQLAlchemy - тот же запрос
+from sqlalchemy import or_, select
+stmt = select(Student).where(
+    or_(
+        Student.name.ilike('%Ivan%'), 
+        Student.email.ilike('%ivan%')
+    )
+)</code></pre>
+                <div class="fragment" style="text-align: left; font-size: 0.65em; margin-top: 10px;">
+                    <p style="color: #2ecc71;"><strong>💡 Пример SQL:</strong> SELECT * FROM students WHERE name ILIKE '%Ivan%' OR email ILIKE '%ivan%'</p>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 22: Операции с полями (F объекты)</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">🎯 Зачем нужны F объекты?</h3>
+                        <p style="margin-left: 20px;">Для операций с полями на уровне БД (без загрузки в Python)</p>
+                        <ul style="margin-left: 40px; font-size: 0.9em;">
+                            <li><strong>Атомарность:</strong> избежание race conditions</li>
+                            <li><strong>Производительность:</strong> операции в БД, не в Python</li>
+                            <li><strong>Пример:</strong> увеличить баллы на 10 для 1000 студентов</li>
+                        </ul>
+                    </div>
+                </div>
+                <pre class="fragment" style="margin-top: 15px;"><code class="python"># Django F - обновление на уровне БД
+from django.db.models import F
+Student.objects.filter(status='active').update(
+    grade=F('grade') + 10  # grade = grade + 10 в SQL
+)
+
+# SQLAlchemy - тот же запрос
+from sqlalchemy import update
+stmt = update(Student).where(
+    Student.status == 'active'
+).values(grade=Student.grade + 10)
+session.execute(stmt)
+session.commit()</code></pre>
+                <div class="fragment" style="text-align: left; font-size: 0.65em; margin-top: 10px;">
+                    <p style="color: #2ecc71;"><strong>💡 SQL:</strong> UPDATE students SET grade = grade + 10 WHERE status = 'active'</p>
+                    <p style="color: #e74c3c; margin-top: 5px;"><strong>⚠️ Без F:</strong> загрузить 1000 студентов в Python → изменить → сохранить (1000 запросов)</p>
+                    <p style="color: #2ecc71; margin-top: 5px;"><strong>✅ С F:</strong> 1 запрос UPDATE в БД (ускорение в 1000 раз)</p>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 23: Raw SQL и транзакции</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">📝 Raw SQL — когда нужен?</h3>
+                        <ul style="margin-left: 20px; font-size: 0.9em;">
+                            <li><strong>Сложные запросы:</strong> ORM не может сгенерировать</li>
+                            <li><strong>Оптимизация:</strong> нужен контроль над SQL</li>
+                            <li><strong>Специфичные функции:</strong> уникальные для СУБД</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #2ecc71;">🔒 Транзакции — зачем?</h3>
+                        <ul style="margin-left: 20px; font-size: 0.9em;">
+                            <li><strong>Атомарность:</strong> все или ничего</li>
+                            <li><strong>Пример:</strong> перевод денег — списать И зачислить</li>
+                            <li><strong>Rollback:</strong> отмена при ошибке</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 20px; margin-top: 15px; font-size: 0.65em;">
+                    <div style="flex: 1;">
+                        <h3 style="color: #3498db; text-align: center;">Raw SQL</h3>
+                        <pre class="fragment"><code class="python"># SQLAlchemy
+from sqlalchemy import text
+result = session.execute(
+    text("SELECT * FROM students WHERE id = :id"),
+    {"id": 1}  # Защита от SQL-инъекций
+).fetchall()
+
+# Django ORM
+from django.db import connection
+with connection.cursor() as cursor:
+    cursor.execute(
+        "SELECT * FROM students WHERE id = %s",
+        [1]
+    )
+    result = cursor.fetchall()</code></pre>
+                    </div>
+                    
+                    <div style="flex: 1;">
+                        <h3 style="color: #2ecc71; text-align: center;">Транзакции</h3>
+                        <pre class="fragment"><code class="python"># SQLAlchemy
+try:
+    session.add(student)
+    session.add(course)
+    session.commit()  # Сохранить
+except:
+    session.rollback()  # Отменить
+finally:
+    session.close()
+
+# Django ORM
+from django.db import transaction
+with transaction.atomic():
+    student.save()
+    course.save()
+    # Автоматический rollback при ошибке</code></pre>
+                    </div>
+                </div>
+                
+                <div class="fragment" style="text-align: left; font-size: 0.65em; margin-top: 10px;">
+                    <p style="color: #f39c12;"><strong>💡 Важно:</strong> Всегда используйте параметры (:id, %s) вместо f-string для защиты от SQL-инъекций</p>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 24: SQLAlchemy 1.x vs 2.x</h2>
+                <div style="font-size: 0.7em; margin-left: -15%;">
+                    <div class="fragment" style="text-align: left; margin-bottom: 15px;">
+                        <h3 style="color: #3498db;">🚀 Ключевые отличия SQLAlchemy 2.0</h3>
+                        <p style="margin-left: 20px; font-size: 0.9em;">Версия 2.0 — полное переосмысление API с фокусом на современный Python и async/await</p>
+                    </div>
+                    
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 5px;">
+                        <tr style="background: rgba(52,152,219,0.3);">
+                            <th style="padding: 15px; border: 2px solid rgba(255,255,255,0.3);"></th>
+                            <th style="padding: 15px; border: 2px solid rgba(255,255,255,0.3); color: #e74c3c;">🔴 SQLAlchemy 1.x</th>
+                            <th style="padding: 15px; border: 2px solid rgba(255,255,255,0.3); color: #2ecc71;">✅ SQLAlchemy 2.x</th>
+                        </tr>
+                        <tr style="background: rgba(46,204,113,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>💻 Query API</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); font-family: monospace;">session.query(Student)</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); font-family: monospace;">session.execute(select(Student))</td>
+                        </tr>
+                        <tr style="background: rgba(155,89,182,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>🎯 Стиль</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">ORM-стиль (legacy)</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">SQL Expression стиль</td>
+                        </tr>
+                        <tr style="background: rgba(241,196,15,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>📝 Типизация</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">Слабая</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">Сильная (type hints)</td>
+                        </tr>
+                        <tr style="background: rgba(231,76,60,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>⚡ Async</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">❌ Нет</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">✅ Полная поддержка</td>
+                        </tr>
+                        <tr style="background: rgba(52,152,219,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>🛠️ Session</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); font-family: monospace;">sessionmaker()</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); font-family: monospace;">async_sessionmaker()</td>
+                        </tr>
+                        <tr style="background: rgba(46,204,113,0.15);">
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);"><strong>🚀 Производительность</strong></td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3);">Хорошая</td>
+                            <td style="padding: 12px; border: 2px solid rgba(255,255,255,0.3); color: #2ecc71;"><strong>Лучше на 20-30%</strong></td>
+                        </tr>
+                    </table>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 24.1: Почему переходить на 2.x?</h2>
+                <div style="text-align: left; font-size: 0.75em;">
+                    <div class="fragment" style="margin-top: 20px;">
+                        <h3 style="color: #2ecc71;">✅ Почему переходить на 2.x?</h3>
+                        <ul style="margin-left: 20px; font-size: 1em; line-height: 1.8;">
+                            <li style="margin-bottom: 15px;"><strong style="color: #3498db;">💻 Современный синтаксис</strong> и лучшая типизация для IDE</li>
+                            <li style="margin-bottom: 15px;"><strong style="color: #9b59b6;">⚡ Поддержка async/await</strong> для высоконагруженных систем</li>
+                            <li style="margin-bottom: 15px;"><strong style="color: #1abc9c;">🎯 Более предсказуемое поведение</strong> и меньше подводных камней</li>
+                            <li style="margin-bottom: 15px;"><strong style="color: #e74c3c;">🔄 Активная поддержка</strong> и обновления (1.x — legacy)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="background: rgba(243,156,18,0.2); padding: 20px; border-radius: 10px; border: 2px solid #f39c12; margin-top: 40px;">
+                        <p style="color: #f39c12; font-size: 1.1em; text-align: center; margin: 0;"><strong>💡 Важно:</strong> SQLAlchemy 1.4 поддерживает оба стиля (переходная версия)</p>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 25: SQLAlchemy синтаксис</h2>
+                <div style="font-size: 0.75em;">
+                    <div class="fragment" style="margin-bottom: 10px;">
+                        <h3 style="color: #e74c3c; text-align: left; font-size: 0.9em;">🔴 SQLAlchemy 1.x (legacy)</h3>
+                        <pre style="margin: 5px 0;"><code class="python" style="font-size: 1.15em;"># Старый ORM-стиль
+students = session.query(Student).all()  # Простой, но устаревший</code></pre>
+                    </div>
+                    
+                    <div class="fragment" style="margin-bottom: 10px;">
+                        <h3 style="color: #2ecc71; text-align: left; font-size: 0.9em;">✅ SQLAlchemy 2.x (синхронный)</h3>
+                        <pre style="margin: 5px 0;"><code class="python" style="font-size: 1.15em;">from sqlalchemy import select
+
+# SQL Expression стиль
+stmt = select(Student)                    # Создаем SQL запрос
+result = session.execute(stmt)            # Выполняем
+students = result.scalars().all()         # Получаем объекты</code></pre>
+                    </div>
+                    
+                    <div class="fragment">
+                        <h3 style="color: #9b59b6; text-align: left; font-size: 0.9em;">⚡ SQLAlchemy 2.x (асинхронный)</h3>
+                        <pre style="margin: 5px 0;"><code class="python" style="font-size: 1.15em;">from sqlalchemy.ext.asyncio import AsyncSession
+
+# Async/await для высоконагруженных систем
+async with AsyncSession(engine) as session:
+    stmt = select(Student)                # Тот же синтаксис
+    result = await session.execute(stmt)  # Асинхронное выполнение
+    students = result.scalars().all()     # Список объектов</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#1a1a2e">
+                <h2 style="color: #FFD700;">🎯 Заключение</h2>
+                <div style="text-align: left; font-size: 0.75em;">
+                    <div class="fragment" style="background: rgba(52,152,219,0.2); padding: 20px; border-radius: 10px; border-left: 5px solid #3498db; margin-bottom: 25px;">
+                        <h3 style="color: #3498db; margin-top: 0;">🔧 Выбор подхода:</h3>
+                        <ul style="line-height: 1.8;">
+                            <li><strong style="color: #e74c3c;">📝 SQL</strong> — максимальная производительность</li>
+                            <li><strong style="color: #9b59b6;">⚙️ PL/pgSQL</strong> — логика на уровне БД</li>
+                            <li><strong style="color: #2ecc71;">🔗 ORM</strong> — быстрая разработка и безопасность</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="background: rgba(46,204,113,0.2); padding: 20px; border-radius: 10px; border-left: 5px solid #2ecc71;">
+                        <h3 style="color: #2ecc71; margin-top: 0;">💡 Рекомендации:</h3>
+                        <ul style="line-height: 1.8;">
+                            <li><strong style="color: #3498db;">✅ ORM</strong> для типовых операций</li>
+                            <li><strong style="color: #f39c12;">⚡ SQL</strong> для сложных запросов</li>
+                            <li><strong style="color: #e74c3c;">📊 Профилируйте</strong> и оптимизируйте</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <div class="navigation-panel" id="navigationPanel">
+        <div class="nav-grid" id="navGrid"></div>
+    </div>
+
+    <style>
+        .navigation-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            background: rgba(22, 33, 62, 0.95);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            padding: 7px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            z-index: 1000;
+        }
+        .nav-grid {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 2px;
+            overflow-x: auto;
+        }
+        .nav-button {
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 3px;
+            font-size: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .nav-button:hover {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            transform: scale(1.1);
+        }
+        .nav-button.active {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+        }
+    </style>
+
+    <script src="../3-4/js/reveal.min.js"></script>
+    <script src="../3-4/js/notes.min.js"></script>
+    <script src="../3-4/js/markdown.min.js"></script>
+    <script src="../3-4/js/highlight.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            transition: 'slide',
+            controls: true,
+            progress: true,
+            slideNumber: false,
+            center: false,
+            margin: 0.02,
+            plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+        });
+        
+
+
+        function createNavigationButtons() {
+            const navGrid = document.getElementById('navGrid');
+            for (let i = 1; i <= 28; i++) {
+                const button = document.createElement('div');
+                button.className = 'nav-button';
+                button.textContent = i;
+                button.onclick = () => Reveal.slide(i - 1, 0);
+                navGrid.appendChild(button);
+            }
+        }
+
+        function updateActiveButton() {
+            const buttons = document.querySelectorAll('.nav-button');
+            const currentSlide = Reveal.getIndices().h;
+            buttons.forEach((button, index) => {
+                button.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        Reveal.on('ready', () => {
+            createNavigationButtons();
+            updateActiveButton();
+        });
+        
+        Reveal.on('slidechanged', updateActiveButton);
+    </script>
+</body>
+</html>

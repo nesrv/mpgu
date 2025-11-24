@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JWT-аутентификация в FastAPI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a2e; color: #eee; overflow: hidden; }
+        .slide { display: none; width: 100vw; height: 100vh; padding: 60px; justify-content: center; align-items: center; flex-direction: column; }
+        .slide.active { display: flex; }
+        h1 { font-size: 3em; margin-bottom: 30px; color: #16c79a; text-align: center; }
+        h2 { font-size: 2.5em; margin-bottom: 40px; color: #16c79a; }
+        h3 { font-size: 1.8em; margin: 20px 0; color: #19d3da; }
+        p, li { font-size: 1.3em; line-height: 1.8; margin: 10px 0; }
+        ul { margin-left: 40px; }
+        code { background: #0f3460; padding: 3px 8px; border-radius: 4px; color: #19d3da; font-family: 'Courier New', monospace; }
+        pre { background: #0f3460; padding: 20px; border-radius: 8px; overflow-x: auto; margin: 20px 0; font-size: 1.1em; }
+        .controls { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 15px; }
+        button { padding: 12px 25px; font-size: 1.1em; background: #16c79a; border: none; border-radius: 5px; cursor: pointer; color: #1a1a2e; font-weight: bold; }
+        button:hover { background: #19d3da; }
+        .slide-number { position: fixed; bottom: 30px; left: 30px; font-size: 1.2em; color: #16c79a; }
+        .content { max-width: 1200px; }
+        .highlight { color: #19d3da; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="slide active">
+    <h1>JWT-аутентификация</h1>
+    <h2>в FastAPI микросервисах</h2>
+    <p style="margin-top: 40px; font-size: 1.5em;">Проектирование и разработка высоконагруженных сервисов</p>
+</div>
+
+<div class="slide">
+    <div class="content">
+        <h2>Что такое JWT?</h2>
+        <p><span class="highlight">JSON Web Token (JWT)</span> — стандарт для безопасной передачи информации между сторонами в виде JSON-объекта</p>
+        <h3>Структура JWT:</h3>
+        <ul>
+            <li><span class="highlight">Header</span> — алгоритм шифрования и тип токена</li>
+            <li><span class="highlight">Payload</span> — данные пользователя (claims)</li>
+            <li><span class="highlight">Signature</span> — цифровая подпись</li>
+        </ul>
+        <pre>xxxxx.yyyyy.zzzzz</pre>
+    </div>
+</div>
+
+<div class="slide">
+    <div class="content">
+        <h2>Преимущества JWT</h2>
+        <ul>
+            <li><span class="highlight">Stateless</span> — сервер не хранит сессии</li>
+            <li><span class="highlight">Масштабируемость</span> — легко работает с микросервисами</li>
+            <li><span class="highlight">Кросс-доменность</span> — работает между разными доменами</li>
+            <li><span class="highlight">Компактность</span> — передается через URL, POST или HTTP Header</li>
+            <li><span class="highlight">Безопасность</span> — подписан криптографически</li>
+        </ul>
+    </div>
+</div>
+
+<div class="slide">
+    <div class="content">
+        <h2>Установка зависимостей</h2>
+        <pre>pip install fastapi uvicorn python-jose[cryptography] passlib[bcrypt] python-multipart</pre>
+        <h3>Основные библиотеки:</h3>
+        <ul>
+            <li><code>python-jose</code> — работа с JWT</li>
+            <li><code>passlib</code> — хеширование паролей</li>
+            <li><code>python-multipart</code> — обработка форм</li>
+        </ul>
+    </div>
+</div>
+
+<div class="slide">
+    <div class="content">
+        <h2>Конфигурация JWT</h2>
+        <pre>from datetime import datetime, timedelta
+from jose import JWTError, jwt
+
+SECRET_KEY = "your-secret-key-keep-it-secret"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=30)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)</pre>
+    </div>
+</div>
+
+<div class="slide">
+    <div class="content">
+        <h2>Хеширование паролей</h2>
+        <pre>from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)</pre>
+    </div>
+</div>
+
+<div class="slide">
+    <div class="content">
+        <h2>Эндпоинт авторизации</h2>
+        <pre>from fastapi import FastAPI, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
+app = FastAPI()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+@app.post("/token")
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Incorrect credentials")
+    access_token = create_access_token(data={"sub": user.username})
+    return {"access_token": access_token, "token_type": "bearer"}</pre>
+    </div>
+</div>
+
+<div class="slide">
+    <div class="content">
+        <h2>Проверка токена</h2>
+        <pre>async def get_current_user(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    return username</pre>
+    </div>
+</div>
+
+<div class="slide">
+    <div class="content">
+        <h2>Защищенные эндпоинты</h2>
+        <pre>@app.get("/users/me")
+async def read_users_me(current_user: str = Depends(get_current_user)):
+    return {"username": current_user}
+
+@app.get("/items/")
+async def read_items(current_user: str = Depends(get_current_user)):
+    return [{"item_id": 1, "owner": current_user}]</pre>
+        <p style="margin-top: 20px;">Используйте <code>Depends(get_current_user)</code> для защиты любого эндпоинта</p>
+    </div>
+</div>
+
+<div class="slide">
+    <div class="content">
+        <h2>Лучшие практики</h2>
+        <ul>
+            <li>Храните <span class="highlight">SECRET_KEY</span> в переменных окружения</li>
+            <li>Используйте <span class="highlight">HTTPS</span> для передачи токенов</li>
+            <li>Устанавливайте <span class="highlight">короткое время жизни</span> токенов</li>
+            <li>Реализуйте <span class="highlight">refresh tokens</span> для обновления</li>
+            <li>Добавьте токены в <span class="highlight">blacklist</span> при logout</li>
+            <li>Валидируйте все <span class="highlight">claims</span> в payload</li>
+        </ul>
+    </div>
+</div>
+
+<div class="slide-number">Слайд <span id="current">1</span> из 10</div>
+
+<div class="controls">
+    <button onclick="prevSlide()">← Назад</button>
+    <button onclick="nextSlide()">Вперед →</button>
+</div>
+
+<script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+
+    function showSlide(n) {
+        slides[currentSlide].classList.remove('active');
+        currentSlide = (n + totalSlides) % totalSlides;
+        slides[currentSlide].classList.add('active');
+        document.getElementById('current').textContent = currentSlide + 1;
+    }
+
+    function nextSlide() { showSlide(currentSlide + 1); }
+    function prevSlide() { showSlide(currentSlide - 1); }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextSlide();
+        if (e.key === 'ArrowLeft') prevSlide();
+    });
+</script>
+
+</body>
+</html>
