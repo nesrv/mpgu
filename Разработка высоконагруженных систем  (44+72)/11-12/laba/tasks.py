@@ -67,8 +67,8 @@ def task_2_2():
         stmt = select(Repository.name).where(
             cast(Repository.repo_metadata['language'], String) == 'Python'
         )
-        for row in session.execute(stmt):
-            print(f"Python проект: {row.name}")
+        for name in session.scalars(stmt):
+            print(f"Python проект: {name}")
 
 # 2.3 Найти участников, работающих с FastAPI
 # SQL: SELECT c.full_name, r.name FROM contributions co NATURAL JOIN contributors c NATURAL JOIN repositories r WHERE r.repo_metadata->>'framework' = 'FastAPI';
@@ -211,11 +211,11 @@ def task_3_5():
 
 if __name__ == "__main__":
     print("=== 1. Простые задания ===")
-    task_1_1()
-    task_1_2()
-    task_1_3()
-    task_1_4()
-    task_1_5()
+    # task_1_1()
+    # task_1_2()
+    # task_1_3()
+    # task_1_4()
+    # task_1_5()
     
     print("\n=== 2. Средние задания ===")
     task_2_1()

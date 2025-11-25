@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оконные функции PostgreSQL</title>
+    <link rel="stylesheet" href="../../Разработка высоконагруженных систем  (44+72)/3-4/css/reveal.min.css">
+    <link rel="stylesheet" href="../../Разработка высоконагруженных систем  (44+72)/3-4/css/black.min.css">
+    <link rel="stylesheet" href="../../Разработка высоконагруженных систем  (44+72)/3-4/css/monokai.min.css">
+    <link rel="stylesheet" href="../../Разработка высоконагруженных систем  (44+72)/3-4/css/presentation.css">
+    <style>
+        .reveal .slides { width: 80% !important; height: 90% !important; transform: scale(1.2) !important; position: absolute !important; left: 50% !important; top: 5% !important; transform: translateX(calc(-50% + 15%)) scale(1.2) !important; transform-origin: top center !important; }
+        .reveal h1 { font-size: 1.8em !important; margin-top: 0 !important; margin-bottom: 0.4em !important; }
+        .reveal h2 { font-size: 1.1em !important; margin-top: 0 !important; margin-bottom: 0.3em !important; text-transform: none !important; }
+        .reveal h3 { font-size: 1.1em !important; margin-top: 0 !important; margin-bottom: 0.3em !important; text-transform: none !important; }
+        .reveal .slides section { padding: 15px !important; font-size: 1em !important; }
+        .reveal p, .reveal ul, .reveal ol { font-size: 0.9em !important; }
+        pre code { font-size: 0.85em !important; max-height: none; overflow: hidden; }
+        pre { max-height: none; overflow: hidden; margin: 10px 0 !important; }
+        .diagram { font-family: 'Courier New', monospace; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; font-size: 0.9em; }
+        table { font-size: 0.8em !important; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            
+            <section data-background-color="#1a1a2e">
+                <div style="background: rgba(22,33,62,0.9); padding: 40px; border: 8px solid #0f3460;">
+                    <h1 style="color: #FFD700;">🪟 Оконные функции PostgreSQL</h1>
+                    <h2 style="color: #90EE90;">Лекция 13-14</h2>
+                    <p style="color: #FFF; font-size: 1em;">🏫 МПГУ, 4 курс, 2025</p>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 2: Актуальность для OLTP и OLAP</h2>
+                <div style="text-align: left; font-size: 0.7em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">🎯 Зачем нужны оконные функции?</h3>
+                        <p style="margin-left: 20px;"><strong style="color: #2ecc71;">OLTP:</strong> Ранжирование пользователей, накопительные суммы, сравнение транзакций</p>
+                        <p style="margin-left: 20px;"><strong style="color: #9b59b6;">OLAP:</strong> Аналитика продаж, скользящие средние, ранжирование товаров</p>
+                    </div>
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h3 style="color: #2ecc71;">✅ Преимущества:</h3>
+                        <ul style="margin-left: 20px;">
+                            <li>Один запрос вместо множества</li>
+                            <li>Не требуется GROUP BY</li>
+                            <li>Доступ к соседним строкам</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 3: OVER() — окно по всей таблице</h2>
+                <div style="font-size: 0.7em;">
+                    <div class="diagram fragment">
+                        <pre>Продажи:
+┌────────┬────────┬────────┐
+│ Товар  │ Сумма  │ Всего  │  ← OVER() считает по всем строкам
+├────────┼────────┼────────┤
+│ Яблоки │  100   │  600   │
+│ Груши  │  150   │  600   │
+│ Бананы │  200   │  600   │
+│ Киви   │  150   │  600   │
+└────────┴────────┴────────┘</pre>
+                    </div>
+                    <pre class="fragment"><code class="sql">SELECT 
+    product,
+    amount,
+    SUM(amount) OVER() as total  -- Сумма по всем строкам
+FROM sales;</code></pre>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 4: PARTITION BY — разделение на группы</h2>
+                <div style="font-size: 0.65em;">
+                    <div class="diagram fragment">
+                        <pre>Продажи по категориям:
+┌──────────┬────────┬────────┬──────────────┐
+│ Категория│ Товар  │ Сумма  │ Итог группы │
+├──────────┼────────┼────────┼──────────────┤
+│ Фрукты   │ Яблоки │  100   │    450       │ ← Группа 1
+│ Фрукты   │ Груши  │  150   │    450       │
+│ Фрукты   │ Бананы │  200   │    450       │
+├──────────┼────────┼────────┼──────────────┤
+│ Овощи    │ Морковь│   80   │    150       │ ← Группа 2
+│ Овощи    │ Капуста│   70   │    150       │
+└──────────┴────────┴────────┴──────────────┘</pre>
+                    </div>
+                    <pre class="fragment"><code class="sql">SELECT 
+    category, product, amount,
+    SUM(amount) OVER(PARTITION BY category) as category_total
+FROM sales;</code></pre>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 5: Нарастающий итог</h2>
+                <div style="font-size: 0.7em;">
+                    <div class="diagram fragment">
+                        <pre>Продажи по дням:
+┌──────┬────────┬─────────────┐
+│ День │ Сумма  │ Накопленная │
+├──────┼────────┼─────────────┤
+│  1   │  100   │    100      │ ← 100
+│  2   │  150   │    250      │ ← 100 + 150
+│  3   │  200   │    450      │ ← 100 + 150 + 200
+│  4   │  150   │    600      │ ← 100 + 150 + 200 + 150
+└──────┴────────┴─────────────┘</pre>
+                    </div>
+                    <pre class="fragment"><code class="sql">SELECT 
+    day, amount,
+    SUM(amount) OVER(ORDER BY day) as running_total
+FROM daily_sales;</code></pre>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 5.1: Нарастающий итог с группировкой</h2>
+                <div style="font-size: 0.65em;">
+                    <pre class="fragment"><code class="sql">SELECT 
+    category, day, amount,
+    SUM(amount) OVER(
+        PARTITION BY category 
+        ORDER BY day
+    ) as category_running_total
+FROM sales;</code></pre>
+                    <div class="diagram fragment" style="margin-top: 10px;">
+                        <pre>┌───────────┬──────┬────────┬────────────────────────┐
+│ category  │ day  │ amount │ category_running_total │
+├───────────┼──────┼────────┼────────────────────────┤
+│ Фрукты    │  1   │  100   │         100            │ ← Начало группы
+│ Фрукты    │  2   │  150   │         250            │ ← 100 + 150
+│ Фрукты    │  3   │  200   │         450            │
+├───────────┼──────┼────────┼────────────────────────┤
+│ Овощи     │  1   │   80   │          80            │ ← Новая группа
+│ Овощи     │  2   │   70   │         150            │
+└───────────┴──────┴────────┴────────────────────────┘</pre>
+                    </div>
+                    <p class="fragment" style="color: #f39c12; text-align: center; margin-top: 10px;">💡 PARTITION BY сбрасывает счетчик для каждой категории</p>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 6: Скользящая рамка</h2>
+                <div style="font-size: 0.7em;">
+                    <div class="diagram fragment">
+                        <pre>Скользящее среднее (3 дня):
+┌──────┬────────┬──────────────────┐
+│ День │ Сумма  │ Среднее за 3 дня │
+├──────┼────────┼──────────────────┤
+│  1   │  100   │      100         │ ← только день 1
+│  2   │  150   │      125         │ ← (100+150)/2
+│  3   │  200   │      150         │ ← (100+150+200)/3
+│  4   │  180   │      177         │ ← (150+200+180)/3
+│  5   │  220   │      200         │ ← (200+180+220)/3
+└──────┴────────┴──────────────────┘
+         ↑↑↑
+      Окно 3 дня</pre>
+                    </div>
+                    <div class="fragment" style="margin-top: 15px;">
+                        <p><strong style="color: #3498db;">Типы рамок:</strong></p>
+                        <ul style="font-size: 0.9em; margin-left: 20px;">
+                            <li><code>ROWS BETWEEN 2 PRECEDING AND CURRENT ROW</code></li>
+                            <li><code>ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code></li>
+                            <li><code>ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING</code></li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 7: Скользящее среднее за 3 дня</h2>
+                <div style="font-size: 0.7em;">
+                    <pre class="fragment"><code class="sql">SELECT 
+    day, amount,
+    AVG(amount) OVER(
+        ORDER BY day
+        ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+    ) as moving_avg_3days
+FROM daily_sales;</code></pre>
+                    <div class="diagram fragment" style="margin-top: 10px;">
+                        <pre>┌──────┬────────┬──────────────────┐
+│ day  │ amount │ moving_avg_3days │
+├──────┼────────┼──────────────────┤
+│  1   │  100   │      100.00      │ ← (100)/1
+│  2   │  150   │      125.00      │ ← (100+150)/2
+│  3   │  200   │      150.00      │ ← (100+150+200)/3
+│  4   │  180   │      176.67      │ ← (150+200+180)/3
+│  5   │  220   │      200.00      │ ← (200+180+220)/3
+└──────┴────────┴──────────────────┘</pre>
+                    </div>
+                    <p class="fragment" style="color: #2ecc71; margin-top: 10px;">💡 Применение: сглаживание трендов, анализ временных рядов</p>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 7.1: Сумма за последние 7 дней</h2>
+                <div style="font-size: 0.7em;">
+                    <pre class="fragment"><code class="sql">SELECT 
+    date, revenue,
+    SUM(revenue) OVER(
+        ORDER BY date
+        ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ) as last_7days_revenue
+FROM sales;</code></pre>
+                    <div class="diagram fragment" style="margin-top: 10px;">
+                        <pre>┌────────────┬─────────┬───────────────────┐
+│    date    │ revenue │ last_7days_revenue│
+├────────────┼─────────┼───────────────────┤
+│ 2025-01-01 │   100   │        100        │ ← 1 день
+│ 2025-01-07 │   180   │        980        │ ← 7 дней
+│ 2025-01-08 │   200   │       1080        │ ← убирается 01-01
+└────────────┴─────────┴───────────────────┘</pre>
+                    </div>
+                    <p class="fragment" style="color: #2ecc71; margin-top: 10px;">💡 Применение: мониторинг недельной выручки, KPI дашборды</p>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 8: LEAD() и LAG()</h2>
+                <div style="font-size: 0.7em;">  
+                    <pre class="fragment"><code class="sql">SELECT 
+    date, price,
+    LAG(price, 1) OVER(ORDER BY date) as prev_price,
+    price - LAG(price, 1) OVER(ORDER BY date) as price_change
+FROM stock_prices;</code></pre>
+                    <div class="diagram fragment" style="margin-top: 10px;">
+                        <pre>┌────────────┬───────┬────────────┬──────────────┐
+│    date    │ price │ prev_price │ price_change │
+├────────────┼───────┼────────────┼──────────────┤
+│ 2025-01-01 │  100  │    NULL    │     NULL     │
+│ 2025-01-02 │  105  │    100     │      +5      │
+│ 2025-01-03 │   98  │    105     │      -7      │
+└────────────┴───────┴────────────┴──────────────┘</pre>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 9: FIRST_VALUE() и LAST_VALUE()</h2>
+                <div style="font-size: 0.7em;">
+                    <pre class="fragment"><code class="sql">SELECT 
+    product, date, price,
+    FIRST_VALUE(price) OVER(
+        PARTITION BY product ORDER BY date
+    ) as initial_price
+FROM product_prices;</code></pre>
+                    <pre class="fragment" style="margin-top: 10px;"><code class="sql">SELECT 
+    product, date, price,
+    LAST_VALUE(price) OVER(
+        PARTITION BY product ORDER BY date
+        ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+    ) as final_price
+FROM product_prices;</code></pre>
+                    <p class="fragment" style="color: #e74c3c; margin-top: 10px;">⚠️ Важно: Для LAST_VALUE() нужно указать UNBOUNDED FOLLOWING!</p>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 10: RANK(), DENSE_RANK(), ROW_NUMBER()</h2>
+                <div style="font-size: 0.65em;">
+                    <pre class="fragment"><code class="sql">SELECT 
+    student, score,
+    ROW_NUMBER() OVER(ORDER BY score DESC) as row_num,
+    RANK() OVER(ORDER BY score DESC) as rank,
+    DENSE_RANK() OVER(ORDER BY score DESC) as dense_rank
+FROM exam_results;</code></pre>
+                    <div class="diagram fragment" style="margin-top: 10px;">
+                        <pre>┌─────────┬───────┬─────────┬──────┬────────────┐
+│ student │ score │ row_num │ rank │ dense_rank │
+├─────────┼───────┼─────────┼──────┼────────────┤
+│ Иван    │  95   │    1    │  1   │     1      │
+│ Петр    │  90   │    2    │  2   │     2      │
+│ Мария   │  90   │    3    │  2   │     2      │ ← одинаковый балл
+│ Анна    │  85   │    4    │  4   │     3      │ ← RANK пропускает 3
+└─────────┴───────┴─────────┴──────┴────────────┘</pre>
+                    </div>
+                    <ul class="fragment" style="margin-top: 10px; font-size: 0.9em;">
+                        <li><code>ROW_NUMBER()</code> — уникальный номер (1,2,3,4)</li>
+                        <li><code>RANK()</code> — пропускает номера (1,2,2,4)</li>
+                        <li><code>DENSE_RANK()</code> — не пропускает (1,2,2,3)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 11: NTILE() — квартили</h2>
+                <div style="font-size: 0.7em;">
+                    <pre class="fragment"><code class="sql">SELECT 
+    customer, revenue,
+    NTILE(4) OVER(ORDER BY revenue DESC) as quartile
+FROM customer_revenue;</code></pre>
+                    <div class="diagram fragment" style="margin-top: 10px;">
+                        <pre>┌──────────┬─────────┬──────────┐
+│ customer │ revenue │ quartile │
+├──────────┼─────────┼──────────┤
+│ Client A │  10000  │    1     │ ← Топ 25%
+│ Client B │   8000  │    1     │
+│ Client C │   6000  │    2     │
+│ Client D │   5000  │    2     │
+│ Client E │   3000  │    3     │
+│ Client F │   2000  │    3     │
+│ Client G │   1000  │    4     │ ← Нижние 25%
+│ Client H │    500  │    4     │
+└──────────┴─────────┴──────────┘</pre>
+                    </div>
+                    <p class="fragment" style="color: #2ecc71; margin-top: 10px;">💡 Применение: ABC-анализ, сегментация клиентов</p>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 12: crosstab() — сводные таблицы</h2>
+                <div style="font-size: 0.65em;">
+                    <pre class="fragment"><code class="sql">CREATE EXTENSION IF NOT EXISTS tablefunc;</code></pre>
+                    <div class="diagram fragment" style="margin-top: 10px;">
+                        <pre>Исходная таблица:
+┌─────────┬─────────┬────────┐
+│ product │  month  │ amount │
+├─────────┼─────────┼────────┤
+│ Яблоки  │ Январь  │  100   │
+│ Яблоки  │ Февраль │  150   │
+│ Груши   │ Январь  │  200   │
+└─────────┴─────────┴────────┘</pre>
+                    </div>
+                    <pre class="fragment" style="margin-top: 10px;"><code class="sql">SELECT * FROM crosstab(
+    'SELECT product, month, amount FROM sales ORDER BY 1,2',
+    'SELECT DISTINCT month FROM sales ORDER BY 1'
+) AS ct(product TEXT, january INT, february INT);</code></pre>
+                    <div class="diagram fragment" style="margin-top: 10px;">
+                        <pre>Результат:
+┌─────────┬─────────┬──────────┐
+│ product │ january │ february │
+├─────────┼─────────┼──────────┤
+│ Яблоки  │   100   │   150    │
+│ Груши   │   200   │   180    │
+└─────────┴─────────┴──────────┘</pre>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 13: GROUPING SETS</h2>
+                <div style="font-size: 0.7em;">
+                    <pre class="fragment"><code class="sql">SELECT 
+    category, region, SUM(amount) as total
+FROM sales
+GROUP BY GROUPING SETS (
+    (category),        -- Группировка по категории
+    (region),          -- Группировка по региону
+    ()                 -- Общий итог
+);</code></pre>
+                    <div class="diagram fragment" style="margin-top: 10px;">
+                        <pre>┌──────────┬────────┬───────┐
+│ category │ region │ total │
+├──────────┼────────┼───────┤
+│ Фрукты   │  NULL  │  450  │ ← По категории
+│ Овощи    │  NULL  │  150  │
+│  NULL    │ Москва │  300  │ ← По региону
+│  NULL    │ СПб    │  300  │
+│  NULL    │  NULL  │  600  │ ← Общий итог
+└──────────┴────────┴───────┘</pre>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 14: ROLLUP — иерархические итоги</h2>
+                <div style="font-size: 0.7em;">
+                    <pre class="fragment"><code class="sql">SELECT 
+    year, quarter, month, SUM(revenue) as total
+FROM sales
+GROUP BY ROLLUP(year, quarter, month);</code></pre>
+                    <div class="diagram fragment" style="margin-top: 10px;">
+                        <pre>┌──────┬─────────┬───────┬────────┐
+│ year │ quarter │ month │ total  │
+├──────┼─────────┼───────┼────────┤
+│ 2025 │   Q1    │  Jan  │  1000  │ ← Детализация
+│ 2025 │   Q1    │  Feb  │  1200  │
+│ 2025 │   Q1    │  NULL │  2200  │ ← Итог Q1
+│ 2025 │   Q2    │  Apr  │  1500  │
+│ 2025 │   Q2    │  NULL │  1500  │ ← Итог Q2
+│ 2025 │   NULL  │  NULL │  3700  │ ← Итог 2025
+│ NULL │   NULL  │  NULL │  3700  │ ← Общий итог
+└──────┴─────────┴───────┴────────┘</pre>
+                    </div>
+                    <p class="fragment" style="color: #2ecc71; margin-top: 10px;">💡 Применение: финансовые отчеты, иерархические структуры</p>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 15: CUBE — все комбинации</h2>
+                <div style="font-size: 0.65em;">
+                    <pre class="fragment"><code class="sql">SELECT 
+    category, region, SUM(amount) as total
+FROM sales
+GROUP BY CUBE(category, region);</code></pre>
+                    <div class="diagram fragment" style="margin-top: 10px;">
+                        <pre>┌──────────┬────────┬───────┐
+│ category │ region │ total │
+├──────────┼────────┼───────┤
+│ Фрукты   │ Москва │  200  │ ← (category, region)
+│ Фрукты   │ СПб    │  250  │
+│ Фрукты   │  NULL  │  450  │ ← (только category)
+│ Овощи    │ Москва │  100  │
+│ Овощи    │ СПб    │   50  │
+│ Овощи    │  NULL  │  150  │
+│  NULL    │ Москва │  300  │ ← (только region)
+│  NULL    │ СПб    │  300  │
+│  NULL    │  NULL  │  600  │ ← (общий итог)
+└──────────┴────────┴───────┘</pre>
+                    </div>
+                    <p class="fragment" style="color: #f39c12; margin-top: 10px;"><strong>Сравнение:</strong> ROLLUP(a, b) → (a,b), (a), () | CUBE(a, b) → (a,b), (a), (b), ()</p>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 16: Практические примеры</h2>
+                <div style="font-size: 0.65em;">
+                    <div class="fragment">
+                        <h3 style="color: #3498db;">1. Топ-3 товара в каждой категории:</h3>
+                        <pre><code class="sql">SELECT * FROM (
+    SELECT category, product, revenue,
+        RANK() OVER(PARTITION BY category ORDER BY revenue DESC) as rank
+    FROM products
+) t WHERE rank <= 3;</code></pre>
+                    </div>
+                    <div class="fragment" style="margin-top: 10px;">
+                        <h3 style="color: #2ecc71;">2. Процент от общей суммы:</h3>
+                        <pre><code class="sql">SELECT product, revenue,
+    ROUND(100.0 * revenue / SUM(revenue) OVER(), 2) as percent
+FROM sales;</code></pre>
+                    </div>
+                    <div class="fragment" style="margin-top: 10px;">
+                        <h3 style="color: #9b59b6;">3. Сравнение с предыдущим периодом:</h3>
+                        <pre><code class="sql">SELECT month, revenue,
+    LAG(revenue) OVER(ORDER BY month) as prev_month,
+    ROUND(100.0 * (revenue - LAG(revenue) OVER(ORDER BY month)) / 
+          LAG(revenue) OVER(ORDER BY month), 2) as growth_percent
+FROM monthly_sales;</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#2c3e50">
+                <h2 style="color: #FFD700;">Слайд 17: Заключение</h2>
+                <div style="text-align: left; font-size: 0.75em;">
+                    <div class="fragment" style="background: rgba(52,152,219,0.2); padding: 20px; border-radius: 10px; border-left: 5px solid #3498db; margin-bottom: 20px;">
+                        <h3 style="color: #3498db; margin-top: 0;">🎯 Оконные функции:</h3>
+                        <ul style="line-height: 1.8;">
+                            <li>✅ Мощный инструмент для аналитики</li>
+                            <li>✅ Заменяют сложные подзапросы</li>
+                            <li>✅ Повышают производительность</li>
+                        </ul>
+                    </div>
+                    <div class="fragment" style="background: rgba(46,204,113,0.2); padding: 20px; border-radius: 10px; border-left: 5px solid #2ecc71;">
+                        <h3 style="color: #2ecc71; margin-top: 0;">💡 Когда использовать:</h3>
+                        <ul style="line-height: 1.8;">
+                            <li>Ранжирование и рейтинги</li>
+                            <li>Накопительные итоги</li>
+                            <li>Сравнение с предыдущими периодами</li>
+                            <li>Скользящие средние</li>
+                            <li>Многомерный анализ (CUBE, ROLLUP)</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">Слайд 18: Рекомендации</h2>
+                <div style="text-align: left; font-size: 0.8em;">
+                    <div class="fragment" style="background: rgba(241,196,15,0.2); padding: 20px; border-radius: 10px; border-left: 5px solid #f39c12; margin-bottom: 20px;">
+                        <h3 style="color: #f39c12; margin-top: 0;">⚡ Оптимизация:</h3>
+                        <ul style="line-height: 1.8;">
+                            <li>Используйте индексы для ORDER BY</li>
+                            <li>Избегайте избыточных PARTITION BY</li>
+                            <li>Тестируйте производительность на больших данных</li>
+                        </ul>
+                    </div>
+                    <div class="fragment" style="background: rgba(231,76,60,0.2); padding: 20px; border-radius: 10px; border-left: 5px solid #e74c3c;">
+                        <h3 style="color: #e74c3c; margin-top: 0;">⚠️ Осторожно:</h3>
+                        <ul style="line-height: 1.8;">
+                            <li>LAST_VALUE() требует UNBOUNDED FOLLOWING</li>
+                            <li>Оконные функции выполняются после WHERE</li>
+                            <li>Не злоупотребляйте на очень больших таблицах</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#1a1a2e">
+                <h2 style="color: #FFD700;">Слайд 19: Полезные ссылки</h2>
+                <div style="text-align: left; font-size: 0.8em;">
+                    <div class="fragment" style="margin-bottom: 20px;">
+                        <h3 style="color: #3498db;">📚 Документация:</h3>
+                        <ul style="line-height: 1.8;">
+                            <li><a href="https://www.postgresql.org/docs/current/tutorial-window.html" style="color: #3498db;">PostgreSQL Window Functions</a></li>
+                            <li><a href="https://www.postgresql.org/docs/current/queries-table-expressions.html#QUERIES-GROUPING-SETS" style="color: #3498db;">PostgreSQL GROUPING SETS</a></li>
+                            <li><a href="https://www.postgresql.org/docs/current/tablefunc.html" style="color: #3498db;">tablefunc Extension</a></li>
+                        </ul>
+                    </div>
+                    <div class="fragment">
+                        <h3 style="color: #2ecc71;">🎯 Практика:</h3>
+                        <ul style="line-height: 1.8;">
+                            <li><a href="https://www.windowfunctions.com/" style="color: #2ecc71;">SQL Window Functions Practice</a></li>
+                            <li><a href="https://pgexercises.com/" style="color: #2ecc71;">PostgreSQL Exercises</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section data-background-color="#1a1a2e">
+                <div style="background: rgba(22,33,62,0.9); padding: 40px; border: 8px solid #0f3460;">
+                    <h1 style="color: #FFD700;">🎉 Спасибо за внимание!</h1>
+                    <p style="color: #90EE90; font-size: 1.2em; margin-top: 30px;">Вопросы?</p>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <div class="navigation-panel" id="navigationPanel">
+        <div class="nav-grid" id="navGrid"></div>
+    </div>
+
+    <style>
+        .navigation-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            background: rgba(22, 33, 62, 0.95);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            padding: 7px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            z-index: 1000;
+        }
+        .nav-grid {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 2px;
+            overflow-x: auto;
+        }
+        .nav-button {
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 3px;
+            font-size: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .nav-button:hover {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            transform: scale(1.1);
+        }
+        .nav-button.active {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+        }
+    </style>
+
+    <script src="../../Разработка высоконагруженных систем  (44+72)/3-4/js/reveal.min.js"></script>
+    <script src="../../Разработка высоконагруженных систем  (44+72)/3-4/js/notes.min.js"></script>
+    <script src="../../Разработка высоконагруженных систем  (44+72)/3-4/js/markdown.min.js"></script>
+    <script src="../../Разработка высоконагруженных систем  (44+72)/3-4/js/highlight.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            transition: 'slide',
+            controls: true,
+            progress: true,
+            slideNumber: false,
+            center: false,
+            margin: 0.02,
+            plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+        });
+
+        function createNavigationButtons() {
+            const navGrid = document.getElementById('navGrid');
+            for (let i = 1; i <= 20; i++) {
+                const button = document.createElement('div');
+                button.className = 'nav-button';
+                button.textContent = i;
+                button.onclick = () => Reveal.slide(i - 1, 0);
+                navGrid.appendChild(button);
+            }
+        }
+
+        function updateActiveButton() {
+            const buttons = document.querySelectorAll('.nav-button');
+            const currentSlide = Reveal.getIndices().h;
+            buttons.forEach((button, index) => {
+                button.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        Reveal.on('ready', () => {
+            createNavigationButtons();
+            updateActiveButton();
+        });
+        
+        Reveal.on('slidechanged', updateActiveButton);
+    </script>
+</body>
+</html>
