@@ -9,15 +9,17 @@
     <link rel="stylesheet" href="../../Разработка высоконагруженных систем  (44+72)/3-4/css/monokai.min.css">
     <link rel="stylesheet" href="../../Разработка высоконагруженных систем  (44+72)/3-4/css/presentation.css">
     <style>
-        .reveal .slides { width: 80% !important; height: 90% !important; transform: scale(1.2) !important; position: absolute !important; left: 50% !important; top: 5% !important; transform: translateX(calc(-50% + 15%)) scale(1.2) !important; transform-origin: top center !important; }
+        .reveal .slides { width: 90% !important; height: 90% !important; transform: scale(1.1) !important; position: absolute !important; left: 50% !important; top: 5% !important; transform: translateX(-50%) scale(1.1) !important; transform-origin: top center !important; }
         .reveal h1 { font-size: 1.8em !important; margin-top: 0 !important; margin-bottom: 0.4em !important; }
         .reveal h2 { font-size: 1.1em !important; margin-top: 0 !important; margin-bottom: 0.3em !important; text-transform: none !important; }
         .reveal h3 { font-size: 1.1em !important; margin-top: 0 !important; margin-bottom: 0.3em !important; text-transform: none !important; }
-        .reveal .slides section { padding: 15px !important; font-size: 1em !important; }
-        .reveal p, .reveal ul, .reveal ol { font-size: 0.9em !important; }
-        pre code { font-size: 0.85em !important; max-height: none; overflow: hidden; }
-        pre { max-height: none; overflow: hidden; margin: 10px 0 !important; }
-        .diagram { font-family: 'Courier New', monospace; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; font-size: 0.9em; }
+        .reveal .slides section { padding: 15px !important; font-size: 1.2em !important; max-width: 100% !important; overflow: hidden !important; }
+        .reveal .slides section > div { max-width: 100% !important; overflow-x: auto !important; }
+        .reveal p, .reveal ul, .reveal ol { font-size: 1.08em !important; }
+        pre code { font-size: 1em !important; max-height: none; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
+        pre { max-height: none; overflow-x: auto; margin: 10px 0 !important; max-width: 100%; }
+        .diagram { font-family: 'Courier New', monospace; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; font-size: 0.9em; overflow-x: auto; max-width: 100%; }
+        .diagram pre { white-space: pre; overflow-x: auto; }
         table { font-size: 0.8em !important; }
     </style>
 </head>
@@ -27,8 +29,8 @@
             
             <section data-background-color="#1a1a2e">
                 <div style="background: rgba(22,33,62,0.9); padding: 40px; border: 8px solid #0f3460;">
-                    <h1 style="color: #FFD700;">🪟 Оконные функции PostgreSQL</h1>
-                    <h2 style="color: #90EE90;">Лекция 13-14</h2>
+                    <h1 style="color: #FFD700;">Оконные функции PostgreSQL</h1>
+                    <h2 style="color: #90EE90;">Теория</h2>
                     <p style="color: #FFF; font-size: 1em;">🏫 МПГУ, 4 курс, 2025</p>
                 </div>
             </section>
@@ -80,7 +82,7 @@ FROM sales;</code></pre>
                     <div class="diagram fragment">
                         <pre>Продажи по категориям:
 ┌──────────┬────────┬────────┬──────────────┐
-│ Категория│ Товар  │ Сумма  │ Итог группы │
+│ Категория│ Товар  │ Сумма  │ Итог группы  │
 ├──────────┼────────┼────────┼──────────────┤
 │ Фрукты   │ Яблоки │  100   │    450       │ ← Группа 1
 │ Фрукты   │ Груши  │  150   │    450       │
@@ -161,12 +163,15 @@ FROM sales;</code></pre>
          ↑↑↑
       Окно 3 дня</pre>
                     </div>
-                    <div class="fragment" style="margin-top: 15px;">
+                    <div class="fragment" style="margin-top: 15px; font-size: 0.5em;">
                         <p><strong style="color: #3498db;">Типы рамок:</strong></p>
-                        <ul style="font-size: 0.9em; margin-left: 20px;">
-                            <li><code>ROWS BETWEEN 2 PRECEDING AND CURRENT ROW</code></li>
-                            <li><code>ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code></li>
-                            <li><code>ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING</code></li>
+                        <ul style="font-size: 0.5em; margin-left: 15px; line-height: 1.1;">
+                            <li style="margin-bottom: 3px;"><code style="font-size: 0.9em;">ROWS BETWEEN 2 PRECEDING AND CURRENT ROW</code><br>
+                            <span style="color: #2ecc71; font-size: 0.85em;">→ 3 строки: 2 предыдущие + текущая (скользящее окно)</span></li>
+                            <li style="margin-bottom: 3px;"><code style="font-size: 0.9em;">ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code><br>
+                            <span style="color: #9b59b6; font-size: 0.85em;">→ От начала таблицы до текущей строки (нарастающий итог)</span></li>
+                            <li style="margin-bottom: 3px;"><code style="font-size: 0.9em;">ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING</code><br>
+                            <span style="color: #f39c12; font-size: 0.85em;">→ 3 строки: предыдущая + текущая + следующая (центрированное окно)</span></li>
                         </ul>
                     </div>
                 </div>
@@ -222,7 +227,11 @@ FROM sales;</code></pre>
 
             <section data-background-color="#16213e">
                 <h2 style="color: #FFD700;">Слайд 8: LEAD() и LAG()</h2>
-                <div style="font-size: 0.7em;">  
+                <div style="font-size: 0.7em;">
+                    <div class="fragment" style="margin-bottom: 10px;">
+                        <p style="text-align: left;"><strong style="color: #3498db;">⬅️ LAG()</strong> — доступ к предыдущей строке</p>
+                        <p style="text-align: left;"><strong style="color: #2ecc71;">➡️ LEAD()</strong> — доступ к следующей строке</p>
+                    </div>  
                     <pre class="fragment"><code class="sql">SELECT 
     date, price,
     LAG(price, 1) OVER(ORDER BY date) as prev_price,
@@ -233,16 +242,21 @@ FROM stock_prices;</code></pre>
 │    date    │ price │ prev_price │ price_change │
 ├────────────┼───────┼────────────┼──────────────┤
 │ 2025-01-01 │  100  │    NULL    │     NULL     │
-│ 2025-01-02 │  105  │    100     │      +5      │
-│ 2025-01-03 │   98  │    105     │      -7      │
+│ 2025-01-02 │  105  │    100     │      +5      │ ← LAG взял 100
+│ 2025-01-03 │   98  │    105     │      -7      │ ← LAG взял 105
 └────────────┴───────┴────────────┴──────────────┘</pre>
                     </div>
+                    <p class="fragment" style="color: #f39c12; margin-top: 10px;">💡 Применение: сравнение с предыдущим периодом, расчет изменений</p>
                 </div>
             </section>
 
             <section data-background-color="#2c3e50">
                 <h2 style="color: #FFD700;">Слайд 9: FIRST_VALUE() и LAST_VALUE()</h2>
                 <div style="font-size: 0.7em;">
+                    <div class="fragment" style="margin-bottom: 10px;">
+                        <p style="text-align: left;"><strong style="color: #3498db;">FIRST_VALUE()</strong> — возвращает первое значение в окне</p>
+                        <p style="text-align: left;"><strong style="color: #2ecc71;">LAST_VALUE()</strong> — возвращает последнее значение в окне</p>
+                    </div>
                     <pre class="fragment"><code class="sql">SELECT 
     product, date, price,
     FIRST_VALUE(price) OVER(
@@ -257,6 +271,7 @@ FROM product_prices;</code></pre>
     ) as final_price
 FROM product_prices;</code></pre>
                     <p class="fragment" style="color: #e74c3c; margin-top: 10px;">⚠️ Важно: Для LAST_VALUE() нужно указать UNBOUNDED FOLLOWING!</p>
+                    <p class="fragment" style="color: #f39c12; margin-top: 5px;">💡 Применение: сравнение с начальной/конечной ценой, расчет изменений</p>
                 </div>
             </section>
 
@@ -280,16 +295,18 @@ FROM exam_results;</code></pre>
 └─────────┴───────┴─────────┴──────┴────────────┘</pre>
                     </div>
                     <ul class="fragment" style="margin-top: 10px; font-size: 0.9em;">
-                        <li><code>ROW_NUMBER()</code> — уникальный номер (1,2,3,4)</li>
-                        <li><code>RANK()</code> — пропускает номера (1,2,2,4)</li>
-                        <li><code>DENSE_RANK()</code> — не пропускает (1,2,2,3)</li>
+                        <li><code>ROW_NUMBER()</code> — присваивает уникальный номер каждой строке (1,2,3,4)</li>
+                        <li><code>RANK()</code> — ранжирует с пропуском номеров при одинаковых значениях (1,2,2,4)</li>
+                        <li><code>DENSE_RANK()</code> — ранжирует без пропуска номеров (1,2,2,3)</li>
                     </ul>
+                    <p class="fragment" style="color: #f39c12; margin-top: 10px;">💡 Применение: рейтинги, топ-N запросы, нумерация строк</p>
                 </div>
             </section>
 
             <section data-background-color="#2c3e50">
                 <h2 style="color: #FFD700;">Слайд 11: NTILE() — квартили</h2>
                 <div style="font-size: 0.7em;">
+                    <p class="fragment" style="text-align: left; margin-bottom: 10px;"><strong style="color: #3498db;">NTILE(n)</strong> — делит строки на n равных групп (квартили, децили и т.д.)</p>
                     <pre class="fragment"><code class="sql">SELECT 
     customer, revenue,
     NTILE(4) OVER(ORDER BY revenue DESC) as quartile
@@ -308,7 +325,8 @@ FROM customer_revenue;</code></pre>
 │ Client H │    500  │    4     │
 └──────────┴─────────┴──────────┘</pre>
                     </div>
-                    <p class="fragment" style="color: #2ecc71; margin-top: 10px;">💡 Применение: ABC-анализ, сегментация клиентов</p>
+                    <p class="fragment" style="color: #f39c12; margin-top: 10px;">📊 NTILE(4) делит на 4 группы, NTILE(10) — на 10 групп (децили)</p>
+                    <p class="fragment" style="color: #2ecc71; margin-top: 5px;">💡 Применение: ABC-анализ, сегментация клиентов, распределение по группам</p>
                 </div>
             </section>
 
