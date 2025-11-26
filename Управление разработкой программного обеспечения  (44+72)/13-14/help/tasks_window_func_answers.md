@@ -169,7 +169,7 @@ ORDER BY percent_of_total DESC;
 ┌─────────────────────┬─────────┬──────────────────┐
 │      product        │ amount  │ percent_of_total │
 ├─────────────────────┼─────────┼──────────────────┤
-│ MacBook Pro         │ 199990  │      14.78       │
+│ MacBook Pro         │ 199990  │      15.5        │
 │ MacBook Air         │ 129990  │       9.61       │
 │ iPhone 15           │  89990  │       6.65       │
 │ iPhone 15           │  89990  │       6.65       │

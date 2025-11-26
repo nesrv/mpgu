@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAPI - Высоконагруженные системы</title>
+    <link rel="stylesheet" href="../3-4/css/reveal.min.css">
+    <link rel="stylesheet" href="../3-4/css/black.min.css">
+    <link rel="stylesheet" href="../3-4/css/monokai.min.css">
+    <link rel="stylesheet" href="../3-4/css/presentation.css">
+    <style>
+        .reveal h1 {
+            font-size: 1.5em !important;
+            margin-top: 0 !important;
+            margin-bottom: 0.3em !important;
+        }
+        .reveal h2 {
+            font-size: 1.25em !important;
+            margin-top: 0 !important;
+            margin-bottom: 0.3em !important;
+        }
+        .reveal h3 {
+            font-size: 1em !important;
+            margin-top: 0 !important;
+            margin-bottom: 0.3em !important;
+        }
+        .reveal h4 {
+            font-size: 0.9em !important;
+            margin-top: 0 !important;
+            margin-bottom: 0.3em !important;
+        }
+        .reveal .slides section {
+            padding-top: 5px !important;
+        }
+        pre code {
+            font-size: 1.5em !important;
+            max-height: 650px;
+            overflow-y: auto;
+        }
+        .slide-45 pre code,
+        .slide-46 pre code,
+        .slide-46a pre code,
+        .slide-47 pre code {
+            font-size: 1.05em !important;
+        }
+        pre {
+            max-height: 650px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            
+            <!-- Слайд 1: Титульный -->
+            <section data-background-color="#1a1a2e" style="font-family: 'Courier New', monospace;">
+                <div style="background: rgba(22,33,62,0.9); padding: 40px; border: 8px solid #0f3460; box-shadow: 0 0 0 4px #16213e, inset 0 0 20px rgba(0,0,0,0.5);">
+                    <h1 style="font-family: 'Courier New', monospace; text-shadow: 4px 4px 0 #000, 2px 2px 0 #0f3460; color: #FFD700; letter-spacing: 3px;">Инфраструктура ⚡ FastAPI</h1>
+                    <h2 style="font-family: 'Courier New', monospace; text-shadow: 3px 3px 0 #000; color: #90EE90;">Теоретическая часть к лабораторной работе</h2>
+                    <p style="font-family: 'Courier New', monospace; text-shadow: 2px 2px 0 #000; color: #FFF; font-size: 1.2em; margin-top: 30px;">🏫 МПГУ, 2025</p>
+                </div>
+            </section>
+
+            <!-- Слайд 2: Инфраструктура FastAPI -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🏗️ Инфраструктура FastAPI</h2>
+                <div style="display: flex; align-items: center; gap: 50px; margin-top: 30px;">
+                    <div style="flex: 1; text-align: center;">
+                        <div style="font-size: 0.8em; margin-bottom: 20px;">
+                            <div class="fragment" style="padding: 15px; margin: 10px 0; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); border-radius: 10px; color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                                <strong>Pydantic</strong><br><small>Валидация и сериализация</small>
+                            </div>
+                            <div class="fragment" style="padding: 15px; margin: 10px 0; background: linear-gradient(135deg, #e91e63 0%, #ad1457 100%); border-radius: 10px; color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                                <strong>Starlette</strong><br><small>ASGI, HTTP, WebSockets</small>
+                            </div>
+                            <div class="fragment" style="padding: 15px; margin: 10px 0; background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); border-radius: 10px; color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                                <strong>Type Hints</strong><br><small>Подсказки типов Python</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="flex: 1; text-align: center;">
+                        <div style="font-size: 0.7em;">
+                            <div class="fragment" style="padding: 10px; margin: 8px 0; background: rgba(155,89,182,0.3); border-radius: 8px; color: white;">
+                                Dependency Injection
+                            </div>
+                            <div class="fragment" style="padding: 10px; margin: 8px 0; background: rgba(52,152,219,0.3); border-radius: 8px; color: white;">
+                                Middleware
+                            </div>
+                            <div class="fragment" style="padding: 10px; margin: 8px 0; background: rgba(46,204,113,0.3); border-radius: 8px; color: white;">
+                                BackgroundTasks
+                            </div>
+                            <div class="fragment" style="padding: 10px; margin: 8px 0; background: rgba(243,156,18,0.3); border-radius: 8px; color: white;">
+                                TestClient
+                            </div>
+                            <div class="fragment" style="padding: 10px; margin: 8px 0; background: rgba(231,76,60,0.3); border-radius: 8px; color: white;">
+                                OAuth2PasswordBearer
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 3: Starlette -->
+            <section>
+                <h2>⭐ Starlette</h2>
+                <div style="text-align: left; font-size: 0.9em; margin-top: 30px;">
+                    <p class="fragment"><strong>Starlette</strong> - это легкий ASGI-фреймворк/инструментарий, он идеально подходит для создания асинхронных веб-сервисов на Python.</p>
+                    
+                    <div class="fragment" style="margin: 20px 0; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                        <pre style="font-size: 0.8em;"><code>FastAPI
+    ├── Pydantic (валидация, сериализация)
+    ├── Starlette (ASGI, HTTP, WebSockets)
+    └── Стандартные типы Python (type hints)</code></pre>
+                    </div>
+
+                    <p class="fragment">Большая часть веб-кода FastAPI основана на созданном Томом Кристи пакете Starlette.</p>
+                    <p class="fragment">Он аналогичен лежащему в основе Flask пакету Werkzeug.</p>
+                </div>
+            </section>
+
+            <!-- Слайд 4: ASGI vs WSGI -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🔄 ASGI vs WSGI</h2>
+                <p class="fragment" style="font-size: 0.9em; margin-bottom: 30px;">Самая важная особенность - поддержка современного асинхронного веб-стандарта Python - ASGI</p>
+                
+                <table class="fragment" style="font-size: 0.7em; border-collapse: separate; border-spacing: 0 8px; margin-top: 30px;">
+                    <tr style="background: rgba(52,152,219,0.3);"><th style="padding: 12px;">Характеристика</th><th style="padding: 12px;">WSGI (Gunicorn, uWSGI)</th><th style="padding: 12px;">ASGI (Uvicorn, Daphne)</th></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Конкурентность</td><td style="padding: 10px;">Синхронная (блокирующая)</td><td style="padding: 10px;">Асинхронная (неблокирующая)</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Поддержка WebSockets</td><td style="padding: 10px;">✗ Нет</td><td style="padding: 10px;">✅ Да</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Долгоживущие соединения</td><td style="padding: 10px;">✗ Нет</td><td style="padding: 10px;">✅ Да</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Производительность</td><td style="padding: 10px;">Хорошая для синхронных приложений</td><td style="padding: 10px;">Лучше для асинхронных приложений</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Лучше всего подходит для</td><td style="padding: 10px;">Flask, Django (по умолчанию)</td><td style="padding: 10px;">FastAPI, Django-ASGI</td></tr>
+                </table>
+            </section>
+
+            <!-- Слайд 5: GIL -->
+            <section>
+                <h2>🔒 GIL (Global Interpreter Lock)</h2>
+                <div style="text-align: left; font-size: 0.9em; margin-top: 30px;">
+                    <p class="fragment"><strong>GIL</strong> - это механизм в CPython, который позволяет только одному потоку выполнять байт-код Python одновременно.</p>
+                    
+                    <div class="fragment" style="margin: 20px 0;">
+                        <h3 style="color: #e74c3c;">Ограничения GIL:</h3>
+                        <ul>
+                            <li class="fragment"><strong>CPU-bound задачи</strong> (вычисления, обработка данных) - потоки не дают преимущества</li>
+                            <li class="fragment"><strong>I/O-bound задачи</strong> (сеть, файлы, БД) - потоки работают эффективно, так как GIL освобождается во время ожидания I/O</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 6: I/O-bound vs CPU-bound -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">⚡ I/O-bound vs CPU-bound</h2>
+                <table class="fragment" style="font-size: 0.65em; border-collapse: separate; border-spacing: 0 8px; margin-top: 30px;">
+                    <tr style="background: rgba(52,152,219,0.3);"><th style="padding: 12px;">Характеристика</th><th style="padding: 12px;">I/O-bound</th><th style="padding: 12px;">CPU-bound</th></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;"><strong>Ограничивающий ресурс</strong></td><td style="padding: 10px;">Скорость Ввода/Вывода (диск, сеть)</td><td style="padding: 10px;">Скорость Процессора (CPU)</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;"><strong>Загрузка CPU</strong></td><td style="padding: 10px;">Низкая (много времени в режиме ожидания)</td><td style="padding: 10px;">Высокая (почти 100%)</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;"><strong>Основное время</strong></td><td style="padding: 10px;">Ожидание</td><td style="padding: 10px;">Активные вычисления</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;"><strong>Примеры</strong></td><td style="padding: 10px;">Веб-запросы, копирование файлов</td><td style="padding: 10px;">Рендеринг видео, математические расчеты</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;"><strong>Способы оптимизации</strong></td><td style="padding: 10px;">Асинхронность, Многопоточность</td><td style="padding: 10px;">Многопроцессорность, Распараллеливание</td></tr>
+                </table>
+                
+                <div class="fragment" style="margin-top: 30px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                    <p><strong>CPU-bound</strong> — это <strong>шеф-повар</strong>, который очень быстро режет овощи.</p>
+                    <p><strong>I/O-bound</strong> — это <strong>курьер</strong>, который ждет лифт, чтобы доставить заказ.</p>
+                </div>
+            </section>
+
+            <!-- Слайд 7: Типы задач в FastAPI -->
+            <section>
+                <h2>🔧 Типы задач в FastAPI</h2>
+                <div style="text-align: left; font-size: 0.8em; margin-top: 30px;">
+                    <h3 class="fragment" style="color: #2ecc71;">1. I/O-bound задачи (связанные с вводом-выводом)</h3>
+                    <ul class="fragment">
+                        <li>Запросы к базам данных</li>
+                        <li>HTTP-запросы к внешним API</li>
+                        <li>Чтение/запись файлов</li>
+                        <li>Сетевые операции</li>
+                    </ul>
+                    
+                    <p class="fragment"><strong>Решение:</strong> Асинхронность (async/await) + asyncio</p>
+                    
+                    <pre class="fragment" style="max-height: 500px; overflow-y: auto;"><code class="python">@app.get("/fetch-data")
+async def fetch_multiple():
+    async with httpx.AsyncClient() as client:
+        # Параллельное выполнение нескольких запросов
+        results = await asyncio.gather(
+            client.get("https://api1.com/data"),
+            client.get("https://api2.com/data"),
+            client.get("https://api3.com/data")
+        )
+    return {"results": [r.json() for r in results]}</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 8: Проблема CPU-bound задач -->
+            <section data-background-color="#c0392b">
+                <h2>⚠️ Проблема CPU-bound задач в FastAPI</h2>
+                <div style="text-align: left; font-size: 0.8em; margin-top: 30px;">
+                    <p class="fragment"><strong>Основная проблема:</strong> FastAPI работает под управлением <strong>asyncio</strong> и использует <strong>один поток события (event loop)</strong>. Когда выполняется CPU-bound задача, она блокирует весь event loop, и сервер не может обрабатывать другие запросы.</p>
+                    
+                    <h3 class="fragment">Пример проблемы:</h3>
+                    <pre class="fragment" style="max-height: 500px; overflow-y: auto;"><code class="python"># CPU-bound задача - тяжелые вычисления
+def heavy_calculation(n: int):
+    # Симуляция тяжелых вычислений
+    result = 0
+    for i in range(n):
+        result += i * i
+    return result
+
+@app.get("/slow-cpu")
+def slow_cpu_endpoint():
+    start = time.time()
+    result = heavy_calculation(50_000_000)  # Блокирующая операция!
+    end = time.time()
+    return {"result": result, "time": end - start}
+
+@app.get("/fast")
+def fast_endpoint():
+    return {"message": "Я быстрый!"}</code></pre>
+                    
+                    <p class="fragment" style="color: #FFD700;"><strong>Проблема:</strong> Второй запрос будет ждать, пока завершится первый!</p>
+                </div>
+            </section>
+
+            <!-- Слайд 9: Решение - ProcessPoolExecutor -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">✅ Решение: Многопроцессорность</h2>
+                <div style="text-align: left; font-size: 0.8em; margin-top: 30px;">
+                    <p class="fragment"><strong>ProcessPoolExecutor</strong> для CPU-bound задач:</p>
+                    
+                    <pre class="fragment" style="max-height: 500px; overflow-y: auto;"><code class="python">from fastapi import FastAPI
+from concurrent.futures import ProcessPoolExecutor
+import asyncio
+
+app = FastAPI()
+executor = ProcessPoolExecutor(max_workers=4)
+
+def heavy_computation(n):
+    # Тяжелые вычисления
+    result = sum(i * i for i in range(n))
+    return result
+
+@app.get("/compute/{n}")
+async def compute(n: int):
+    loop = asyncio.get_event_loop()
+    # Выполняем в отдельном процессе
+    result = await loop.run_in_executor(executor, heavy_computation, n)
+    return {"result": result}</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 10: Многопоточность -->
+            <section>
+                <h2>🧵 Многопоточность (Threading)</h2>
+                <div style="text-align: left; font-size: 0.8em; margin-top: 30px;">
+                    <pre class="fragment" style="max-height: 500px; overflow-y: auto;"><code class="python">from fastapi import FastAPI
+from concurrent.futures import ThreadPoolExecutor
+import time
+import asyncio
+
+app = FastAPI()
+thread_executor = ThreadPoolExecutor(max_workers=10)
+
+def io_task(duration):
+    time.sleep(duration)  # Имитация I/O операции
+    return f"Completed after {duration}s"
+
+@app.get("/thread-task")
+async def thread_task():
+    loop = asyncio.get_event_loop()
+    tasks = [
+        loop.run_in_executor(thread_executor, io_task, 1),
+        loop.run_in_executor(thread_executor, io_task, 2),
+        loop.run_in_executor(thread_executor, io_task, 3)
+    ]
+    results = await asyncio.gather(*tasks)
+    return {"results": results}</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 11: Рекомендации по выбору -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">📋 Рекомендации по выбору</h2>
+                <table class="fragment" style="font-size: 0.7em; border-collapse: separate; border-spacing: 0 8px; margin-top: 30px;">
+                    <tr style="background: rgba(52,152,219,0.3);"><th style="padding: 12px;">Тип задачи</th><th style="padding: 12px;">Решение</th><th style="padding: 12px;">Пример</th></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">I/O-bound (сеть, БД)</td><td style="padding: 10px;">async/await</td><td style="padding: 10px;">API запросы, БД запросы</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">CPU-bound (вычисления)</td><td style="padding: 10px;">ProcessPoolExecutor</td><td style="padding: 10px;">Обработка изображений, ML</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Смешанные задачи</td><td style="padding: 10px;">ThreadPoolExecutor</td><td style="padding: 10px;">Парсинг + сеть</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Фоновые задачи</td><td style="padding: 10px;">BackgroundTasks</td><td style="padding: 10px;">Отправка email, логирование</td></tr>
+                    <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 10px;">Распределенные задачи</td><td style="padding: 10px;">Celery + Redis</td><td style="padding: 10px;">Длительные задачи, очереди</td></tr>
+                </table>
+            </section>
+
+            <!-- Слайд 12: Практический пример -->
+            <section>
+                <h2>💼 Практический пример: комбинированный подход</h2>
+                <div style="text-align: left; font-size: 0.6em; margin-top: 20px;">
+                    <pre class="fragment" style="max-height: 500px; overflow-y: auto;"><code class="python">from fastapi import FastAPI, BackgroundTasks
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+import asyncio
+import httpx
+import time
+
+app = FastAPI()
+process_pool = ProcessPoolExecutor(max_workers=4)
+thread_pool = ThreadPoolExecutor(max_workers=10)
+
+def process_image(image_data):
+    # CPU-intensive: обработка изображения
+    return {"processed": True}
+
+async def fetch_data(url):
+    # I/O-bound: получение данных
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        return response.json()
+
+def save_to_db(data):
+    # I/O-bound: сохранение в БД
+    time.sleep(1)
+    return {"saved": True}
+
+@app.post("/process")
+async def process(background_tasks: BackgroundTasks):
+    # 1. Асинхронно получаем данные
+    data = await fetch_data("https://api.example.com/data")
+  
+    # 2. CPU-задачу выполняем в отдельном процессе
+    loop = asyncio.get_event_loop()
+    processed = await loop.run_in_executor(
+        process_pool, 
+        process_image, 
+        data
+    )
+  
+    # 3. Сохранение в БД делаем в фоне
+    background_tasks.add_task(save_to_db, processed)
+  
+    return {"status": "processing", "data": processed}</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 13: Параллельные вычисления -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">⚙️ Параллельные вычисления</h2>
+                <div style="text-align: left; font-size: 0.8em; margin-top: 30px;">
+                    <p class="fragment">FastAPI отлично подходит для создания API, которые могут инициировать параллельные и распределенные вычисления, но само по себе оно не предоставляет полноценного фреймворка для этих задач.</p>
+                    
+                    <div class="fragment" style="margin: 20px 0; padding: 20px; background: rgba(52,152,219,0.2); border-left: 4px solid #3498db; border-radius: 5px;">
+                        <h4 style="color: #3498db; margin-top: 0;">asyncio.gather() (для I/O-bound задач):</h4>
+                        <p>Используем этот подход, когда ваши задачи в основном связаны с вводом-выводом (сетевые запросы, чтение/запись в БД).</p>
+                    </div>
+                    
+                    <div class="fragment" style="margin: 20px 0; padding: 20px; background: rgba(46,204,113,0.2); border-left: 4px solid #2ecc71; border-radius: 5px;">
+                        <h4 style="color: #2ecc71; margin-top: 0;">ProcessPoolExecutor (для CPU-bound задач):</h4>
+                        <p>Для задач, интенсивно использующих процессор (сложные вычисления, обработка данных), Python имеет ограничение (GIL).</p>
+                    </div>
+                    
+                    <div class="fragment" style="margin: 20px 0; padding: 20px; background: rgba(243,156,18,0.2); border-left: 4px solid #f39c12; border-radius: 5px;">
+                        <h4 style="color: #f39c12; margin-top: 0;">BackgroundTasks:</h4>
+                        <p>Позволяет серверу FastAPI немедленно отправить ответ клиенту, пока длительная задача выполняется в фоновом режиме.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 14: Сравнение параллельных и распределенных вычислений -->
+            <section>
+                <h2>🌐 Параллельные vs Распределенные вычисления</h2>
+                <div style="text-align: left; font-size: 0.75em; margin-top: 20px;">
+                    
+                    <div class="fragment" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div style="padding: 15px; background: rgba(52,152,219,0.2); border-left: 4px solid #3498db; border-radius: 5px;">
+                            <h3 style="color: #3498db; margin-top: 0;">⚡ Параллельные (один сервер)</h3>
+                            <ul style="font-size: 0.9em;">
+                                <li><strong>Масштаб:</strong> Один сервер, несколько ядер CPU</li>
+                                <li><strong>Память:</strong> Общая память процесса</li>
+                                <li><strong>Связь:</strong> Прямой доступ к памяти</li>
+                                <li><strong>Скорость:</strong> Очень быстрая (наносекунды)</li>
+                                <li><strong>Инструменты:</strong> ProcessPoolExecutor, ThreadPoolExecutor</li>
+                                <li><strong>Ограничения:</strong> Ресурсы одной машины</li>
+                            </ul>
+                        </div>
+                        <div style="padding: 15px; background: rgba(155,89,182,0.2); border-left: 4px solid #9b59b6; border-radius: 5px;">
+                            <h3 style="color: #9b59b6; margin-top: 0;">🌐 Распределенные (много серверов)</h3>
+                            <ul style="font-size: 0.9em;">
+                                <li><strong>Масштаб:</strong> Множество серверов/узлов</li>
+                                <li><strong>Память:</strong> Изолированная на каждом узле</li>
+                                <li><strong>Связь:</strong> Сеть (HTTP, очереди сообщений)</li>
+                                <li><strong>Скорость:</strong> Медленнее (миллисекунды)</li>
+                                <li><strong>Инструменты:</strong> Celery, Ray, Kafka, RabbitMQ</li>
+                                <li><strong>Ограничения:</strong> Практически безграничны</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="fragment" style="margin: 20px 0; padding: 15px; background: rgba(46,204,113,0.2); border-left: 4px solid #2ecc71; border-radius: 5px;">
+                        <h4 style="color: #2ecc71; margin-top: 0;">📊 Когда использовать распределенные вычисления:</h4>
+                        <ul style="font-size: 0.9em;">
+                            <li>✅ Задачи выполняются дольше 30 секунд (обработка видео, ML-обучение)</li>
+                            <li>✅ Нужна высокая отказоустойчивость (если один сервер упал, другие продолжают)</li>
+                            <li>✅ Нагрузка превышает возможности одного сервера</li>
+                            <li>✅ Нужна очередь задач с приоритетами</li>
+                            <li>✅ Задачи должны выполняться по расписанию (cron-like)</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 14a: Архитектура распределенной системы -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🔧 Архитектура распределенной системы с FastAPI</h2>
+                <div style="text-align: left; font-size: 0.8em; margin-top: 30px;">
+                    
+                    <div class="fragment" style="margin: 20px 0; padding: 20px; background: rgba(243,156,18,0.2); border-left: 4px solid #f39c12; border-radius: 5px;">
+                        <h4 style="color: #f39c12; margin-top: 0;">📦 Компоненты системы:</h4>
+                        <ol style="font-size: 0.95em; line-height: 1.8;">
+                            <li><strong>FastAPI сервер</strong> - принимает запросы от клиентов, отправляет задачи в очередь</li>
+                            <li><strong>Брокер сообщений</strong> (Redis/RabbitMQ/Kafka) - хранит очередь задач, обеспечивает надежную доставку</li>
+                            <li><strong>Celery Workers</strong> (на разных серверах) - извлекают задачи из очереди и выполняют их параллельно</li>
+                            <li><strong>База данных</strong> (PostgreSQL/MongoDB) - хранит результаты выполнения и статусы задач</li>
+                        </ol>
+                    </div>
+
+                    <div class="fragment" style="margin: 20px 0; padding: 20px; background: rgba(52,152,219,0.2); border-left: 4px solid #3498db; border-radius: 5px;">
+                        <h4 style="color: #3498db; margin-top: 0;">🔄 Поток выполнения задачи:</h4>
+                        <p style="font-size: 1em; line-height: 1.8; margin: 15px 0;">
+                            <strong>1.</strong> Клиент → <strong>2.</strong> FastAPI (создает задачу) → <strong>3.</strong> Redis (очередь) → 
+                            <strong>4.</strong> Worker 1/2/3 (выполняет) → <strong>5.</strong> БД (сохраняет результат) → 
+                            <strong>6.</strong> FastAPI (проверяет статус) → <strong>7.</strong> Клиент (получает результат)
+                        </p>
+                    </div>
+
+                    <div class="fragment" style="margin: 20px 0; padding: 20px; background: rgba(46,204,113,0.2); border-left: 4px solid #2ecc71; border-radius: 5px;">
+                        <h4 style="color: #2ecc71; margin-top: 0;">💡 Преимущества архитектуры:</h4>
+                        <ul style="font-size: 0.95em; line-height: 1.6;">
+                            <li>✅ <strong>Масштабируемость:</strong> добавляйте новые workers по мере роста нагрузки</li>
+                            <li>✅ <strong>Отказоустойчивость:</strong> если worker упал, задача переназначается другому</li>
+                            <li>✅ <strong>Асинхронность:</strong> клиент получает мгновенный ответ, задача выполняется в фоне</li>
+                            <li>✅ <strong>Приоритеты:</strong> важные задачи выполняются первыми</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 15: Сравнение синхронного и асинхронного кода -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🔄 Сравнение синхронного и асинхронного кода</h2>
+                <div class="fragment" style="display: flex; gap: 15px; margin-top: 20px; margin-left: -20%;">
+                    <div class="fragment" style="flex: 1;">
+                        <h3 style="color: #e74c3c;">Синхронный код:</h3>
+                        <pre style="font-size: 0.42em;"><code class="python">import time
+
+def q():
+    print("Почему программисты не умеют шутить?")
+    time.sleep(3)
+
+def a():
+    print("Тайминг!")
+
+def main():
+    q()
+    a()
+
+main()</code></pre>
+                        <p style="font-size: 0.8em; color: #e74c3c;">Между вопросом и ответом будет трехсекундный промежуток.</p>
+                    </div>
+                    <div class="fragment" style="flex: 1;">
+                        <h3 style="color: #2ecc71;">Асинхронный код:</h3>
+                        <pre style="font-size: 0.42em;"><code class="python">import asyncio
+
+async def q():
+    print("Почему программисты не умеют шутить?")
+    await asyncio.sleep(3)
+
+async def a():
+    print("Тайминг!")
+
+async def main():
+    await asyncio.gather(q(), a())
+
+asyncio.run(main())</code></pre>
+                        <p style="font-size: 0.8em; color: #2ecc71;">Выполняется параллельно!</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 16: Асинхронный эндпоинт -->
+            <section>
+                <h2>🚀 Асинхронный эндпоинт</h2>
+                <div style="text-align: left; font-size: 0.8em; margin-top: 30px;">
+                    <pre class="fragment" style="font-size: 0.7em;"><code class="python">from fastapi import FastAPI
+import asyncio
+
+app = FastAPI()
+
+@app.get("/hi")
+async def greet():
+    await asyncio.sleep(1)
+    return "Привет? Мир?"</code></pre>
+                    
+                    <div class="fragment" style="margin: 20px 0;">
+                        <h4>Запуск:</h4>
+                        <pre><code class="bash">uvicorn greet_async:app</code></pre>
+                    </div>
+                    
+                    <div class="fragment" style="margin: 20px 0;">
+                        <h4>Или с uvicorn в коде:</h4>
+                        <pre style="font-size: 0.7em;"><code class="python">if __name__ == "__main__":
+    uvicorn.run("greet_async_uvicorn:app")</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 17: Pydantic и подсказки типов -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🔍 Pydantic, подсказки типов и обзор моделей</h2>
+                <div style="text-align: left; font-size: 0.8em; margin-top: 30px;">
+                    <p>Подсказки типа переменной могут включать только тип:</p>
+                    <pre><code>name: type</code></pre>
+                    
+                    <p>или также инициализировать переменную значением:</p>
+                    <pre><code>name: type = value</code></pre>
+                    
+                    <div style="margin: 20px 0;">
+                        <h4>Пример:</h4>
+                        <pre style="font-size: 0.7em;"><code class="python">thing: str = "yeti"
+physics_magic_number: float = 1.0/137.03599913
+hp_lovecraft_noun: str = "ichor"
+exploding_sheep: tuple = ("sis", "boom", "bah!")
+responses: dict = {"Александр": "Пушкин", "ответ": 37}</code></pre>
+                    </div>
+                    
+                    <p>Можно также включать подтипы коллекций:</p>
+                    <pre><code class="python">name: dict[keytype, valtype] = {key1: val1, key2: val2}</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 18: Модуль typing -->
+            <section>
+                <h2>📝 Модуль typing</h2>
+                <div style="text-align: left; font-size: 0.8em; margin-top: 30px;">
+                    <p class="fragment">При использовании Python до версии 3.9 необходимо импортировать прописные версии стандартных имен типов из модуля typing:</p>
+                    
+                    <pre class="fragment"><code class="python">from typing import Str
+thing: Str = "yeti"</code></pre>
+                    
+                    <div class="fragment" style="margin: 20px 0; padding: 20px; background: rgba(52,152,219,0.2); border-left: 4px solid #3498db; border-radius: 5px;">
+                        <h4 style="color: #3498db; margin-top: 0;">Модуль typing содержит полезные дополнения:</h4>
+                        <ul>
+                            <li><strong>Any</strong> - любой тип</li>
+                            <li><strong>Union</strong> - любой из указанных типов, например <code>Union[str, int]</code></li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 19: Примеры Pydantic -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">📊 Примеры определений Pydantic</h2>
+                <div style="text-align: left; font-size: 0.8em; margin-top: 30px;">
+                    <p class="fragment">Примеры определений Pydantic для словарей (dict) в Python:</p>
+                    
+                    <pre class="fragment"><code class="python">from typing import Any
+responses: dict[str, Any] = {"Александр": "Пушкин", "ответ": 37}</code></pre>
+                    
+                    <p class="fragment">Или, если быть более точными:</p>
+                    <pre class="fragment"><code class="python">from typing import Union
+responses: dict[str, Union[str, int]] = {"Александр": "Пушкин", "ответ": 37}</code></pre>
+                    
+                    <p class="fragment">либо (в Python 3.10 и более поздних версиях):</p>
+                    <pre class="fragment"><code class="python">responses: dict[str, str | int] = {"Александр": "Пушкин", "ответ": 37}</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 20: Подсказки типов в Python -->
+            <section>
+                <h2>⚠️ Подсказки типов в Python</h2>
+                <div style="text-align: left; font-size: 0.8em; margin-top: 30px;">
+                    <p class="fragment">Обратите внимание на то, что в Python строка переменной с подсказкой типа является верной, а простая строка переменной - нет:</p>
+                    
+                    <pre class="fragment"><code class="python">>>> thing0
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+NameError: name 'thing0' is not defined
+
+>>> thing0: str
+>>> thing1: str = "yeti"
+>>> thing1 = 47</code></pre>
+                    
+                    <div class="fragment" style="margin: 20px 0; padding: 20px; background: rgba(231,76,60,0.2); border-left: 4px solid #e74c3c; border-radius: 5px;">
+                        <p><strong>Но такие ошибки будут обнаружены mypy.</strong></p>
+                        <p>Если у вас еще не установлен этот статический анализатор:</p>
+                        <pre><code class="bash">pip install mypy
+mypy stuff.py</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 21: Подсказка типа возврата -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">→ Подсказка типа возврата функции</h2>
+                <div style="text-align: left; font-size: 0.8em; margin-top: 30px;">
+                    <p class="fragment">В подсказке типа возврата функции вместо двоеточия применяется стрелка:</p>
+                    
+                    <pre class="fragment"><code>function(args) -> type:</code></pre>
+                    
+                    <div class="fragment" style="margin: 20px 0;">
+                        <h4>Пример возврата функции при использовании Pydantic:</h4>
+                        <pre><code class="python">def get_thing() -> str:
+    return "yeti"</code></pre>
+                    </div>
+                    
+                    <p class="fragment">Можно задействовать любой тип, включая определенные классы или их комбинации.</p>
+                </div>
+            </section>
+
+            <!-- Слайд 22: Методы FastAPI -->
+            <section>
+                <h2>🔧 Методы FastAPI</h2>
+                <div style="text-align: left; font-size: 1.04em; margin-top: 30px;">
+                    <p class="fragment">Одним из преимуществ FastAPI является то, что фреймворк позволяет быстро и легко построить веб-сервис в стиле REST.</p>
+                    
+                    <div class="fragment" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+                        <div style="padding: 15px; background: rgba(46,204,113,0.2); border-left: 4px solid #2ecc71; border-radius: 5px;">
+                            <h4 style="color: #2ecc71; margin-top: 0;">Основные методы HTTP:</h4>
+                            <ul>
+                                <li><strong>GET</strong> (получение данных)</li>
+                                <li><strong>POST</strong> (добавление данных)</li>
+                                <li><strong>PUT</strong> (изменение данных)</li>
+                                <li><strong>DELETE</strong> (удаление данных)</li>
+                            </ul>
+                        </div>
+                        <div style="padding: 15px; background: rgba(52,152,219,0.2); border-left: 4px solid #3498db; border-radius: 5px;">
+                            <h4 style="color: #3498db; margin-top: 0;">Дополнительные методы:</h4>
+                            <ul>
+                                <li><strong>OPTIONS</strong> (получение информации о поддерживаемых методах)</li>
+                                <li><strong>HEAD</strong> (получение только заголовков без тела ответа)</li>
+                                <li><strong>PATCH</strong> (частичное обновление ресурса)</li>
+                                <li><strong>TRACE</strong> (диагностика, отладка запросов)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 23: Методы класса FastAPI -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🔄 Методы класса FastAPI</h2>
+                <div style="text-align: left; font-size: 0.91em; margin-top: 30px;">
+                    <p class="fragment">В классе FastAPI для каждого из этих типов запросов определены одноименные методы:</p>
+                    
+                    <div class="fragment" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+                        <div>
+                            <ul>
+                                <li><strong>get()</strong> - получение данных (чтение)</li>
+                                <li><strong>post()</strong> - создание новых данных</li>
+                                <li><strong>put()</strong> - полное обновление данных (замена)</li>
+                                <li><strong>delete()</strong> - удаление данных</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <ul>
+                                <li><strong>options()</strong> - получение информации о поддерживаемых методах (CORS)</li>
+                                <li><strong>head()</strong> - получение только заголовков ответа</li>
+                                <li><strong>patch()</strong> - частичное обновление данных</li>
+                                <li><strong>trace()</strong> - диагностика, возвращает полученные данные</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="fragment" style="margin: 20px 0; padding: 15px; background: rgba(243,156,18,0.2); border-left: 4px solid #f39c12; border-radius: 5px;">
+                        <h4 style="color: #f39c12; margin-top: 0;">Пример:</h4>
+                        <pre style="font-size: 1.04em;"><code class="python">from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def root():
+    return {"message": "Hello Пушкин.COM"}</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 24: Подобные функции -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🔄 Подобные функции</h2>
+                <div style="text-align: left; font-size: 1.04em; margin-top: 30px;">
+                    <p class="fragment">Подобным образом можно определять и другие функции, которые будут обрабатывать запросы по другим путям:</p>
+                    
+                    <pre class="fragment"><code class="python">from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def root():
+    return {"message": "Hello Пушкин.COM"}
+
+@app.get("/about")
+def about():
+    return {"message": "О сайте"}</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 25: Response -->
+            <section>
+                <h2>📄 Response</h2>
+                <div style="text-align: left; font-size: 1.04em; margin-top: 30px;">
+                    <p class="fragment">Класс fastapi.Response является базовым для остальных классов ответа. Для определения ответа конструктор класса принимает следующие параметры:</p>
+                    
+                    <ul class="fragment">
+                        <li><strong>content</strong>: задает отправляемое содержимое</li>
+                        <li><strong>status_code</strong>: задает статусный код ответа</li>
+                        <li><strong>media_type</strong>: задает MIME-тип ответа</li>
+                        <li><strong>headers</strong>: задает заголовки ответа</li>
+                    </ul>
+                    
+                    <pre class="fragment"><code class="python">from fastapi import FastAPI, Response
+
+app = FastAPI()
+
+@app.get("/")
+def root():
+    data = "Hello Пушкин.COM"
+    return Response(content=data, media_type="text/plain")</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 26: PlainTextResponse -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">📝 PlainTextResponse</h2>
+                <div style="text-align: left; font-size: 1.04em; margin-top: 30px;">
+                    <p class="fragment">Для отправки простого текста также можно использовать класс-наследник PlainTextResponse:</p>
+                    
+                    <pre class="fragment"><code class="python">from fastapi import FastAPI
+from fastapi.responses import PlainTextResponse
+
+app = FastAPI()
+
+@app.get("/")
+def root():
+    data = "Hello Пушкин.COM"
+    return PlainTextResponse(content=data)</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 27: HTMLResponse -->
+            <section>
+                <h2>🌐 HTMLResponse</h2>
+                <div style="text-align: left; font-size: 1.04em; margin-top: 30px;">
+                    <p class="fragment">Для упрощения отправки кода HTML предназначен класс HTMLResponse. Он устанавливает для заголовка Content-Type значение text/html:</p>
+                    
+                    <pre class="fragment"><code class="python">from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+
+app = FastAPI()
+
+@app.get("/")
+def root():
+    data = "<h2>Hello Пушкин.COM</h2>"
+    return HTMLResponse(content=data)</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 28: Установка типа ответа -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">⚙️ Установка типа ответа через методы FastAPI</h2>
+                <div style="text-align: left; font-size: 1.04em; margin-top: 30px;">
+                    <p class="fragment">Методы FastAPI такие как get(), post() и т.д. позволяют задать тип ответа с помощью параметра response_class:</p>
+                    
+                    <pre class="fragment"><code class="python">from fastapi import FastAPI
+from fastapi.responses import PlainTextResponse, JSONResponse, HTMLResponse
+
+app = FastAPI()
+
+@app.get("/text", response_class=PlainTextResponse)
+def root_text():
+    return "Hello Пушкин.COM"
+
+@app.get("/html", response_class=HTMLResponse)
+def root_html():
+    return "<h2>Hello Пушкин.COM</h2>"</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 29: FileResponse -->
+            <section>
+                <h2>📁 FileResponse</h2>
+                <div style="text-align: left; font-size: 0.91em; margin-top: 30px;">
+                    <p class="fragment">Пусть в проекте в папке public есть файл index.html:</p>
+                    
+                    <pre class="fragment"><code class="html"><!DOCTYPE html>
+<html>
+<head>
+    <title>Пушкин.COM</title>
+    <meta charset="utf-8" />
+</head>
+<body>
+    <h2>Hello Пушкин.COM</h2>
+</body>
+</html></code></pre>
+                    
+                    <p class="fragment">В файле main.py определим код для отправки этого файла клиенту:</p>
+                    
+                    <pre class="fragment"><code class="python">from fastapi import FastAPI
+from fastapi.responses import FileResponse
+
+app = FastAPI()
+
+@app.get("/")
+def root():
+    return FileResponse("public/index.html")</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 30: Очередность определения путей -->
+            <section data-background-color="#c0392b">
+                <h2>⚠️ Очередность определения путей</h2>
+                <div style="text-align: left; font-size: 1.04em; margin-top: 30px;">
+                    <p class="fragment">При определении шаблонов путей следует учитывать очередность определения шаблонов путей:</p>
+                    
+                    <pre class="fragment"><code class="python">@app.get("/users/{name}")
+def users(name):
+    return {"user_name": name}
+
+@app.get("/users/admin")
+def admin():
+    return {"message": "Hello admin"}</code></pre>
+                    
+                    <div class="fragment" style="margin: 20px 0; padding: 15px; background: rgba(231,76,60,0.3); border-radius: 5px;">
+                        <p><strong>Проблема:</strong> Запрос /users/admin обработает функция users(), а не admin()!</p>
+                        <p><strong>Решение:</strong> Поменять определение функций местами.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 31: Ограничение типа параметров -->
+            <section>
+                <h2>🔢 Ограничение типа параметров</h2>
+                <div style="text-align: left; font-size: 1.04em; margin-top: 30px;">
+                    <p class="fragment">FastAPI позволяет ограничить тип параметров и соответственно набор используемых значений:</p>
+                    
+                    <pre class="fragment"><code class="python">@app.get("/users/{id}")
+def users(id: int):
+    return {"user_id": id}</code></pre>
+                    
+                    <p class="fragment">Чтобы указать, что параметр - целое число, у параметра функции явным образом задается тип int. Если передать не целочисленное значение, то сервер отправит сообщение об ошибке.</p>
+                </div>
+            </section>
+
+            <!-- Слайд 32: Path -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🛤️ Path</h2>
+                <div style="text-align: left; font-size: 1.18em; margin-top: 30px;">
+                    <p class="fragment">Класс Path позволяет валидировать значения параметров. Параметры для валидации:</p>
+                    
+                    <ul class="fragment" style="font-size: 0.8em;">
+                        <li><strong>min_length</strong>: минимальное количество символов</li>
+                        <li><strong>max_length</strong>: максимальное количество символов</li>
+                        <li><strong>pattern</strong>: регулярное выражение</li>
+                        <li><strong>lt/le/gt/ge</strong>: сравнения для чисел</li>
+                    </ul>
+                    
+                    <pre class="fragment"><code class="python">@app.get("/users/{name}")
+def users(name:str = Path(min_length=3, max_length=20)):
+    return {"name": name}</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 33: Валидация параметров -->
+            <section>
+                <h2>✅ Валидация параметров</h2>
+                <div style="text-align: left; font-size: 1.09em; margin-top: 30px;">
+                    <p class="fragment">Подобным образом можно использовать другие параметры валидации:</p>
+                    
+                    <pre class="fragment"><code class="python">@app.get("/users/{name}/{age}")
+def users(name:str = Path(min_length=3, max_length=20), 
+          age: int = Path(ge=18, lt=111)):
+    return {"name": name, "age": age}</code></pre>
+                    
+                    <p class="fragment">Валидация с помощью регулярного выражения:</p>
+                    
+                    <pre class="fragment"><code class="python">@app.get("/users/{phone}")
+def users(phone:str = Path(pattern=r"^\d{11}$")):
+    return {"phone": phone}</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 39: Дополнительные возможности Query -->
+            <section>
+                <h2>⚙️ Дополнительные возможности Query</h2>
+                <div style="text-align: left; font-size: 0.96em; margin-top: 30px;">
+                    <p class="fragment">Query позволяет установить значение по умолчанию с помощью параметра default:</p>
+                    
+                    <pre class="fragment"><code class="python">@app.get("/users")
+def users(name: str = Query(default="Undefined", min_length=2)):
+    return {"name": name}</code></pre>
+                    
+                    <p class="fragment">Если параметры должны быть необязательными, то параметру default передается значение None:</p>
+                    
+                    <pre class="fragment"><code class="python">@app.get("/users")
+def users(name:str | None = Query(default=None, min_length=2)):
+    if name == None:
+        return {"name": "Undefined"}
+    else:
+        return {"name": name}</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 40: Получение списков значений -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">📋 Получение списков значений</h2>
+                <div style="text-align: left; font-size: 1.09em; margin-top: 30px;">
+                    <p class="fragment">Использование класса Query позволяет получать через строку запроса списки:</p>
+                    
+                    <div class="fragment" style="margin: 20px 0; padding: 15px; background: rgba(52,152,219,0.2); border-radius: 5px;">
+                        <p><strong>Пример запроса:</strong></p>
+                        <code>http://127.0.0.1:8000/users?people=tom&people=Sam&people=Bob</code>
+                    </div>
+                    
+                    <pre class="fragment"><code class="python">@app.get("/users")
+def users(people: list[str] = Query()):
+    return {"people": people}</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 41: Сочетание параметров пути и строки запроса -->
+            <section>
+                <h2>🔗 Сочетание параметров пути и строки запроса</h2>
+                <div style="text-align: left; font-size: 1.09em; margin-top: 30px;">
+                    <pre class="fragment"><code class="python">@app.get("/users/{name}")
+def users(name:str = Path(min_length=3, max_length=20), 
+          age: int = Query(ge=18, lt=111)):
+    return {"name": name, "age": age}</code></pre>
+                    
+                    <p class="fragment">В данном случае параметр name представляет параметр пути, а age - параметр строки запроса.</p>
+                    
+                    <div class="fragment" style="margin: 20px 0; padding: 15px; background: rgba(46,204,113,0.2); border-radius: 5px;">
+                        <p><strong>Пример обращения:</strong></p>
+                        <code>http://127.0.0.1:8000/users/Tom?age=38</code>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 38: Dependency Injection -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">💉 Dependency Injection (Инъекция зависимостей)</h2>
+                <div style="text-align: left; font-size: 1.09em; margin-top: 30px;">
+                    <p class="fragment">Dependency Injection - это паттерн проектирования, который позволяет передавать зависимости в функции автоматически.</p>
+                    
+                    <div class="fragment" style="margin: 20px 0; padding: 20px; background: rgba(52,152,219,0.2); border-left: 4px solid #3498db; border-radius: 5px;">
+                        <h4 style="color: #3498db; margin-top: 0;">Преимущества:</h4>
+                        <ul>
+                            <li>Переиспользование кода</li>
+                            <li>Упрощение тестирования</li>
+                            <li>Разделение ответственности</li>
+                            <li>Управление жизненным циклом объектов</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 39: Dependency Injection - Пример 1 -->
+            <section>
+                <h2>💻 Пример 1: Подключение к БД</h2>
+                <div style="text-align: left; font-size: 1.09em; margin-top: 30px;">
+                    <pre class="fragment"><code class="python">from fastapi import Depends
+
+def get_db():
+    db = Database()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.get("/users")
+def read_users(db = Depends(get_db)):
+    return db.get_all_users()</code></pre>
+                    
+                    <p class="fragment" style="margin-top: 20px;">FastAPI автоматически вызывает get_db(), передает результат в read_users() и закрывает соединение после выполнения.</p>
+                </div>
+            </section>
+
+            <!-- Слайд 40: Dependency Injection - Пример 2 -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🔐 Пример 2: Аутентификация</h2>
+                <div style="text-align: left; font-size: 1.09em; margin-top: 30px;">
+                    <pre class="fragment"><code class="python">from fastapi import Depends, HTTPException
+
+def get_current_user(token: str):
+    user = verify_token(token)
+    if not user:
+        raise HTTPException(status_code=401)
+    return user
+
+@app.get("/profile")
+def get_profile(user = Depends(get_current_user)):
+    return {"username": user.name, "email": user.email}</code></pre>
+                    
+                    <p class="fragment" style="margin-top: 20px;">Зависимость проверяет токен и возвращает пользователя. Если токен невалиден - возвращается ошибка 401.</p>
+                </div>
+            </section>
+
+            <!-- Слайд 41: Dependency Injection - Пример 3 -->
+            <section>
+                <h2>⚙️ Пример 3: Вложенные зависимости</h2>
+                <div style="text-align: left; font-size: 1.09em; margin-top: 30px;">
+                    <pre class="fragment"><code class="python">def get_db():
+    return Database()
+
+def get_user_service(db = Depends(get_db)):
+    return UserService(db)
+
+@app.post("/users")
+def create_user(
+    user_data: UserCreate,
+    service = Depends(get_user_service)
+):
+    return service.create(user_data)</code></pre>
+                    
+                    <p class="fragment" style="margin-top: 20px;">Зависимости могут зависеть друг от друга. FastAPI автоматически разрешает всю цепочку зависимостей.</p>
+                </div>
+            </section>
+
+            <!-- Слайд 42: Generics (Дженерики) -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">📦 Generics (Дженерики)</h2>
+                <div style="text-align: left; font-size: 0.87em; margin-top: 30px;">
+                    <p class="fragment">Generics позволяют создавать переиспользуемые компоненты, которые работают с различными типами данных.</p>
+                    
+                    <div class="fragment" style="margin: 20px 0; padding: 20px; background: rgba(52,152,219,0.2); border-left: 4px solid #3498db; border-radius: 5px;">
+                        <h4 style="color: #3498db; margin-top: 0;">Преимущества:</h4>
+                        <ul>
+                            <li>Типобезопасность - ошибки выявляются на этапе разработки</li>
+                            <li>Переиспользование кода - один код для разных типов</li>
+                            <li>Автодополнение в IDE</li>
+                            <li>Читаемость кода</li>
+                        </ul>
+                    </div>
+                    
+                    <pre class="fragment"><code class="python">from typing import TypeVar, Generic
+from pydantic import BaseModel
+
+T = TypeVar('T')
+
+class Response(BaseModel, Generic[T]):
+    data: T
+    message: str
+    success: bool</code></pre>
+                    
+                    <p class="fragment" style="margin-top: 20px;"><strong>T = TypeVar('T')</strong> - создаём переменную типа, которая может быть любым типом данных.</p>
+                    <p class="fragment"><strong>Generic[T]</strong> - делаем класс обобщённым, поле data может содержать любой тип T.</p>
+                </div>
+            </section>
+
+            <!-- Слайд 43: Generics - Примеры -->
+            <section>
+                <h2>📝 Примеры использования Generics</h2>
+                <div style="text-align: left; font-size: 1.09em; margin-top: 30px;">
+                    <pre class="fragment"><code class="python">class User(BaseModel):
+    id: int
+    name: str
+
+class Product(BaseModel):
+    id: int
+    title: str
+    price: float
+
+@app.get("/users/{id}", response_model=Response[User])
+def get_user(id: int):
+    user = User(id=id, name="Иван")
+    return Response(data=user, message="OK", success=True)
+
+@app.get("/products/{id}", response_model=Response[Product])
+def get_product(id: int):
+    product = Product(id=id, title="Товар", price=100.0)
+    return Response(data=product, message="OK", success=True)</code></pre>
+                    
+                    <p class="fragment" style="margin-top: 20px;">Один класс Response работает с разными типами данных, сохраняя типобезопасность.</p>
+                </div>
+            </section>
+
+            <!-- Слайд 44: Современный синтаксис Generics -->
+            <section data-background-color="#16213e">
+                <h2 style="color: #FFD700;">🆕 Современный синтаксис Generics</h2>
+                <div style="text-align: left; font-size: 1.09em; margin-top: 30px;">
+                    <div class="fragment" style="padding: 20px; background: rgba(46,204,113,0.2); border-left: 4px solid #2ecc71; border-radius: 5px;">
+                        <h4 style="color: #2ecc71; margin-top: 0;">✅ Актуальность:</h4>
+                        <p>Дженерики <strong>полностью актуальны</strong> в Pydantic v2 и FastAPI 0.100+</p>
+                        <ul>
+                            <li>Лучшая производительность</li>
+                            <li>Более строгая типизация</li>
+                            <li>Автоматическая генерация OpenAPI схем</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 20px;">
+                        <h4>Современный синтаксис (Python 3.12+):</h4>
+                        <pre style="margin-top: 10px;"><code class="python"># Старый способ (все еще работает)
+from typing import TypeVar, Generic
+T = TypeVar('T')
+class Response(BaseModel, Generic[T]):
+    data: T
+
+# Новый способ (Python 3.12+)
+class Response[T](BaseModel):
+    data: T
+    message: str</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 45: Pydantic v2 -->
+            <section class="slide-45">
+                <h2>🚀 Pydantic v2 - Новое поколение</h2>
+                <div style="text-align: left; font-size: 1.09em; margin-top: 30px;">
+                    <p class="fragment">Pydantic v2 (выпущен в 2023) - полная переработка с ядром на Rust (pydantic-core)</p>
+                    
+                    <div class="fragment" style="margin: 20px 0; padding: 20px; background: rgba(231,76,60,0.2); border-left: 4px solid #e74c3c; border-radius: 5px;">
+                        <h4 style="color: #e74c3c; margin-top: 0;">💥 Ключевые улучшения:</h4>
+                        <ul>
+                            <li><strong>До 17x быстрее</strong> валидация данных</li>
+                            <li><strong>До 5x быстрее</strong> сериализация JSON</li>
+                            <li>Лучшая поддержка типов Python</li>
+                            <li>Улучшенные сообщения об ошибках</li>
+                            <li>Новые валидаторы и сериализаторы</li>
+                        </ul>
+                    </div>
+                    
+                    <pre class="fragment" style="font-size: 0.7em;"><code class="python">from pydantic import BaseModel, Field, field_validator
+
+class User(BaseModel):
+    name: str = Field(min_length=1, max_length=50)
+    age: int = Field(ge=0, le=120)
+    email: str
+    
+    @field_validator('email')
+    def validate_email(cls, v):
+        if '@' not in v:
+            raise ValueError('Некорректный email')
+        return v</code></pre>
+                </div>
+            </section>
+
+            <!-- Слайд 46: Pydantic v2 - Computed Fields -->
+            <section data-background-color="#16213e" class="slide-46">
+                <h2 style="color: #FFD700;">📊 Computed Fields (Вычисляемые поля)</h2>
+                <div style="text-align: left; font-size: 0.95em; margin-top: 20px;">
+                    <div class="fragment" style="padding: 15px; background: rgba(52,152,219,0.2); border-left: 4px solid #3498db; border-radius: 5px; margin-bottom: 15px;">
+                        <p><strong>Что это?</strong> Поля, которые вычисляются динамически на основе других полей и автоматически включаются в сериализацию (JSON, dict).</p>
+                    </div>
+                    
+                    <pre class="fragment" style="font-size: 0.65em;"><code class="python">from pydantic import BaseModel, computed_field
+
+class User(BaseModel):
+    first_name: str
+    last_name: str
+    
+    @computed_field  # Декоратор для вычисляемого поля
+    @property        # Делаем его свойством класса
+    def full_name(self) -> str:
+        return f"{self.first_name} {self.last_name}"
+
+user = User(first_name="Иван", last_name="Иванов")
+print(user.full_name)  # Иван Иванов
+print(user.model_dump())  
+# {'first_name': 'Иван', 'last_name': 'Иванов', 'full_name': 'Иван Иванов'}</code></pre>
+                    
+                    <div class="fragment" style="margin-top: 12px;">
+                        <h4 style="color: #2ecc71; font-size: 0.95em;">💡 Преимущества:</h4>
+                        <ul style="font-size: 0.75em; line-height: 1.4;">
+                            <li>Автоматически включается в JSON/dict</li>
+                            <li>Кэшируется при первом обращении</li>
+                            <li>Типобезопасность и автодополнение в IDE</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 12px; padding: 10px; background: rgba(243,156,18,0.2); border-left: 4px solid #f39c12; border-radius: 5px;">
+                        <p style="margin: 0; font-size: 0.8em;"><strong>📌 Применение:</strong> полное имя, возраст из даты рождения, форматированные строки</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 46a: Pydantic v2 - Strict Mode -->
+            <section class="slide-46a">
+                <h2>🔒 Strict Mode (Строгий режим)</h2>
+                <div style="text-align: left; font-size: 0.95em; margin-top: 20px;">
+                    <div class="fragment" style="padding: 15px; background: rgba(231,76,60,0.2); border-left: 4px solid #e74c3c; border-radius: 5px; margin-bottom: 15px;">
+                        <p><strong>Что это?</strong> Режим, который отключает автоматическое преобразование типов. Принимаются только точные типы данных.</p>
+                    </div>
+                    
+                    <pre class="fragment" style="font-size: 0.65em;"><code class="python">from pydantic import BaseModel, Field, ValidationError
+
+class StrictUser(BaseModel):
+    age: int = Field(strict=True)        # Только int, не "25"
+    is_active: bool = Field(strict=True) # Только True/False, не 1/0
+
+# ✅ ОК: точные типы
+user = StrictUser(age=25, is_active=True)
+
+# ❌ Ошибка: строка "25" вместо числа 25
+try:
+    user = StrictUser(age="25", is_active=True)
+except ValidationError as e:
+    print("Ошибка валидации!")  # Pydantic выбросит исключение</code></pre>
+                    
+                    <div class="fragment" style="margin-top: 15px;">
+                        <h4 style="color: #e74c3c;">⚠️ Обычный режим vs Строгий режим:</h4>
+                        <table style="font-size: 0.8em; width: 100%; border-collapse: separate; border-spacing: 0 5px;">
+                            <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 8px;"><strong>Обычный:</strong></td><td style="padding: 8px;"><code>age: int</code> примет "25" и преобразует в 25</td></tr>
+                            <tr style="background: rgba(255,255,255,0.05);"><td style="padding: 8px;"><strong>Строгий:</strong></td><td style="padding: 8px;"><code>age: int = Field(strict=True)</code> выбросит ошибку для "25"</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div class="fragment" style="margin-top: 15px; padding: 12px; background: rgba(46,204,113,0.2); border-left: 4px solid #2ecc71; border-radius: 5px;">
+                        <p style="margin: 0;"><strong>✅ Когда использовать:</strong> API с внешними клиентами, финансовые данные, критичные системы, где важна точность типов</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Слайд 47: Pydantic v2 - Миграция -->
+            <section class="slide-47">
+                <h2>🔄 Миграция на Pydantic v2</h2>
+                <div style="text-align: left; font-size: 1.09em; margin-top: 30px;">
+                    <div class="fragment" style="padding: 20px; background: rgba(52,152,219,0.2); border-left: 4px solid #3498db; border-radius: 5px;">
+                        <h4 style="color: #3498db; margin-top: 0;">Основные изменения:</h4>
+                        <ul>
+                            <li><code>@validator</code> → <code>@field_validator</code></li>
+                            <li><code>@root_validator</code> → <code>@model_validator</code></li>
+                            <li><code>Config</code> → <code>model_config</code></li>
+                            <li><code>.dict()</code> → <code>.model_dump()</code></li>
+                            <li><code>.json()</code> → <code>.model_dump_json()</code></li>
+                        </ul>
+                    </div>
+                    
+                    <pre class="fragment" style="margin-top: 20px; font-size: 0.7em;"><code class="python"># Pydantic v2
+from pydantic import BaseModel, ConfigDict
+
+class User(BaseModel):
+    model_config = ConfigDict(strict=True)
+    
+    name: str
+    age: int
+
+# Использование
+user = User(name="Иван", age=25)
+data = user.model_dump()  # Вместо .dict()
+json_str = user.model_dump_json()  # Вместо .json()</code></pre>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Навигационная панель -->
+    <div class="navigation-panel" id="navigationPanel">
+        <div class="nav-grid" id="navGrid">
+            <!-- Кнопки будут созданы динамически -->
+        </div>
+    </div>
+
+    <style>
+        .navigation-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            background: rgba(22, 33, 62, 0.95);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 0;
+            padding: 7px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            z-index: 1000;
+            max-width: none;
+        }
+        
+        .nav-grid {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 2px;
+            overflow-x: auto;
+        }
+        
+        .nav-button {
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 3px;
+            font-size: 6px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-button:hover {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            transform: scale(1.1);
+            box-shadow: 0 3px 10px rgba(52,152,219,0.4);
+        }
+        
+        .nav-button.active {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            box-shadow: 0 3px 10px rgba(255,215,0,0.6);
+        }
+    </style>
+
+    <script src="../3-4/js/reveal.min.js"></script>
+    <script src="../3-4/js/notes.min.js"></script>
+    <script src="../3-4/js/markdown.min.js"></script>
+    <script src="../3-4/js/highlight.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            transition: 'slide',
+            controls: true,
+            progress: true,
+            slideNumber: false,
+            center: true,
+            plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+        });
+
+        // Создаем кнопки навигации
+        function createNavigationButtons() {
+            const navGrid = document.getElementById('navGrid');
+            for (let i = 1; i <= 48; i++) {
+                const button = document.createElement('div');
+                button.className = 'nav-button';
+                button.textContent = i;
+                button.onclick = () => Reveal.slide(i - 1, 0);
+                navGrid.appendChild(button);
+            }
+        }
+
+        // Обновляем активную кнопку
+        function updateActiveButton() {
+            const buttons = document.querySelectorAll('.nav-button');
+            const currentSlide = Reveal.getIndices().h;
+            
+            buttons.forEach((button, index) => {
+                button.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        // Инициализация
+        Reveal.on('ready', () => {
+            createNavigationButtons();
+            updateActiveButton();
+        });
+        
+        Reveal.on('slidechanged', updateActiveButton);
+    </script>
+</body>
+</html>
