@@ -1,3 +1,22 @@
+
+перенеси на отдельный слайд
+
+🎭 Правило для логирования
+CREATE TABLE students_log (
+    operation TEXT,
+    student_id INT,
+    changed_at TIMESTAMP
+);
+
+CREATE RULE log_student_updates AS
+    ON UPDATE TO students
+    DO ALSO
+        INSERT INTO students_log (operation, student_id, changed_at)
+        VALUES ('UPDATE', NEW.id, NOW());
+
+<div class="slides" style="width: 960px; height: 700px; zoom: 1.01675;">
+            родвинь влево на 10 %
+
 придумай бд для практических заданий по изучению sqlalchemy 2.x 
 не больше 3 таблиц,
 чтобы можно было использовать natural join
