@@ -155,6 +155,8 @@ CALL delete_inactive_students();
 
 ```sql
 
+
+-- РЕШЕНИЕ 1:
 CREATE OR REPLACE FUNCTION get_student_avg_grade(p_student_id INT)
 RETURNS NUMERIC
 LANGUAGE sql
@@ -500,63 +502,269 @@ def get_active_students_sqlalchemy(db: Session = Depends(get_db)):
     return {"method": "sqlalchemy", "count": len(students), "data": students}
 ```
 
-# Самостоятельная работа
-Сделать решения через raw sql и sqlalchemy 
+Решения через raw sql и sqlalchemy 
 
 ```python
 
 # эндпоинт для top_students_view
 @app.get("/students/top/raw")
-
+def get_top_students_raw(db: Session = Depends(get_db)):
+    result = db.execute(text("SELECT * FROM top_students_view"))
+    students = [dict(row._mapping) for row in result]
+    return {"method": "raw_sql", "data": students}
 
 top_students_table = Table('top_students_view', metadata, autoload_with=engine)
 
 @app.get("/students/top/sqlalchemy")
-
+def get_top_students_sqlalchemy(db: Session = Depends(get_db)):
+    stmt = select(top_students_table)
+    result = db.execute(stmt)
+    students = [dict(row._mapping) for row in result]
+    return {"method": "sqlalchemy", "data": students}
 
 
 # эндпоинт для course_statistics_mv
 @app.get("/courses/statistics/raw")
-
+def get_course_statistics_raw(db: Session = Depends(get_db)):
+    result = db.execute(text("SELECT * FROM course_statistics_mv"))
+    stats = [dict(row._mapping) for row in result]
+    return {"method": "raw_sql", "data": stats}
 
 course_stats_table = Table('course_statistics_mv', metadata, autoload_with=engine)
 
 @app.get("/courses/statistics/sqlalchemy")
-
+def get_course_statistics_sqlalchemy(db: Session = Depends(get_db)):
+    stmt = select(course_stats_table)
+    result = db.execute(stmt)
+    stats = [dict(row._mapping) for row in result]
+    return {"method": "sqlalchemy", "data": stats}
 
 
 # эндпоинт для add_student
 @app.post("/students/add/raw")
-
+def add_student_raw(name: str, email: str, status: str = "active", db: Session = Depends(get_db)):
+    db.execute(text("CALL add_student(:name, :email, :status)"), 
+               {"name": name, "email": email, "status": status})
+    db.commit()
+    return {"method": "raw_sql", "message": "Student added"}
 
 
 # эндпоинт для delete_inactive_students
 @app.delete("/students/inactive/raw")
-
+def delete_inactive_students_raw(db: Session = Depends(get_db)):
+    db.execute(text("CALL delete_inactive_students()"))
+    db.commit()
+    return {"method": "raw_sql", "message": "Inactive students deleted"}
 
 
 # эндпоинт для get_student_avg_grade
 @app.get("/students/{student_id}/avg-grade/raw")
-
+def get_student_avg_grade_raw(student_id: int, db: Session = Depends(get_db)):
+    result = db.execute(text("SELECT get_student_avg_grade(:id) as avg_grade"), 
+                        {"id": student_id})
+    avg_grade = result.scalar()
+    return {"method": "raw_sql", "student_id": student_id, "avg_grade": float(avg_grade)}
 
 
 # эндпоинт для count_student_courses
 @app.get("/students/{student_id}/courses-count/raw")
-
+def count_student_courses_raw(student_id: int, db: Session = Depends(get_db)):
+    result = db.execute(text("SELECT count_student_courses(:id) as count"), 
+                        {"id": student_id})
+    count = result.scalar()
+    return {"method": "raw_sql", "student_id": student_id, "courses_count": count}
 
 
 # эндпоинт для get_grade_status
 @app.get("/grades/status/raw")
-
+def get_grade_status_raw(grade: float, db: Session = Depends(get_db)):
+    result = db.execute(text("SELECT get_grade_status(:grade) as status"), 
+                        {"grade": grade})
+    status = result.scalar()
+    return {"method": "raw_sql", "grade": grade, "status": status}
 
 
 # эндпоинт для calculate_course_discount
 @app.get("/courses/{course_id}/discount/raw")
-
+def calculate_course_discount_raw(course_id: int, db: Session = Depends(get_db)):
+    result = db.execute(text("SELECT calculate_course_discount(:id) as price"), 
+                        {"id": course_id})
+    price = result.scalar()
+    return {"method": "raw_sql", "course_id": course_id, "discounted_price": float(price)}
 
 
 # эндпоинт для get_course_students
 @app.get("/courses/{course_id}/students/raw")
+def get_course_students_raw(course_id: int, db: Session = Depends(get_db)):
+    result = db.execute(text("SELECT * FROM get_course_students(:id)"), 
+                        {"id": course_id})
+    students = [dict(row._mapping) for row in result]
+    return {"method": "raw_sql", "course_id": course_id, "data": students}
+
+
+# ============================================
+# ПРИМЕРЫ ДАЛЬНЕЙШЕЙ ОБРАБОТКИ ДАННЫХ
+# ============================================
+
+# Пример 1: Агрегация и фильтрация данных из view
+@app.get("/students/top/filtered")
+def get_top_students_filtered(min_courses: int = 3, db: Session = Depends(get_db)):
+    """""" Получаем топ студентов с фильтрацией по количеству курсов """
+    result = db.execute(text("""
+        SELECT * FROM top_students_view 
+        WHERE courses_count >= :min_courses
+    """), {"min_courses": min_courses})
+    
+    students = [dict(row._mapping) for row in result]
+    
+    # Дополнительная обработка в Python
+    for student in students:
+        student['grade_category'] = (
+            'Отличник' if student['avg_grade'] >= 4.5 
+            else 'Хорошист' if student['avg_grade'] >= 4.0 
+            else 'Удовлетворительно'
+        )
+        student['email_domain'] = student['email'].split('@')[1]
+    
+    return {
+        "total": len(students),
+        "filter": {"min_courses": min_courses},
+        "data": students
+    }
+
+
+# Пример 2: Комбинирование нескольких функций
+@app.get("/students/{student_id}/profile")
+def get_student_profile(student_id: int, db: Session = Depends(get_db)):
+    """Полный профиль студента с использованием нескольких функций"""
+    # Получаем базовую информацию
+    student = db.execute(text("""
+        SELECT id, name, email, status FROM students WHERE id = :id
+    """), {"id": student_id}).fetchone()
+    
+    if not student:
+        return {"error": "Student not found"}
+    
+    # Используем функции для дополнительных данных
+    avg_grade = db.execute(text(
+        "SELECT get_student_avg_grade(:id)"
+    ), {"id": student_id}).scalar()
+    
+    courses_count = db.execute(text(
+        "SELECT count_student_courses(:id)"
+    ), {"id": student_id}).scalar()
+    
+    # Собираем все в один объект
+    profile = {
+        "id": student.id,
+        "name": student.name,
+        "email": student.email,
+        "status": student.status,
+        "avg_grade": float(avg_grade),
+        "courses_count": courses_count,
+        "performance": "Excellent" if avg_grade >= 4.5 else "Good" if avg_grade >= 4.0 else "Average"
+    }
+    
+    return profile
+
+
+# Пример 3: Статистика и аналитика
+@app.get("/analytics/courses")
+def get_courses_analytics(db: Session = Depends(get_db)):
+    """Аналитика по курсам с дополнительными расчетами"""
+    result = db.execute(text("SELECT * FROM course_statistics_mv"))
+    courses = [dict(row._mapping) for row in result]
+    
+    # Расчет дополнительных метрик
+    total_students = sum(c['students_count'] for c in courses)
+    avg_grade_all = sum(c['avg_grade'] * c['students_count'] for c in courses) / total_students if total_students > 0 else 0
+    
+    # Добавляем дополнительные поля
+    for course in courses:
+        course['difficulty'] = (
+            'Сложный' if course['avg_grade'] < 4.0 
+            else 'Средний' if course['avg_grade'] < 4.5 
+            else 'Легкий'
+        )
+        course['popularity_percent'] = round((course['students_count'] / total_students * 100), 2) if total_students > 0 else 0
+    
+    return {
+        "summary": {
+            "total_courses": len(courses),
+            "total_students": total_students,
+            "avg_grade_overall": round(avg_grade_all, 2)
+        },
+        "courses": courses
+    }
+
+
+# Пример 4: Использование процедур с валидацией
+from pydantic import BaseModel, EmailStr
+
+class StudentCreate(BaseModel):
+    name: str
+    email: EmailStr
+    status: str = "active"
+
+@app.post("/students/create")
+def create_student_validated(student: StudentCreate, db: Session = Depends(get_db)):
+    """Создание студента с валидацией и проверкой"""
+    # Проверяем, существует ли email
+    existing = db.execute(text(
+        "SELECT id FROM students WHERE email = :email"
+    ), {"email": student.email}).fetchone()
+    
+    if existing:
+        return {"error": "Student with this email already exists", "existing_id": existing.id}
+    
+    # Вызываем процедуру
+    db.execute(text(
+        "CALL add_student(:name, :email, :status)"
+    ), {"name": student.name, "email": student.email, "status": student.status})
+    db.commit()
+    
+    # Получаем созданного студента
+    new_student = db.execute(text(
+        "SELECT * FROM students WHERE email = :email"
+    ), {"email": student.email}).fetchone()
+    
+    return {
+        "message": "Student created successfully",
+        "student": dict(new_student._mapping)
+    }
+
+
+# Пример 5: Пагинация результатов функции
+@app.get("/courses/{course_id}/students/paginated")
+def get_course_students_paginated(
+    course_id: int, 
+    page: int = 1, 
+    page_size: int = 10,
+    db: Session = Depends(get_db)
+):
+    """Получение студентов курса с пагинацией"""
+    offset = (page - 1) * page_size
+    
+    # Получаем все данные
+    result = db.execute(text("""
+        SELECT * FROM get_course_students(:id)
+        LIMIT :limit OFFSET :offset
+    """), {"id": course_id, "limit": page_size, "offset": offset})
+    
+    students = [dict(row._mapping) for row in result]
+    
+    # Подсчитываем общее количество
+    total = db.execute(text("""
+        SELECT COUNT(*) FROM get_course_students(:id)
+    """), {"id": course_id}).scalar()
+    
+    return {
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "total_pages": (total + page_size - 1) // page_size,
+        "data": students
+    }
 
 ```
 

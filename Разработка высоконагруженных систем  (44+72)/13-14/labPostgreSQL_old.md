@@ -91,7 +91,7 @@ SELECT * FROM top_students_view;
 
 
 ```sql
---решение здесь
+
 
 ```
 
@@ -155,6 +155,8 @@ CALL delete_inactive_students();
 
 ```sql
 
+
+-- РЕШЕНИЕ 1:
 CREATE OR REPLACE FUNCTION get_student_avg_grade(p_student_id INT)
 RETURNS NUMERIC
 LANGUAGE sql
@@ -243,6 +245,7 @@ LIMIT 5;
 
 
 
+
 5.4 Создайте функцию calculate_course_discount, которая возвращает цену курса со скидкой
 Скидка 10% если credits >= 4, иначе без скидки. Базовая цена: 1000 за credit
 
@@ -312,9 +315,22 @@ SELECT * FROM get_course_students(1);
 
 ```
 
-Работа с хранимыми в бд объектами через fastapi
+
+4.1  Генерация большого количества студентов (например, 10000)
+
+```sql
+
+INSERT INTO students (name, email, status)
+SELECT 
+    'Student ' || i,
+    'student' || i || '@test.com',
+    CASE WHEN i % 2 = 0 THEN 'active' ELSE 'inactive' END
+FROM generate_series(1, 10000) AS i;
+```
 
 ## 📋 Подготовка к работе
+
+## 
 
 
 
@@ -336,6 +352,7 @@ lab-postgres/
 pip install fastapi uvicorn sqlalchemy psycopg2-binary
 ```
 
+-
 
 ## 🔧 Настройка проекта
 
@@ -464,15 +481,69 @@ async def execute_sql_file(file: UploadFile = File(...), db: Session = Depends(g
         return {"status": "error", "message": str(e)}
 
 
+
 ```
 
-Реализовать вызов представлений, процедур и функций через эндпоинты
+---
+
+## 📝 Задание 1: Работа с Views (Представлениями)
+
+### Цель
+Создать представление для активных студентов и работать с ним через FastAPI.
+
+### Шаг 1: Создание представления в БД
+
+**Способ 1: Через Python-скрипт**
+
+```python
+# init_views.py
+from database import engine
+from sqlalchemy import text
+
+def create_views():
+    with engine.connect() as conn:
+        # Создаем view для активных студентов
+        conn.execute(text("""
+            CREATE OR REPLACE VIEW active_students_view AS
+            SELECT 
+                id,
+                name,
+                email,
+                created_at
+            FROM students
+            WHERE status = 'active';
+        """))
+        conn.commit()
+        print("✅ View 'active_students_view' created successfully")
+
+if __name__ == "__main__":
+    create_views()
+```
 
 
-### Пример получения активных студентов
+**Способ 2: Через dbeaver или pgAdmin**
+
+```sql
+CREATE VIEW active_students_view AS
+SELECT 
+    id,
+    name,
+    email,
+    created_at
+FROM students
+WHERE status = 'active';
+```
+
+### Шаг 2: Работа через Raw SQL
 
 ```python
 # main.py
+from fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+from database import get_db
+
+app = FastAPI()
 
 @app.get("/students/active/raw")
 def get_active_students_raw(db: Session = Depends(get_db)):
@@ -480,10 +551,11 @@ def get_active_students_raw(db: Session = Depends(get_db)):
     result = db.execute(text("SELECT * FROM active_students_view"))
     students = [dict(row._mapping) for row in result]
     return {"method": "raw_sql", "count": len(students), "data": students}
+```
 
+### Шаг 3: Работа через SQLAlchemy
 
-# через SQLAlchemy
-
+```python
 from sqlalchemy import Table, MetaData, select
 from database import engine
 
@@ -500,67 +572,327 @@ def get_active_students_sqlalchemy(db: Session = Depends(get_db)):
     return {"method": "sqlalchemy", "count": len(students), "data": students}
 ```
 
-# Самостоятельная работа
-Сделать решения через raw sql и sqlalchemy 
+### Задание для выполнения
 
-```python
+1. Создайте view `top_students_view` с топ-10 студентами по среднему баллу
+2. Реализуйте эндпоинт `/students/top` двумя способами (raw SQL и SQLAlchemy)
+3. Добавьте параметр `limit` для управления количеством результатов
 
-# эндпоинт для top_students_view
-@app.get("/students/top/raw")
+---
 
+## 📝 Задание 2: Материализованные представления
 
-top_students_table = Table('top_students_view', metadata, autoload_with=engine)
+### Цель
+Создать материализованное представление для статистики по курсам.
 
-@app.get("/students/top/sqlalchemy")
-
-
-
-# эндпоинт для course_statistics_mv
-@app.get("/courses/statistics/raw")
+### Шаг 1: Создание materialized view
 
 
-course_stats_table = Table('course_statistics_mv', metadata, autoload_with=engine)
+```sql
+CREATE MATERIALIZED VIEW course_statistics AS
+SELECT 
+    c.id as course_id,
+    c.title,
+    COUNT(g.id) as student_count,
+    AVG(g.grade) as avg_grade,
+    MAX(g.grade) as max_grade,
+    MIN(g.grade) as min_grade,
+    NOW() as last_updated
+FROM courses c
+LEFT JOIN grades g ON c.id = g.course_id
+GROUP BY c.id, c.title;
 
-@app.get("/courses/statistics/sqlalchemy")
-
-
-
-# эндпоинт для add_student
-@app.post("/students/add/raw")
-
-
-
-# эндпоинт для delete_inactive_students
-@app.delete("/students/inactive/raw")
-
-
-
-# эндпоинт для get_student_avg_grade
-@app.get("/students/{student_id}/avg-grade/raw")
-
-
-
-# эндпоинт для count_student_courses
-@app.get("/students/{student_id}/courses-count/raw")
-
-
-
-# эндпоинт для get_grade_status
-@app.get("/grades/status/raw")
-
-
-
-# эндпоинт для calculate_course_discount
-@app.get("/courses/{course_id}/discount/raw")
-
-
-
-# эндпоинт для get_course_students
-@app.get("/courses/{course_id}/students/raw")
-
+-- Создаем индекс для быстрого доступа
+CREATE INDEX idx_course_stats_id ON course_statistics(course_id);
 ```
 
+### Шаг 2: Чтение данных
+
+```python
+@app.get("/courses/statistics")
+def get_course_statistics(db: Session = Depends(get_db)):
+    """Получение статистики по курсам из materialized view"""
+    result = db.execute(text("SELECT * FROM course_statistics"))
+    stats = [dict(row._mapping) for row in result]
+    return {"data": stats}
+```
+
+### Шаг 3: Обновление materialized view
+
+```python
+@app.post("/courses/statistics/refresh")
+def refresh_course_statistics(db: Session = Depends(get_db)):
+    """Обновление материализованного представления"""
+    db.execute(text("REFRESH MATERIALIZED VIEW course_statistics"))
+    db.commit()
+    return {"message": "Statistics refreshed successfully"}
+
+@app.post("/courses/statistics/refresh-concurrent")
+def refresh_course_statistics_concurrent(db: Session = Depends(get_db)):
+    """Обновление без блокировки чтения"""
+    db.execute(text("REFRESH MATERIALIZED VIEW CONCURRENTLY course_statistics"))
+    db.commit()
+    return {"message": "Statistics refreshed concurrently"}
+```
+
+### Задание для выполнения
+
+1. Создайте materialized view `student_performance` с информацией о каждом студенте
+2. Добавьте эндпоинт для получения данных из этого view
+3. Реализуйте автоматическое обновление через фоновую задачу (используйте `BackgroundTasks`)
+
+---
+
+## 📝 Задание 3: Работа с курсорами
+
+### Цель
+Обработать большой объем данных порциями с помощью курсоров.
+
+### Шаг 1: Создание тестовых данных
+
+```python
+@app.post("/students/generate")
+def generate_test_students(count: int = 10000, db: Session = Depends(get_db)):
+    """Генерация тестовых данных"""
+    for i in range(count):
+        student = Student(
+            name=f"Student {i}",
+            email=f"student{i}@test.com",
+            status='active' if i % 2 == 0 else 'inactive'
+        )
+        db.add(student)
+        if i % 1000 == 0:
+            db.commit()
+    db.commit()
+    return {"message": f"Generated {count} students"}
+```
+
+### Шаг 2: Использование серверного курсора
+
+```python
+import psycopg2
+from typing import List
+
+@app.get("/students/export")
+def export_students_with_cursor(batch_size: int = 1000):
+    """Экспорт студентов порциями через курсор"""
+    conn = psycopg2.connect(DATABASE_URL)
+    
+    # Создаем серверный курсор
+    cursor = conn.cursor(name='student_cursor')
+    cursor.execute("SELECT id, name, email FROM students")
+    
+    all_students = []
+    batch_count = 0
+    
+    while True:
+        rows = cursor.fetchmany(batch_size)
+        if not rows:
+            break
+        
+        batch_count += 1
+        all_students.extend([{"id": r[0], "name": r[1], "email": r[2]} for r in rows])
+    
+    cursor.close()
+    conn.close()
+    
+    return {
+        "total": len(all_students),
+        "batches": batch_count,
+        "batch_size": batch_size,
+        "sample": all_students[:10]  # Первые 10 для примера
+    }
+```
+
+### Шаг 3: Курсор с SQLAlchemy
+
+```python
+from sqlalchemy import select
+from models import Student
+
+@app.get("/students/stream")
+def stream_students(limit: int = 100, db: Session = Depends(get_db)):
+    """Потоковое чтение через SQLAlchemy"""
+    stmt = select(Student).execution_options(yield_per=limit)
+    result = db.execute(stmt)
+    
+    students = []
+    for row in result.scalars():
+        students.append({
+            "id": row.id,
+            "name": row.name,
+            "email": row.email
+        })
+    
+    return {"count": len(students), "data": students[:10]}
+```
+
+### Задание для выполнения
+
+1. Создайте эндпоинт `/grades/export` для экспорта всех оценок порциями по 500
+2. Добавьте подсчет статистики во время обработки (средний балл, количество)
+3. Реализуйте прогресс-бар через WebSocket или Server-Sent Events
+
+---
+
+## 📝 Задание 4: Хранимые процедуры
+
+### Цель
+Создать процедуру для зачисления студента на курс с проверками.
+
+### Шаг 1: Создание процедуры
 
 
+```sql
+CREATE OR REPLACE PROCEDURE enroll_student_to_course(
+    p_student_id INT,
+    p_course_id INT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_student_exists BOOLEAN;
+    v_course_exists BOOLEAN;
+    v_already_enrolled BOOLEAN;
+BEGIN
+    -- Проверяем существование студента
+    SELECT EXISTS(SELECT 1 FROM students WHERE id = p_student_id) INTO v_student_exists;
+    IF NOT v_student_exists THEN
+        RAISE EXCEPTION 'Student with id % does not exist', p_student_id;
+    END IF;
+    
+    -- Проверяем существование курса
+    SELECT EXISTS(SELECT 1 FROM courses WHERE id = p_course_id) INTO v_course_exists;
+    IF NOT v_course_exists THEN
+        RAISE EXCEPTION 'Course with id % does not exist', p_course_id;
+    END IF;
+    
+    -- Проверяем, не зачислен ли уже
+    SELECT EXISTS(
+        SELECT 1 FROM grades 
+        WHERE student_id = p_student_id AND course_id = p_course_id
+    ) INTO v_already_enrolled;
+    
+    IF v_already_enrolled THEN
+        RAISE EXCEPTION 'Student already enrolled in this course';
+    END IF;
+    
+    -- Зачисляем студента (добавляем запись с оценкой 0)
+    INSERT INTO grades (student_id, course_id, grade)
+    VALUES (p_student_id, p_course_id, 0);
+    
+    COMMIT;
+    
+    RAISE NOTICE 'Student % enrolled to course %', p_student_id, p_course_id;
+END;
+$$;
+```
+
+### Шаг 2: Вызов процедуры из FastAPI
+
+```python
+from pydantic import BaseModel
+
+class EnrollRequest(BaseModel):
+    student_id: int
+    course_id: int
+
+@app.post("/enrollments/")
+def enroll_student(request: EnrollRequest, db: Session = Depends(get_db)):
+    """Зачисление студента на курс через процедуру"""
+    try:
+        db.execute(
+            text("CALL enroll_student_to_course(:student_id, :course_id)"),
+            {"student_id": request.student_id, "course_id": request.course_id}
+        )
+        db.commit()
+        return {"message": "Student enrolled successfully"}
+    except Exception as e:
+        db.rollback()
+        return {"error": str(e)}
+```
+
+### Задание для выполнения
+
+1. Создайте процедуру `update_student_grade(p_student_id, p_course_id, p_grade)` с валидацией
+2. Добавьте процедуру `archive_old_students(p_year)` для архивации выпускников
+3. Реализуйте эндпоинты для вызова этих процедур
+
+---
+
+## 📝 Задание 5: Хранимые функции
+
+### Цель
+Создать функции для расчета статистики и использовать их в запросах.
+
+### Шаг 1: Простая функция
+
+```sql
+CREATE OR REPLACE FUNCTION get_student_gpa(p_student_id INT)
+RETURNS NUMERIC
+LANGUAGE sql
+AS $$
+    SELECT COALESCE(AVG(grade), 0)
+    FROM grades
+    WHERE student_id = p_student_id;
+$$;
+```
+
+### Шаг 2: Использование в FastAPI
+
+```python
+@app.get("/students/{student_id}/gpa")
+def get_student_gpa(student_id: int, db: Session = Depends(get_db)):
+    """Получение GPA студента через функцию"""
+    result = db.execute(
+        text("SELECT get_student_gpa(:student_id) as gpa"),
+        {"student_id": student_id}
+    )
+    gpa = result.scalar()
+    return {"student_id": student_id, "gpa": float(gpa)}
+```
+
+### Шаг 3: Функция, возвращающая таблицу
+
+```sql
+CREATE OR REPLACE FUNCTION get_students_by_gpa(p_min_gpa NUMERIC)
+RETURNS TABLE(
+    student_id INT,
+    student_name TEXT,
+    gpa NUMERIC
+)
+LANGUAGE sql
+AS $$
+    SELECT 
+        s.id,
+        s.name,
+        AVG(g.grade) as avg_grade
+    FROM students s
+    JOIN grades g ON s.id = g.student_id
+    GROUP BY s.id, s.name
+    HAVING AVG(g.grade) >= p_min_gpa
+    ORDER BY avg_grade DESC;
+$$;
+```
+
+```python
+@app.get("/students/by-gpa/{min_gpa}")
+def get_students_by_gpa(min_gpa: float, db: Session = Depends(get_db)):
+    """Получение студентов с GPA выше указанного"""
+    result = db.execute(
+        text("SELECT * FROM get_students_by_gpa(:min_gpa)"),
+        {"min_gpa": min_gpa}
+    )
+    students = [dict(row._mapping) for row in result]
+    return {"min_gpa": min_gpa, "count": len(students), "data": students}
+```
+
+### Задание для выполнения
+
+1. Создайте функцию `calculate_course_difficulty(p_course_id)` - возвращает сложность курса (0-10)
+2. Создайте функцию `get_student_ranking()` - возвращает рейтинг всех студентов
+3. Реализуйте эндпоинты для использования этих функций
+
+---
 
 

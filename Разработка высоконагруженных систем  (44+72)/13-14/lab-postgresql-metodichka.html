@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Практика: PostgreSQL Views, Functions, Procedures</title>
+    <style media="print">
+        body { font-family: Arial, sans-serif; font-size: 12px; }
+        .container { box-shadow: none; background: white; }
+        .header { background: white !important; color: black !important; }
+        .save-btn { display: none !important; }
+        .section { page-break-inside: avoid; }
+        input, textarea { border: 1px solid #ccc; background: white; color: black; }
+        .code-block { background: white !important; color: black !important; border: 1px solid #ccc; }
+    </style>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .student-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #4A90E2;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #4A90E2;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: auto;
+            resize: vertical;
+        }
+
+        .section textarea.code-textarea {
+            min-height: 300px;
+        }
+
+        .code-textarea {
+            font-family: 'Courier New', monospace;
+            background: #2d3748;
+            color: #e2e8f0;
+            white-space: pre;
+            tab-size: 4;
+        }
+
+        .code-editor-wrapper {
+            position: relative;
+        }
+
+        .code-editor-wrapper .code-highlight {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 12px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            white-space: pre;
+            overflow: auto;
+            pointer-events: none;
+            background: #2d3748;
+            line-height: 1.5;
+        }
+
+        .code-editor-wrapper textarea {
+            position: relative;
+            background: transparent;
+            color: transparent;
+            caret-color: #e2e8f0;
+            z-index: 1;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 25px;
+            background: #fff;
+            border-left: 5px solid #4A90E2;
+            border-radius: 0 10px 10px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            color: #4A90E2;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .section h3 {
+            color: #357ABD;
+            margin: 20px 0 10px 0;
+            font-size: 1.3em;
+        }
+
+        .section h4 {
+            color: #555;
+            margin: 15px 0 10px 0;
+            font-size: 1.1em;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .code-block .keyword { color: #ff79c6; font-weight: bold; }
+        .code-block .string { color: #f1fa8c; }
+        .code-block .function { color: #50fa7b; }
+        .code-block .class { color: #8be9fd; }
+        .code-block .decorator { color: #ff79c6; }
+        .code-block .comment { color: #6272a4; font-style: italic; }
+        .code-block .number { color: #bd93f9; }
+        .code-block .operator { color: #ff79c6; }
+
+        .checkbox-item {
+            margin: 15px 0;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .checkbox-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid white;
+            border-radius: 6px;
+            margin-right: 15px;
+            cursor: pointer;
+            position: relative;
+            background: transparent;
+            transition: all 0.3s;
+        }
+
+        .checkbox-item input[type="checkbox"]:checked {
+            background: white;
+        }
+
+        .checkbox-item input[type="checkbox"]:checked::after {
+            content: '✓';
+            position: absolute;
+            top: -2px;
+            left: 4px;
+            font-size: 18px;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .checkbox-item label {
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: block;
+            margin: 30px auto;
+            transition: transform 0.3s;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ul li {
+            padding: 8px 0 8px 30px;
+            position: relative;
+        }
+
+        ul li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: #4A90E2;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        table th {
+            background: #4A90E2;
+            color: white;
+        }
+
+        table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        @media (max-width: 768px) {
+            .student-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗄️ Практическая работа</h1>
+            <h2>PostgreSQL: Views, Functions, Procedures</h2>
+            <p>Продвинутая работа с PostgreSQL в среде FastAPI</p>
+        </div>
+
+        <div class="student-info">
+            <div class="form-group">
+                <label for="student-name">ФИО студента:</label>
+                <input type="text" id="student-name" placeholder="Иванов Иван Иванович">
+            </div>
+            <div class="form-group">
+                <label for="group">Группа:</label>
+                <input type="text" id="group" placeholder="ИСТ-401">
+            </div>
+            <div class="form-group">
+                <label for="date">Дата:</label>
+                <input type="date" id="date">
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Цель работы</h2>
+            <p>Изучить продвинутые возможности PostgreSQL (Views, Materialized Views, Cursors, Functions, Procedures) и интегрировать их с FastAPI через SQLAlchemy и raw SQL.</p>
+            <p>Оптимизация и ускорение работы бэкенда за счет переноса нагрузки на базу данных.</p>
+            
+            <h3>Время выполнения</h3>
+            <p>4 академических часа</p>
+            
+            <h3>Подготовка</h3>
+            <ul>
+                <li>Запустите PostgreSQL в контейнере</li>
+                <li>Создайте и заполните тестовыми данными БД из seed_data.sql</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>3. Представления (Views)</h2>
+            
+            <h3>3.1 Создать представление active_students_view для активных студентов</h3>
+            <div class="code-block"><span class="keyword">CREATE VIEW</span> active_students_view <span class="keyword">AS</span>
+<span class="keyword">SELECT</span> 
+    id,
+    name,
+    email,
+    created_at
+<span class="keyword">FROM</span> students
+<span class="keyword">WHERE</span> status <span class="operator">=</span> <span class="string">'active'</span>;</div>
+
+            <h4>Результат:</h4>
+            <table>
+                <tr>
+                    <th>id</th>
+                    <th>name</th>
+                    <th>email</th>
+                    <th>created_at</th>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Иван Иванов</td>
+                    <td>ivan.ivanov@example.com</td>
+                    <td>2025-12-01 22:20:47.421411</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Мария Петрова</td>
+                    <td>maria.petrova@example.com</td>
+                    <td>2025-12-01 22:20:47.421411</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Алексей Сидоров</td>
+                    <td>alexey.sidorov@example.com</td>
+                    <td>2025-12-01 22:20:47.421411</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>Дмитрий Волков</td>
+                    <td>dmitry.volkov@example.com</td>
+                    <td>2025-12-01 22:20:47.421411</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>Анна Смирнова</td>
+                    <td>anna.smirnova@example.com</td>
+                    <td>2025-12-01 22:20:47.421411</td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td>Сергей Лебедев</td>
+                    <td>sergey.lebedev@example.com</td>
+                    <td>2025-12-01 22:20:47.421411</td>
+                </tr>
+            </table>
+
+            <h3>3.2 Создайте представление view top_students_view с топ-5 студентами по среднему баллу</h3>
+            <div class="code-block"><span class="keyword">CREATE VIEW</span> top_students_view <span class="keyword">AS</span>
+<span class="keyword">SELECT</span> 
+   <span class="comment">...</span>
+<span class="keyword">FROM</span> 
+    <span class="comment">...</span>
+<span class="keyword">JOIN</span> 
+    <span class="comment">...</span>
+<span class="keyword">GROUP</span> <span class="comment">...</span>
+<span class="keyword">ORDER</span> <span class="comment">...</span>
+<span class="keyword">LIMIT</span> <span class="number">5</span>;
+
+<span class="comment">-- Проверка:</span>
+<span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> top_students_view;</div>
+
+            <h4>Ожидаемый результат:</h4>
+            <table>
+                <tr>
+                    <th>id</th>
+                    <th>name</th>
+                    <th>email</th>
+                    <th>avg_grade</th>
+                    <th>courses_count</th>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>Дмитрий Волков</td>
+                    <td>dmitry.volkov@example.com</td>
+                    <td>4.83</td>
+                    <td>6</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Мария Петрова</td>
+                    <td>maria.petrova@example.com</td>
+                    <td>4.75</td>
+                    <td>4</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Иван Иванов</td>
+                    <td>ivan.ivanov@example.com</td>
+                    <td>4.63</td>
+                    <td>4</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>Анна Смирнова</td>
+                    <td>anna.smirnova@example.com</td>
+                    <td>4.50</td>
+                    <td>3</td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td>Сергей Лебедев</td>
+                    <td>sergey.lebedev@example.com</td>
+                    <td>4.17</td>
+                    <td>3</td>
+                </tr>
+            </table>
+
+            <div class="form-group">
+                <label>Ваше решение:</label>
+                <textarea class="code-textarea"></textarea>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task3-2">
+                <label for="task3-2">Задание 3.2 выполнено</label>
+            </div>
+
+            <h3>3.3 Создайте materialized view course_statistics_mv со статистикой по каждому курсу</h3>
+            <p>Требуется: название курса, количество студентов, средний балл, минимальный и максимальный балл</p>
+
+            <h4>Ожидаемый результат:</h4>
+            <table>
+                <tr>
+                    <th>id</th>
+                    <th>title</th>
+                    <th>students_count</th>
+                    <th>avg_grade</th>
+                    <th>min_grade</th>
+                    <th>max_grade</th>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>Базы данных</td>
+                    <td>4</td>
+                    <td>4.63</td>
+                    <td>4</td>
+                    <td>5</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Программирование</td>
+                    <td>6</td>
+                    <td>4.50</td>
+                    <td>4</td>
+                    <td>5</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>Алгоритмы и структуры данных</td>
+                    <td>3</td>
+                    <td>4.50</td>
+                    <td>4</td>
+                    <td>5</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>Веб-разработка</td>
+                    <td>4</td>
+                    <td>4.25</td>
+                    <td>3</td>
+                    <td>5</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Математика</td>
+                    <td>6</td>
+                    <td>4.17</td>
+                    <td>3</td>
+                    <td>5</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Физика</td>
+                    <td>4</td>
+                    <td>4.13</td>
+                    <td>3.5</td>
+                    <td>5</td>
+                </tr>
+            </table>
+
+            <div class="form-group">
+                <label>Ваше решение:</label>
+                <textarea class="code-textarea"></textarea>
+            </div>
+
+            <h4>Задачи для проверки:</h4>
+            <ul>
+                <li>Измените данные в таблице</li>
+                <li>Выполните материализованный запрос</li>
+                <li>Обновите материализованный запрос</li>
+            </ul>
+
+            <div class="checkbox-item">
+                <input type="checkbox" id="task3-3">
+                <label for="task3-3">Задание 3.3 выполнено</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>4. Процедуры (Procedures)</h2>
+            
+            <h3>4.1 Создайте процедуру add_student для добавления нового студента</h3>
+            <div class="code-block"><span class="keyword">CREATE OR REPLACE PROCEDURE</span> <span class="function">add_student</span>(
+    p_name <span class="class">VARCHAR</span>,
+    p_email <span class="class">VARCHAR</span>,
+    p_status <span class="class">VARCHAR</span> <span class="keyword">DEFAULT</span> <span class="string">'active'</span>
+)
+<span class="keyword">LANGUAGE</span> sql
+<span class="keyword">AS</span> $$
+    <span class="keyword">INSERT INTO</span> students (name, email, status)
+    <span class="keyword">VALUES</span> (p_name, p_email, p_status);
+$$;
+
+<span class="comment">-- Вызов:</span>
+<span class="keyword">CALL</span> <span class="function">add_student</span>(<span class="string">'Петр Петров'</span>, <span class="string">'petr.petrov@example.com'</span>, <span class="string">'active'</span>);</div>
+
+            <h3>4.2 Создайте процедуру add_grade для добавления оценки студенту по курсу</h3>
+            <div class="code-block"><span class="keyword">CREATE OR REPLACE PROCEDURE</span> <span class="function">add_grade</span>(
+  <span class="comment">...</span>
+)
+<span class="keyword">LANGUAGE</span> sql
+<span class="keyword">AS</span> $$
+    <span class="keyword">INSERT INTO</span> grades <span class="comment">...</span>
+    <span class="keyword">VALUES</span> <span class="comment">...</span>
+$$;
+
+<span class="comment">-- Вызов:</span>
+<span class="keyword">CALL</span> <span class="function">add_grade</span>(<span class="number">1</span>, <span class="number">1</span>, <span class="number">4.5</span>);</div>
+
+            <div class="form-group">
+                <label>Ваше решение:</label>
+                <textarea class="code-textarea"></textarea>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task4-2">
+                <label for="task4-2">Задание 4.2 выполнено</label>
+            </div>
+
+            <h3>4.3 Создайте процедуру delete_inactive_students для удаления неактивных студентов без оценок</h3>
+            <div class="code-block"><span class="keyword">CREATE OR REPLACE PROCEDURE</span> <span class="function">delete_inactive_students</span>()
+<span class="keyword">LANGUAGE</span> sql
+<span class="keyword">AS</span> $$
+   <span class="comment">...</span>
+$$;
+
+<span class="comment">-- Вызов:</span>
+<span class="keyword">CALL</span> <span class="function">delete_inactive_students</span>();</div>
+
+            <div class="form-group">
+                <label>Ваше решение:</label>
+                <textarea class="code-textarea"></textarea>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task4-3">
+                <label for="task4-3">Задание 4.3 выполнено</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>5. Функции (Functions)</h2>
+            
+            <h3>5.1 Создайте функцию get_student_avg_grade, которая возвращает средний балл студента по его ID</h3>
+            <div class="code-block"><span class="keyword">CREATE OR REPLACE FUNCTION</span> <span class="function">get_student_avg_grade</span>(p_student_id <span class="class">INT</span>)
+<span class="keyword">RETURNS</span> <span class="class">NUMERIC</span>
+<span class="keyword">LANGUAGE</span> sql
+<span class="keyword">AS</span> $$
+    <span class="keyword">SELECT</span> <span class="function">COALESCE</span>(<span class="function">ROUND</span>(<span class="function">AVG</span>(grade)::<span class="class">numeric</span>, <span class="number">2</span>), <span class="number">0</span>)
+    <span class="keyword">FROM</span> grades
+    <span class="keyword">WHERE</span> student_id <span class="operator">=</span> p_student_id;
+$$;
+
+<span class="comment">-- Использование:</span>
+<span class="keyword">SELECT</span> name, <span class="function">get_student_avg_grade</span>(id) <span class="keyword">as</span> avg_grade
+<span class="keyword">FROM</span> students;</div>
+
+            <h3>5.2 Создайте функцию count_student_courses, которая возвращает количество курсов студента</h3>
+            <div class="code-block"><span class="keyword">CREATE OR REPLACE FUNCTION</span> <span class="function">count_student_courses</span>(p_student_id <span class="class">INT</span>)
+<span class="keyword">RETURNS</span> <span class="class">BIGINT</span>
+<span class="keyword">LANGUAGE</span> sql
+<span class="keyword">AS</span> $$
+   <span class="comment">...</span>
+$$;
+
+<span class="comment">-- Использование:</span>
+<span class="keyword">SELECT</span> name, <span class="function">count_student_courses</span>(id) <span class="keyword">as</span> courses_count
+<span class="keyword">FROM</span> students;</div>
+
+            <div class="form-group">
+                <label>Ваше решение:</label>
+                <textarea class="code-textarea"></textarea>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task5-2">
+                <label for="task5-2">Задание 5.2 выполнено</label>
+            </div>
+
+            <h3>5.3 Создайте функцию get_grade_status, которая возвращает статус оценки</h3>
+            <p>'Отлично' (>=4.5), 'Хорошо' (>=3.5), 'Удовлетворительно' (<3.5)</p>
+
+            <h4>Ожидаемый результат:</h4>
+            <table>
+                <tr>
+                    <th>student_id</th>
+                    <th>course_id</th>
+                    <th>grade</th>
+                    <th>status</th>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>1</td>
+                    <td>5</td>
+                    <td>Отлично</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>2</td>
+                    <td>4.5</td>
+                    <td>Отлично</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>3</td>
+                    <td>5</td>
+                    <td>Отлично</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>4</td>
+                    <td>4</td>
+                    <td>Хорошо</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>1</td>
+                    <td>4.5</td>
+                    <td>Отлично</td>
+                </tr>
+            </table>
+
+            <div class="code-block"><span class="keyword">CREATE OR REPLACE FUNCTION</span> <span class="function">get_grade_status</span>(p_grade <span class="class">REAL</span>)
+<span class="keyword">RETURNS</span> <span class="class">TEXT</span>
+<span class="keyword">LANGUAGE</span> sql
+<span class="keyword">IMMUTABLE</span>
+<span class="keyword">AS</span> $$
+    <span class="keyword">SELECT CASE</span>
+       <span class="comment">...</span>
+    <span class="keyword">END</span>;
+$$;
+
+<span class="comment">-- Использование:</span>
+
+<span class="comment">-- Простой вызов функции</span>
+<span class="keyword">SELECT</span> <span class="function">get_grade_status</span>(<span class="number">4.8</span>);  <span class="comment">-- Результат: 'Отлично'</span>
+<span class="keyword">SELECT</span> <span class="function">get_grade_status</span>(<span class="number">4.0</span>);  <span class="comment">-- Результат: 'Хорошо'</span>
+
+<span class="comment">-- Пример с таблицей оценок</span>
+<span class="keyword">SELECT</span> 
+    student_id,
+    course_id,
+    grade,
+    <span class="function">get_grade_status</span>(grade) <span class="keyword">AS</span> status
+<span class="keyword">FROM</span> grades
+<span class="keyword">LIMIT</span> <span class="number">5</span>;
+
+<span class="comment">-- еще пример</span>
+<span class="keyword">SELECT</span> 
+    s.name, 
+    c.title, 
+    g.grade, 
+    <span class="function">get_grade_status</span>(g.grade) <span class="keyword">as</span> status
+<span class="keyword">FROM</span> grades g
+<span class="keyword">JOIN</span> students s <span class="keyword">ON</span> g.student_id <span class="operator">=</span> s.id
+<span class="keyword">JOIN</span> courses c <span class="keyword">ON</span> g.course_id <span class="operator">=</span> c.id
+<span class="keyword">LIMIT</span> <span class="number">5</span>;</div>
+
+            <div class="form-group">
+                <label>Ваше решение:</label>
+                <textarea class="code-textarea"></textarea>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task5-3">
+                <label for="task5-3">Задание 5.3 выполнено</label>
+            </div>
+
+            <h3>5.4 Создайте функцию calculate_course_discount, которая возвращает цену курса со скидкой</h3>
+            <p>Скидка 10% если credits >= 4, иначе без скидки. Базовая цена: 1000 за credit</p>
+
+            <h4>Ожидаемый результат:</h4>
+            <table>
+                <tr>
+                    <th>Название курса</th>
+                    <th>Длительность (мес)</th>
+                    <th>Стоимость (руб)</th>
+                    <th>Скидка 10% (руб)</th>
+                </tr>
+                <tr>
+                    <td>Математика</td>
+                    <td>4</td>
+                    <td>4000</td>
+                    <td>3600.0</td>
+                </tr>
+                <tr>
+                    <td>Физика</td>
+                    <td>3</td>
+                    <td>3000</td>
+                    <td>3000</td>
+                </tr>
+                <tr>
+                    <td>Программирование</td>
+                    <td>5</td>
+                    <td>5000</td>
+                    <td>4500.0</td>
+                </tr>
+                <tr>
+                    <td>Базы данных</td>
+                    <td>4</td>
+                    <td>4000</td>
+                    <td>3600.0</td>
+                </tr>
+                <tr>
+                    <td>Алгоритмы и структуры данных</td>
+                    <td>4</td>
+                    <td>4000</td>
+                    <td>3600.0</td>
+                </tr>
+                <tr>
+                    <td>Веб-разработка</td>
+                    <td>3</td>
+                    <td>3000</td>
+                    <td>3000</td>
+                </tr>
+            </table>
+
+            <div class="code-block"><span class="keyword">CREATE OR REPLACE FUNCTION</span> <span class="function">calculate_course_discount</span>(p_course_id <span class="class">INT</span>)
+<span class="keyword">RETURNS</span> <span class="class">NUMERIC</span>
+<span class="keyword">LANGUAGE</span> sql
+<span class="keyword">STABLE</span>
+<span class="keyword">AS</span> $$
+   <span class="comment">...</span>
+$$;
+
+<span class="comment">-- Использование:</span>
+<span class="keyword">SELECT</span> 
+    title, 
+    credits,
+    credits <span class="operator">*</span> <span class="number">1000</span> <span class="keyword">as</span> original_price,
+    <span class="function">calculate_course_discount</span>(id) <span class="keyword">as</span> discounted_price
+<span class="keyword">FROM</span> courses;</div>
+
+            <div class="form-group">
+                <label>Ваше решение:</label>
+                <textarea class="code-textarea"></textarea>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task5-4">
+                <label for="task5-4">Задание 5.4 выполнено</label>
+            </div>
+
+            <h3>5.5* Создайте функцию get_course_students, которая возвращает всех студентов курса</h3>
+
+            <h4>Ожидаемый результат:</h4>
+            <table>
+                <tr>
+                    <th>id</th>
+                    <th>Имя</th>
+                    <th>Email</th>
+                    <th>Оценка</th>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Иван Иванов</td>
+                    <td>ivan.ivanov@example.com</td>
+                    <td>5</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>Дмитрий Волков</td>
+                    <td>dmitry.volkov@example.com</td>
+                    <td>5</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Мария Петрова</td>
+                    <td>maria.petrova@example.com</td>
+                    <td>4.5</td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td>Сергей Лебедев</td>
+                    <td>sergey.lebedev@example.com</td>
+                    <td>4</td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td>Ольга Новикова</td>
+                    <td>olga.novikova@example.com</td>
+                    <td>3.5</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>Елена Козлова</td>
+                    <td>elena.kozlova@example.com</td>
+                    <td>3</td>
+                </tr>
+            </table>
+
+            <div class="code-block"><span class="keyword">CREATE OR REPLACE FUNCTION</span> <span class="function">get_course_students</span>(p_course_id <span class="class">INT</span>)
+<span class="keyword">RETURNS TABLE</span>(
+    student_id <span class="class">INT</span>,
+    student_name <span class="class">VARCHAR</span>,
+    student_email <span class="class">VARCHAR</span>,
+    grade <span class="class">REAL</span>
+)
+<span class="keyword">LANGUAGE</span> sql
+<span class="keyword">AS</span> $$
+  <span class="comment">...</span>
+$$;
+
+<span class="comment">-- Использование:</span>
+<span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> <span class="function">get_course_students</span>(<span class="number">1</span>);</div>
+
+            <div class="form-group">
+                <label>Ваше решение:</label>
+                <textarea class="code-textarea"></textarea>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task5-5">
+                <label for="task5-5">Задание 5.5 выполнено</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📋 Работа с хранимыми в БД объектами через FastAPI</h2>
+            
+            <h3>Структура проекта</h3>
+            <div class="code-block">lab-postgres/
+├── main.py              <span class="comment"># FastAPI приложение</span>
+├── database.py          <span class="comment"># Подключение к БД</span>
+├── models.py            <span class="comment"># SQLAlchemy модели</span>
+├── schemas.py           <span class="comment"># Pydantic схемы</span>
+├── init_db.sql          <span class="comment"># SQL для инициализации</span>
+└── requirements.txt     <span class="comment"># Зависимости</span></div>
+
+            <h3>Установка зависимостей</h3>
+            <div class="code-block">pip install fastapi uvicorn sqlalchemy psycopg2-binary</div>
+        </div>
+
+        <div class="section">
+            <h2>🔧 Настройка проекта</h2>
+            
+            <h3>database.py</h3>
+            <div class="code-block"><span class="keyword">from</span> sqlalchemy <span class="keyword">import</span> create_engine, text
+<span class="keyword">from</span> sqlalchemy.orm <span class="keyword">import</span> sessionmaker, DeclarativeBase
+
+<span class="class">DATABASE_URL</span> <span class="operator">=</span> <span class="string">"postgresql://user:password@localhost/lab_db"</span>
+
+engine <span class="operator">=</span> <span class="function">create_engine</span>(<span class="class">DATABASE_URL</span>)
+<span class="class">SessionLocal</span> <span class="operator">=</span> <span class="function">sessionmaker</span>(autocommit<span class="operator">=</span><span class="keyword">False</span>, autoflush<span class="operator">=</span><span class="keyword">False</span>, bind<span class="operator">=</span>engine)
+
+<span class="keyword">class</span> <span class="class">Base</span>(<span class="class">DeclarativeBase</span>):
+    <span class="keyword">pass</span>
+
+<span class="keyword">def</span> <span class="function">get_db</span>():
+    db <span class="operator">=</span> <span class="function">SessionLocal</span>()
+    <span class="keyword">try</span>:
+        <span class="keyword">yield</span> db
+    <span class="keyword">finally</span>:
+        db.<span class="function">close</span>()</div>
+
+            <h3>models.py</h3>
+            <div class="code-block"><span class="keyword">from</span> sqlalchemy <span class="keyword">import</span> String, Float, DateTime, ForeignKey
+<span class="keyword">from</span> sqlalchemy.orm <span class="keyword">import</span> Mapped, mapped_column, relationship
+<span class="keyword">from</span> database <span class="keyword">import</span> Base
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+
+<span class="keyword">class</span> <span class="class">Student</span>(<span class="class">Base</span>):
+    __tablename__ <span class="operator">=</span> <span class="string">"students"</span>
+    
+    id: <span class="class">Mapped</span>[<span class="class">int</span>] <span class="operator">=</span> <span class="function">mapped_column</span>(primary_key<span class="operator">=</span><span class="keyword">True</span>, index<span class="operator">=</span><span class="keyword">True</span>)
+    name: <span class="class">Mapped</span>[<span class="class">str</span>] <span class="operator">=</span> <span class="function">mapped_column</span>(<span class="class">String</span>(<span class="number">100</span>))
+    email: <span class="class">Mapped</span>[<span class="class">str</span>] <span class="operator">=</span> <span class="function">mapped_column</span>(<span class="class">String</span>(<span class="number">100</span>), unique<span class="operator">=</span><span class="keyword">True</span>)
+    status: <span class="class">Mapped</span>[<span class="class">str</span>] <span class="operator">=</span> <span class="function">mapped_column</span>(<span class="class">String</span>(<span class="number">20</span>), default<span class="operator">=</span><span class="string">'active'</span>)
+    created_at: <span class="class">Mapped</span>[datetime] <span class="operator">=</span> <span class="function">mapped_column</span>(<span class="class">DateTime</span>, default<span class="operator">=</span>datetime.utcnow)
+    
+    grades: <span class="class">Mapped</span>[<span class="class">list</span>[<span class="string">"Grade"</span>]] <span class="operator">=</span> <span class="function">relationship</span>(back_populates<span class="operator">=</span><span class="string">"student"</span>)
+
+<span class="keyword">class</span> <span class="class">Course</span>(<span class="class">Base</span>):
+    __tablename__ <span class="operator">=</span> <span class="string">"courses"</span>
+    
+    id: <span class="class">Mapped</span>[<span class="class">int</span>] <span class="operator">=</span> <span class="function">mapped_column</span>(primary_key<span class="operator">=</span><span class="keyword">True</span>, index<span class="operator">=</span><span class="keyword">True</span>)
+    title: <span class="class">Mapped</span>[<span class="class">str</span>] <span class="operator">=</span> <span class="function">mapped_column</span>(<span class="class">String</span>(<span class="number">200</span>))
+    credits: <span class="class">Mapped</span>[<span class="class">int</span>] <span class="operator">=</span> <span class="function">mapped_column</span>(default<span class="operator">=</span><span class="number">3</span>)
+    
+    grades: <span class="class">Mapped</span>[<span class="class">list</span>[<span class="string">"Grade"</span>]] <span class="operator">=</span> <span class="function">relationship</span>(back_populates<span class="operator">=</span><span class="string">"course"</span>)
+
+<span class="keyword">class</span> <span class="class">Grade</span>(<span class="class">Base</span>):
+    __tablename__ <span class="operator">=</span> <span class="string">"grades"</span>
+    
+    id: <span class="class">Mapped</span>[<span class="class">int</span>] <span class="operator">=</span> <span class="function">mapped_column</span>(primary_key<span class="operator">=</span><span class="keyword">True</span>, index<span class="operator">=</span><span class="keyword">True</span>)
+    student_id: <span class="class">Mapped</span>[<span class="class">int</span>] <span class="operator">=</span> <span class="function">mapped_column</span>(<span class="function">ForeignKey</span>(<span class="string">"students.id"</span>))
+    course_id: <span class="class">Mapped</span>[<span class="class">int</span>] <span class="operator">=</span> <span class="function">mapped_column</span>(<span class="function">ForeignKey</span>(<span class="string">"courses.id"</span>))
+    grade: <span class="class">Mapped</span>[<span class="class">float</span>] <span class="operator">=</span> <span class="function">mapped_column</span>(<span class="class">Float</span>)
+    
+    student: <span class="class">Mapped</span>[<span class="string">"Student"</span>] <span class="operator">=</span> <span class="function">relationship</span>(back_populates<span class="operator">=</span><span class="string">"grades"</span>)
+    course: <span class="class">Mapped</span>[<span class="string">"Course"</span>] <span class="operator">=</span> <span class="function">relationship</span>(back_populates<span class="operator">=</span><span class="string">"grades"</span>)</div>
+
+            <h3>schemas.py</h3>
+            <div class="code-block"><span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel, ConfigDict
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+
+<span class="keyword">class</span> <span class="class">StudentBase</span>(<span class="class">BaseModel</span>):
+    name: <span class="class">str</span>
+    email: <span class="class">str</span>
+    status: <span class="class">str</span> <span class="operator">=</span> <span class="string">'active'</span>
+
+<span class="keyword">class</span> <span class="class">StudentResponse</span>(<span class="class">StudentBase</span>):
+    id: <span class="class">int</span>
+    created_at: datetime
+    
+    model_config <span class="operator">=</span> <span class="function">ConfigDict</span>(from_attributes<span class="operator">=</span><span class="keyword">True</span>)
+
+<span class="keyword">class</span> <span class="class">GradeResponse</span>(<span class="class">BaseModel</span>):
+    student_id: <span class="class">int</span>
+    course_id: <span class="class">int</span>
+    grade: <span class="class">float</span>
+    
+    model_config <span class="operator">=</span> <span class="function">ConfigDict</span>(from_attributes<span class="operator">=</span><span class="keyword">True</span>)
+
+<span class="keyword">class</span> <span class="class">SQLQuery</span>(<span class="class">BaseModel</span>):
+    query: <span class="class">str</span></div>
+
+            <h3>main.py</h3>
+            <div class="code-block"><span class="keyword">from</span> fastapi <span class="keyword">import</span> FastAPI, Depends, UploadFile, File
+<span class="keyword">from</span> sqlalchemy.orm <span class="keyword">import</span> Session
+<span class="keyword">from</span> sqlalchemy <span class="keyword">import</span> text, MetaData, Table, select
+<span class="keyword">from</span> database <span class="keyword">import</span> get_db, engine
+<span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel
+<span class="keyword">from</span> schemas <span class="keyword">import</span> SQLQuery
+
+app <span class="operator">=</span> <span class="function">FastAPI</span>()
+
+<span class="decorator">@app.get</span>(<span class="string">"/"</span>)
+<span class="keyword">def</span> <span class="function">root</span>():
+    <span class="keyword">return</span> {<span class="string">"message"</span>: <span class="string">"Lab PostgreSQL API is running"</span>}
+
+<span class="keyword">def</span> <span class="function">get_active_students_table</span>():
+    metadata <span class="operator">=</span> <span class="function">MetaData</span>()
+    <span class="keyword">return</span> <span class="function">Table</span>(<span class="string">'active_students_view'</span>, metadata, autoload_with<span class="operator">=</span>engine)
+
+
+<span class="decorator">@app.post</span>(<span class="string">"/sql/file"</span>, summary<span class="operator">=</span><span class="string">"Execute SQL from file"</span>, description<span class="operator">=</span><span class="string">"Upload and execute SQL file"</span>)
+<span class="keyword">async def</span> <span class="function">execute_sql_file</span>(file: <span class="class">UploadFile</span> <span class="operator">=</span> <span class="function">File</span>(...), db: <span class="class">Session</span> <span class="operator">=</span> <span class="function">Depends</span>(get_db)):
+    <span class="keyword">try</span>:
+        content <span class="operator">=</span> <span class="keyword">await</span> file.<span class="function">read</span>()
+        sql_query <span class="operator">=</span> content.<span class="function">decode</span>(<span class="string">'utf-8'</span>)
+        
+        <span class="comment"># Выполняем все запросы из файла</span>
+        result <span class="operator">=</span> db.<span class="function">execute</span>(<span class="function">text</span>(sql_query))
+        db.<span class="function">commit</span>()       
+       
+        <span class="keyword">return</span> {<span class="string">"status"</span>: <span class="string">"success"</span>, <span class="string">"message"</span>: <span class="string">"SQL file executed successfully"</span>}
+    <span class="keyword">except</span> <span class="class">Exception</span> <span class="keyword">as</span> e:
+        db.<span class="function">rollback</span>()
+        <span class="keyword">return</span> {<span class="string">"status"</span>: <span class="string">"error"</span>, <span class="string">"message"</span>: <span class="function">str</span>(e)}</div>
+        </div>
+
+        <div class="section">
+            <h2>Пример получения активных студентов</h2>
+            
+            <h3>Через raw SQL</h3>
+            <div class="code-block"><span class="comment"># main.py</span>
+
+<span class="decorator">@app.get</span>(<span class="string">"/students/active/raw"</span>)
+<span class="keyword">def</span> <span class="function">get_active_students_raw</span>(db: <span class="class">Session</span> <span class="operator">=</span> <span class="function">Depends</span>(get_db)):
+    <span class="string">"""Получение активных студентов через raw SQL"""</span>
+    result <span class="operator">=</span> db.<span class="function">execute</span>(<span class="function">text</span>(<span class="string">"SELECT * FROM active_students_view"</span>))
+    students <span class="operator">=</span> [<span class="function">dict</span>(row._mapping) <span class="keyword">for</span> row <span class="keyword">in</span> result]
+    <span class="keyword">return</span> {<span class="string">"method"</span>: <span class="string">"raw_sql"</span>, <span class="string">"count"</span>: <span class="function">len</span>(students), <span class="string">"data"</span>: students}</div>
+
+            <h3>Через SQLAlchemy</h3>
+            <div class="code-block"><span class="keyword">from</span> sqlalchemy <span class="keyword">import</span> Table, MetaData, select
+<span class="keyword">from</span> database <span class="keyword">import</span> engine
+
+<span class="comment"># Отражаем view как таблицу</span>
+metadata <span class="operator">=</span> <span class="function">MetaData</span>()
+active_students_table <span class="operator">=</span> <span class="function">Table</span>(<span class="string">'active_students_view'</span>, metadata, autoload_with<span class="operator">=</span>engine)
+
+<span class="decorator">@app.get</span>(<span class="string">"/students/active/sqlalchemy"</span>)
+<span class="keyword">def</span> <span class="function">get_active_students_sqlalchemy</span>(db: <span class="class">Session</span> <span class="operator">=</span> <span class="function">Depends</span>(get_db)):
+    <span class="string">"""Получение активных студентов через SQLAlchemy"""</span>
+    stmt <span class="operator">=</span> <span class="function">select</span>(active_students_table)
+    result <span class="operator">=</span> db.<span class="function">execute</span>(stmt)
+    students <span class="operator">=</span> [<span class="function">dict</span>(row._mapping) <span class="keyword">for</span> row <span class="keyword">in</span> result]
+    <span class="keyword">return</span> {<span class="string">"method"</span>: <span class="string">"sqlalchemy"</span>, <span class="string">"count"</span>: <span class="function">len</span>(students), <span class="string">"data"</span>: students}</div>
+        </div>
+
+        <div class="section">
+            <h2>Самостоятельная работа</h2>
+            <p>Сделать решения через raw sql и sqlalchemy</p>
+            
+            <h3>Эндпоинт для top_students_view</h3>
+            <div class="code-block"><span class="comment"># эндпоинт для top_students_view</span>
+<span class="decorator">@app.get</span>(<span class="string">"/students/top/raw"</span>)
+
+
+top_students_table <span class="operator">=</span> <span class="function">Table</span>(<span class="string">'top_students_view'</span>, metadata, autoload_with<span class="operator">=</span>engine)
+
+<span class="decorator">@app.get</span>(<span class="string">"/students/top/sqlalchemy"</span>)</div>
+
+            <div class="form-group">
+                <label>Ваше решение:</label>
+                <textarea class="code-textarea"></textarea>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task-top-students">
+                <label for="task-top-students">Эндпоинт top_students выполнен</label>
+            </div>
+
+            <h3>Эндпоинт для course_statistics_mv</h3>
+            <div class="code-block"><span class="comment"># эндпоинт для course_statistics_mv</span>
+<span class="decorator">@app.get</span>(<span class="string">"/courses/statistics/raw"</span>)
+
+
+course_stats_table <span class="operator">=</span> <span class="function">Table</span>(<span class="string">'course_statistics_mv'</span>, metadata, autoload_with<span class="operator">=</span>engine)
+
+<span class="decorator">@app.get</span>(<span class="string">"/courses/statistics/sqlalchemy"</span>)</div>
+
+            <div class="form-group">
+                <label>Ваше решение:</label>
+                <textarea class="code-textarea"></textarea>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task-course-stats">
+                <label for="task-course-stats">Эндпоинт course_statistics выполнен</label>
+            </div>
+
+            <h3>Эндпоинт для add_student</h3>
+            <div class="code-block"><span class="comment"># эндпоинт для add_student</span>
+<span class="decorator">@app.post</span>(<span class="string">"/students/add/raw"</span>)</div>
+
+            <div class="form-group">
+                <label>Ваше решение:</label>
+                <textarea class="code-textarea"></textarea>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task-add-student">
+                <label for="task-add-student">Эндпоинт add_student выполнен</label>
+            </div>
+
+            <h3>Эндпоинт для delete_inactive_students</h3>
+            <div class="code-block"><span class="comment"># эндпоинт для delete_inactive_students</span>
+<span class="decorator">@app.delete</span>(<span class="string">"/students/inactive/raw"</span>)</div>
+
+            <div class="form-group">
+                <label>Ваше решение:</label>
+                <textarea class="code-textarea"></textarea>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task-delete-inactive">
+                <label for="task-delete-inactive">Эндпоинт delete_inactive_students выполнен</label>
+            </div>
+
+            <h3>Эндпоинт для get_student_avg_grade</h3>
+            <div class="code-block"><span class="comment"># эндпоинт для get_student_avg_grade</span>
+<span class="decorator">@app.get</span>(<span class="string">"/students/{student_id}/avg-grade/raw"</span>)</div>
+
+            <div class="form-group">
+                <label>Ваше решение:</label>
+                <textarea class="code-textarea"></textarea>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task-avg-grade">
+                <label for="task-avg-grade">Эндпоинт get_student_avg_grade выполнен</label>
+            </div>
+
+            <h3>Эндпоинт для count_student_courses</h3>
+            <div class="code-block"><span class="comment"># эндпоинт для count_student_courses</span>
+<span class="decorator">@app.get</span>(<span class="string">"/students/{student_id}/courses-count/raw"</span>)</div>
+
+            <div class="form-group">
+                <label>Ваше решение:</label>
+                <textarea class="code-textarea"></textarea>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task-count-courses">
+                <label for="task-count-courses">Эндпоинт count_student_courses выполнен</label>
+            </div>
+
+            <h3>Эндпоинт для get_grade_status</h3>
+            <div class="code-block"><span class="comment"># эндпоинт для get_grade_status</span>
+<span class="decorator">@app.get</span>(<span class="string">"/grades/status/raw"</span>)</div>
+
+            <div class="form-group">
+                <label>Ваше решение:</label>
+                <textarea class="code-textarea"></textarea>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task-grade-status">
+                <label for="task-grade-status">Эндпоинт get_grade_status выполнен</label>
+            </div>
+
+            <h3>Эндпоинт для calculate_course_discount</h3>
+            <div class="code-block"><span class="comment"># эндпоинт для calculate_course_discount</span>
+<span class="decorator">@app.get</span>(<span class="string">"/courses/{course_id}/discount/raw"</span>)</div>
+
+            <div class="form-group">
+                <label>Ваше решение:</label>
+                <textarea class="code-textarea"></textarea>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task-discount">
+                <label for="task-discount">Эндпоинт calculate_course_discount выполнен</label>
+            </div>
+
+            <h3>Эндпоинт для get_course_students</h3>
+            <div class="code-block"><span class="comment"># эндпоинт для get_course_students</span>
+<span class="decorator">@app.get</span>(<span class="string">"/courses/{course_id}/students/raw"</span>)</div>
+
+            <div class="form-group">
+                <label>Ваше решение:</label>
+                <textarea class="code-textarea"></textarea>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="task-course-students">
+                <label for="task-course-students">Эндпоинт get_course_students выполнен</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Выводы по занятию</h2>
+
+            <div class="form-group">
+                <label>На данном занятии мы изучили:</label>
+                <textarea rows="3">Перечислите основные темы...</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Что нового узнал(а):</label>
+                <textarea rows="3">Опишите новые знания...</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Что было трудно для понимания:</label>
+                <textarea rows="3">Опишите сложности...</textarea>
+            </div>
+        </div>
+
+        <button class="save-btn" onclick="saveToPDF()">💾 Сохранить в PDF</button>
+    </div>
+
+    <script>
+        function loadFromStorage() {
+            document.getElementById('student-name').value = localStorage.getItem('student-name') || '';
+            document.getElementById('group').value = localStorage.getItem('group') || '';
+            document.getElementById('date').value = localStorage.getItem('date') || new Date().toISOString().split('T')[0];
+            
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                if (localStorage.getItem(checkbox.id) === 'true') checkbox.checked = true;
+            });
+            
+            document.querySelectorAll('textarea').forEach((textarea, index) => {
+                const saved = localStorage.getItem('textarea-' + index);
+                if (saved) textarea.value = saved;
+            });
+        }
+        
+        function saveToStorage() {
+            localStorage.setItem('student-name', document.getElementById('student-name').value);
+            localStorage.setItem('group', document.getElementById('group').value);
+            localStorage.setItem('date', document.getElementById('date').value);
+            
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                localStorage.setItem(checkbox.id, checkbox.checked);
+            });
+            
+            document.querySelectorAll('textarea').forEach((textarea, index) => {
+                localStorage.setItem('textarea-' + index, textarea.value);
+            });
+        }
+        
+        loadFromStorage();
+
+        document.getElementById('student-name').addEventListener('input', saveToStorage);
+        document.getElementById('group').addEventListener('input', saveToStorage);
+        document.getElementById('date').addEventListener('change', saveToStorage);
+        
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', saveToStorage);
+        });
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        function highlightSQL(code) {
+            let result = code
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            
+            result = result.replace(/(--.*$)/gm, '###COMMENT###$1###/COMMENT###');
+            result = result.replace(/(['"`])((?:\\.|(?!\1)[^\\\r\n])*?)\1/g, '###STRING###$&###/STRING###');
+            result = result.replace(/\b(SELECT|FROM|WHERE|JOIN|LEFT|RIGHT|INNER|OUTER|ON|GROUP BY|ORDER BY|LIMIT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TABLE|VIEW|MATERIALIZED|PROCEDURE|FUNCTION|RETURNS|LANGUAGE|AS|CALL|CASE|WHEN|THEN|ELSE|END|AND|OR|NOT|IN|IS|NULL|DEFAULT|PRIMARY KEY|FOREIGN KEY|REFERENCES)\b/gi, '###KEYWORD###$&###/KEYWORD###');
+            result = result.replace(/\b(\d+\.?\d*)\b/g, '###NUMBER###$1###/NUMBER###');
+            result = result.replace(/\b(INT|VARCHAR|TEXT|REAL|NUMERIC|BIGINT|FLOAT|DATETIME|DATE|BOOLEAN)\b/gi, '###CLASS###$&###/CLASS###');
+            result = result.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\s*\()/g, '###FUNCTION###$1###/FUNCTION###');
+            result = result.replace(/(=|>|<|>=|<=|<>|\*|\+|-|\/)/g, '###OPERATOR###$1###/OPERATOR###');
+            
+            result = result.replace(/###COMMENT###/g, '<span class="comment">');
+            result = result.replace(/###\\/COMMENT###/g, '</span>');
+            result = result.replace(/###STRING###/g, '<span class="string">');
+            result = result.replace(/###\\/STRING###/g, '</span>');
+            result = result.replace(/###KEYWORD###/g, '<span class="keyword">');
+            result = result.replace(/###\\/KEYWORD###/g, '</span>');
+            result = result.replace(/###CLASS###/g, '<span class="class">');
+            result = result.replace(/###\\/CLASS###/g, '</span>');
+            result = result.replace(/###FUNCTION###/g, '<span class="function">');
+            result = result.replace(/###\\/FUNCTION###/g, '</span>');
+            result = result.replace(/###NUMBER###/g, '<span class="number">');
+            result = result.replace(/###\\/NUMBER###/g, '</span>');
+            result = result.replace(/###OPERATOR###/g, '<span class="operator">');
+            result = result.replace(/###\\/OPERATOR###/g, '</span>');
+            
+            return result;
+        }
+
+        function highlightPython(code) {
+            let result = code
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            
+            result = result.replace(/(#.*$)/gm, '###COMMENT###$1###/COMMENT###');
+            result = result.replace(/(['"`])((?:\\.|(?!\1)[^\\\r\n])*?)\1/g, '###STRING###$&###/STRING###');
+            result = result.replace(/\b(from|import|def|class|return|if|else|elif|for|while|try|except|finally|with|as|and|or|not|in|is|True|False|None|async|await|raise|pass)\b/g, '###KEYWORD###$1###/KEYWORD###');
+            result = result.replace(/\b(\d+)\b/g, '###NUMBER###$1###/NUMBER###');
+            result = result.replace(/\b(Session|Student|Course|Grade|Mapped|select|func|text|ForeignKey|Float|String|DateTime|int|str|dict|list|BaseModel|FastAPI|Depends|UploadFile|File|MetaData|Table|ConfigDict|datetime)\b/g, '###CLASS###$1###/CLASS###');
+            result = result.replace(/(@\w+)/g, '###DECORATOR###$1###/DECORATOR###');
+            result = result.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\s*\()/g, '###FUNCTION###$1###/FUNCTION###');
+            result = result.replace(/(=|>|<|>=|<=|!=|\*|\+|-|\/)/g, '###OPERATOR###$1###/OPERATOR###');
+            
+            result = result.replace(/###COMMENT###/g, '<span class="comment">');
+            result = result.replace(/###\\/COMMENT###/g, '</span>');
+            result = result.replace(/###STRING###/g, '<span class="string">');
+            result = result.replace(/###\\/STRING###/g, '</span>');
+            result = result.replace(/###KEYWORD###/g, '<span class="keyword">');
+            result = result.replace(/###\\/KEYWORD###/g, '</span>');
+            result = result.replace(/###CLASS###/g, '<span class="class">');
+            result = result.replace(/###\\/CLASS###/g, '</span>');
+            result = result.replace(/###DECORATOR###/g, '<span class="decorator">');
+            result = result.replace(/###\\/DECORATOR###/g, '</span>');
+            result = result.replace(/###FUNCTION###/g, '<span class="function">');
+            result = result.replace(/###\\/FUNCTION###/g, '</span>');
+            result = result.replace(/###NUMBER###/g, '<span class="number">');
+            result = result.replace(/###\\/NUMBER###/g, '</span>');
+            result = result.replace(/###OPERATOR###/g, '<span class="operator">');
+            result = result.replace(/###\\/OPERATOR###/g, '</span>');
+            
+            return result;
+        }
+
+        document.querySelectorAll('.code-textarea').forEach(textarea => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'code-editor-wrapper';
+            textarea.parentNode.insertBefore(wrapper, textarea);
+            wrapper.appendChild(textarea);
+
+            const highlight = document.createElement('div');
+            highlight.className = 'code-highlight';
+            wrapper.insertBefore(highlight, textarea);
+
+            function updateHighlight() {
+                const code = textarea.value;
+                if (code.includes('SELECT') || code.includes('CREATE') || code.includes('INSERT') || code.includes('CALL')) {
+                    highlight.innerHTML = highlightSQL(code);
+                } else if (code.includes('def ') || code.includes('@app') || code.includes('import ')) {
+                    highlight.innerHTML = highlightPython(code);
+                } else {
+                    highlight.textContent = code;
+                }
+            }
+
+            textarea.addEventListener('input', function() {
+                autoResize(this);
+                updateHighlight();
+                saveToStorage();
+            });
+
+            textarea.addEventListener('scroll', function() {
+                highlight.scrollTop = textarea.scrollTop;
+                highlight.scrollLeft = textarea.scrollLeft;
+            });
+            
+            if (textarea.value.trim()) {
+                updateHighlight();
+            }
+
+            autoResize(textarea);
+        });
+
+        document.querySelectorAll('textarea:not(.code-textarea)').forEach(textarea => {
+            textarea.addEventListener('input', function() {
+                autoResize(this);
+                saveToStorage();
+            });
+            autoResize(textarea);
+        });
+
+        function saveToPDF() {
+            const studentName = document.getElementById('student-name').value || 'Не указано';
+            const group = document.getElementById('group').value || 'Не указано';
+            const date = document.getElementById('date').value || 'Не указано';
+            
+            const originalTitle = document.title;
+            document.title = `PostgreSQL_Lab_${studentName}_${group}_${date}`;
+            
+            window.print();
+            
+            setTimeout(() => {
+                document.title = originalTitle;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
