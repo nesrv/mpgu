@@ -110,30 +110,8 @@
             position: relative;
         }
 
-        .code-editor-wrapper .code-highlight {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            padding: 12px;
-            border: 2px solid transparent;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 16px;
-            white-space: pre;
-            overflow: auto;
-            pointer-events: none;
-            background: #2d3748;
-            line-height: 1.5;
-        }
-
-        .code-editor-wrapper textarea {
-            position: relative;
-            background: transparent;
-            color: transparent;
-            caret-color: #e2e8f0;
-            z-index: 1;
+        .code-highlight {
+            display: none;
         }
 
         .section {
@@ -1242,6 +1220,35 @@ course_stats_table <span class="operator">=</span> <span class="function">Table<
             textarea.style.height = textarea.scrollHeight + 'px';
         }
 
+        function highlightPython(code) {
+            let result = code
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            
+            result = result.replace(/(#.*$)/gm, '###COMMENT###$1###/COMMENT###');
+            result = result.replace(/(['"`])((?:\\.|(?!\1)[^\\\r\n])*?)\1/g, '###STRING###$&###/STRING###');
+            result = result.replace(/\b(from|import|def|class|return|if|else|elif|for|while|try|except|finally|with|as|and|or|not|in|is|True|False|None|async|await|raise|pass)\b/g, '###KEYWORD###$1###/KEYWORD###');
+            result = result.replace(/\b(\d+)\b/g, '###NUMBER###$1###/NUMBER###');
+            result = result.replace(/\b(Session|Contributor|Repository|Contribution|Mapped|select|func|text|ForeignKey|JSON|date|engine|Base|DeclarativeBase|create_engine|mapped_column|int|str|dict|list)\b/g, '###CLASS###$1###/CLASS###');
+            result = result.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\s*\()/g, '###FUNCTION###$1###/FUNCTION###');
+            
+            result = result.replace(/###COMMENT###/g, '<span class="comment">');
+            result = result.replace(/###\/COMMENT###/g, '</span>');
+            result = result.replace(/###STRING###/g, '<span class="string">');
+            result = result.replace(/###\/STRING###/g, '</span>');
+            result = result.replace(/###KEYWORD###/g, '<span class="keyword">');
+            result = result.replace(/###\/KEYWORD###/g, '</span>');
+            result = result.replace(/###CLASS###/g, '<span class="class">');
+            result = result.replace(/###\/CLASS###/g, '</span>');
+            result = result.replace(/###FUNCTION###/g, '<span class="function">');
+            result = result.replace(/###\/FUNCTION###/g, '</span>');
+            result = result.replace(/###NUMBER###/g, '<span class="number">');
+            result = result.replace(/###\/NUMBER###/g, '</span>');
+            
+            return result;
+        }
+
         function highlightSQL(code) {
             let result = code
                 .replace(/&/g, '&amp;')
@@ -1253,96 +1260,69 @@ course_stats_table <span class="operator">=</span> <span class="function">Table<
             result = result.replace(/\b(SELECT|FROM|WHERE|JOIN|LEFT|RIGHT|INNER|OUTER|ON|GROUP BY|ORDER BY|LIMIT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TABLE|VIEW|MATERIALIZED|PROCEDURE|FUNCTION|RETURNS|LANGUAGE|AS|CALL|CASE|WHEN|THEN|ELSE|END|AND|OR|NOT|IN|IS|NULL|DEFAULT|PRIMARY KEY|FOREIGN KEY|REFERENCES)\b/gi, '###KEYWORD###$&###/KEYWORD###');
             result = result.replace(/\b(\d+\.?\d*)\b/g, '###NUMBER###$1###/NUMBER###');
             result = result.replace(/\b(INT|VARCHAR|TEXT|REAL|NUMERIC|BIGINT|FLOAT|DATETIME|DATE|BOOLEAN)\b/gi, '###CLASS###$&###/CLASS###');
-            result = result.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\s*\()/g, '###FUNCTION###$1###/FUNCTION###');
-            result = result.replace(/(=|>|<|>=|<=|<>|\*|\+|-|\/)/g, '###OPERATOR###$1###/OPERATOR###');
             
             result = result.replace(/###COMMENT###/g, '<span class="comment">');
-            result = result.replace(/###\\/COMMENT###/g, '</span>');
+            result = result.replace(/###\/COMMENT###/g, '</span>');
             result = result.replace(/###STRING###/g, '<span class="string">');
-            result = result.replace(/###\\/STRING###/g, '</span>');
+            result = result.replace(/###\/STRING###/g, '</span>');
             result = result.replace(/###KEYWORD###/g, '<span class="keyword">');
-            result = result.replace(/###\\/KEYWORD###/g, '</span>');
+            result = result.replace(/###\/KEYWORD###/g, '</span>');
             result = result.replace(/###CLASS###/g, '<span class="class">');
-            result = result.replace(/###\\/CLASS###/g, '</span>');
-            result = result.replace(/###FUNCTION###/g, '<span class="function">');
-            result = result.replace(/###\\/FUNCTION###/g, '</span>');
+            result = result.replace(/###\/CLASS###/g, '</span>');
             result = result.replace(/###NUMBER###/g, '<span class="number">');
-            result = result.replace(/###\\/NUMBER###/g, '</span>');
-            result = result.replace(/###OPERATOR###/g, '<span class="operator">');
-            result = result.replace(/###\\/OPERATOR###/g, '</span>');
-            
-            return result;
-        }
-
-        function highlightPython(code) {
-            let result = code
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-            
-            result = result.replace(/(#.*$)/gm, '###COMMENT###$1###/COMMENT###');
-            result = result.replace(/(['"`])((?:\\.|(?!\1)[^\\\r\n])*?)\1/g, '###STRING###$&###/STRING###');
-            result = result.replace(/\b(from|import|def|class|return|if|else|elif|for|while|try|except|finally|with|as|and|or|not|in|is|True|False|None|async|await|raise|pass)\b/g, '###KEYWORD###$1###/KEYWORD###');
-            result = result.replace(/\b(\d+)\b/g, '###NUMBER###$1###/NUMBER###');
-            result = result.replace(/\b(Session|Student|Course|Grade|Mapped|select|func|text|ForeignKey|Float|String|DateTime|int|str|dict|list|BaseModel|FastAPI|Depends|UploadFile|File|MetaData|Table|ConfigDict|datetime)\b/g, '###CLASS###$1###/CLASS###');
-            result = result.replace(/(@\w+)/g, '###DECORATOR###$1###/DECORATOR###');
-            result = result.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\s*\()/g, '###FUNCTION###$1###/FUNCTION###');
-            result = result.replace(/(=|>|<|>=|<=|!=|\*|\+|-|\/)/g, '###OPERATOR###$1###/OPERATOR###');
-            
-            result = result.replace(/###COMMENT###/g, '<span class="comment">');
-            result = result.replace(/###\\/COMMENT###/g, '</span>');
-            result = result.replace(/###STRING###/g, '<span class="string">');
-            result = result.replace(/###\\/STRING###/g, '</span>');
-            result = result.replace(/###KEYWORD###/g, '<span class="keyword">');
-            result = result.replace(/###\\/KEYWORD###/g, '</span>');
-            result = result.replace(/###CLASS###/g, '<span class="class">');
-            result = result.replace(/###\\/CLASS###/g, '</span>');
-            result = result.replace(/###DECORATOR###/g, '<span class="decorator">');
-            result = result.replace(/###\\/DECORATOR###/g, '</span>');
-            result = result.replace(/###FUNCTION###/g, '<span class="function">');
-            result = result.replace(/###\\/FUNCTION###/g, '</span>');
-            result = result.replace(/###NUMBER###/g, '<span class="number">');
-            result = result.replace(/###\\/NUMBER###/g, '</span>');
-            result = result.replace(/###OPERATOR###/g, '<span class="operator">');
-            result = result.replace(/###\\/OPERATOR###/g, '</span>');
+            result = result.replace(/###\/NUMBER###/g, '</span>');
             
             return result;
         }
 
         document.querySelectorAll('.code-textarea').forEach(textarea => {
             const wrapper = document.createElement('div');
-            wrapper.className = 'code-editor-wrapper';
+            wrapper.style.position = 'relative';
             textarea.parentNode.insertBefore(wrapper, textarea);
             wrapper.appendChild(textarea);
 
-            const highlight = document.createElement('div');
-            highlight.className = 'code-highlight';
-            wrapper.insertBefore(highlight, textarea);
-
-            function updateHighlight() {
-                const code = textarea.value;
-                if (code.includes('SELECT') || code.includes('CREATE') || code.includes('INSERT') || code.includes('CALL')) {
-                    highlight.innerHTML = highlightSQL(code);
-                } else if (code.includes('def ') || code.includes('@app') || code.includes('import ')) {
-                    highlight.innerHTML = highlightPython(code);
-                } else {
-                    highlight.textContent = code;
-                }
-            }
+            const preview = document.createElement('div');
+            preview.className = 'code-block';
+            preview.style.display = 'none';
+            preview.style.cursor = 'pointer';
+            wrapper.appendChild(preview);
 
             textarea.addEventListener('input', function() {
                 autoResize(this);
-                updateHighlight();
                 saveToStorage();
             });
 
-            textarea.addEventListener('scroll', function() {
-                highlight.scrollTop = textarea.scrollTop;
-                highlight.scrollLeft = textarea.scrollLeft;
+            textarea.addEventListener('blur', () => {
+                saveToStorage();
+                setTimeout(() => {
+                    if (textarea.value.trim()) {
+                        const code = textarea.value;
+                        if (code.includes('SELECT') || code.includes('CREATE') || code.includes('CALL')) {
+                            preview.innerHTML = highlightSQL(code);
+                        } else {
+                            preview.innerHTML = highlightPython(code);
+                        }
+                        preview.style.display = 'block';
+                        textarea.style.display = 'none';
+                    }
+                }, 200);
+            });
+
+            preview.addEventListener('click', () => {
+                preview.style.display = 'none';
+                textarea.style.display = 'block';
+                textarea.focus();
             });
             
             if (textarea.value.trim()) {
-                updateHighlight();
+                const code = textarea.value;
+                if (code.includes('SELECT') || code.includes('CREATE') || code.includes('CALL')) {
+                    preview.innerHTML = highlightSQL(code);
+                } else {
+                    preview.innerHTML = highlightPython(code);
+                }
+                preview.style.display = 'block';
+                textarea.style.display = 'none';
             }
 
             autoResize(textarea);
