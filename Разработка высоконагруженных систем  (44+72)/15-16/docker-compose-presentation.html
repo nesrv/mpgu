@@ -1,0 +1,99 @@
+<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>Docker Compose</title><link rel="stylesheet" href="css/reveal.min.css"><link rel="stylesheet" href="css/black.min.css"><link rel="stylesheet" href="css/monokai.min.css"><style>.reveal .slides{width:80%!important;height:90%!important;transform:scale(1.2)!important;position:absolute!important;left:50%!important;top:0!important;transform:translateX(calc(-50% + 5%)) scale(1.2)!important;transform-origin:top center!important}.reveal h1{font-size:1.8em!important;margin-top:0!important;margin-bottom:.4em!important}.reveal h2{font-size:0.75em!important;margin-top:0!important;margin-bottom:.4em!important;text-transform:none!important;text-align:right!important;margin-right:10%!important}.reveal h3{font-size:1.1em!important;margin-top:0!important;margin-bottom:.3em!important;text-transform:none!important}.reveal .slides section{padding:15px!important;font-size:1em!important}.reveal p,.reveal ul,.reveal ol{font-size:.9em!important}pre code{font-size:.75em;max-height:none;overflow:hidden}pre{max-height:none;overflow:hidden;margin:10px 0!important}table{font-size:.75em!important}</style></head><body><div class="reveal"><div class="slides">
+
+<section data-background-color="#1a1a2e"><div style="background:rgba(22,33,62,0.9);padding:40px;border:8px solid #0f3460"><h1 style="color:#FFD700">🐳 Docker Compose</h1><h2 style="color:#90EE90;text-align:center!important;margin-right:0!important">Практическое руководство</h2><p style="color:#FFF;font-size:1em">🏫 МПГУ, 4 курс, 2025</p></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 1: Что такое Docker Compose?</h2><div style="text-align:left;font-size:.7em"><div class="fragment"><p style="margin-left:20px"><strong>Docker Compose</strong> — инструмент для запуска многоконтейнерных приложений</p></div><div class="fragment" style="margin-top:15px"><h3 style="color:#3498db">Зачем нужен:</h3><ul style="margin-left:40px"><li>✅ Запуск нескольких контейнеров одной командой</li><li>✅ Описание инфраструктуры в YAML файле</li><li>✅ Связь между сервисами</li><li>✅ Управление volumes и networks</li></ul></div><div class="fragment" style="margin-top:15px"><h3 style="color:#2ecc71">Основной файл:</h3><pre style="margin-top:10px"><code class="yaml">version: '3'
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"</code></pre></div></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 2: Задание 1 - Запуск nginx</h2><div style="text-align:left;font-size:.7em"><div class="fragment"><h3 style="color:#3498db">docker-compose.yml</h3><pre style="margin-top:10px"><code class="yaml">services:
+  nginx:
+    image: nginx:alpine  # Готовый образ
+    ports:
+      - "80:80"  # host:container</code></pre></div><div class="fragment" style="margin-top:15px"><h3 style="color:#2ecc71">Запуск</h3><pre style="margin-top:10px"><code class="bash"># Запустить только nginx
+docker-compose up nginx
+
+# Проверить: http://localhost</code></pre></div><div class="fragment" style="margin-top:15px;text-align:center"><p style="color:#f39c12;font-size:1.1em"><strong>Изучили:</strong> запуск отдельных сервисов, проброс портов</p></div></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 3: Задание 2 - Изменить порт</h2><div style="text-align:left;font-size:.7em"><div class="fragment"><h3 style="color:#e74c3c">Было:</h3><pre style="margin-top:10px"><code class="yaml">app:
+  ports:
+    - "8000:8000"  # localhost:8000 → container:8000</code></pre></div><div class="fragment" style="margin-top:15px"><h3 style="color:#2ecc71">Стало:</h3><pre style="margin-top:10px"><code class="yaml">app:
+  ports:
+    - "3000:8000"  # localhost:3000 → container:8000</code></pre></div><div class="fragment" style="margin-top:15px"><pre><code class="bash">docker-compose down
+docker-compose up app -d
+# Проверить: http://localhost:3000/docs</code></pre></div><div class="fragment" style="margin-top:15px;text-align:center"><p style="color:#f39c12;font-size:1.1em"><strong>Изучили:</strong> проброс портов host:container</p></div></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 4: Задание 3 - Переменные окружения</h2><div style="text-align:left;font-size:.7em"><div class="fragment"><h3 style="color:#3498db">Добавить в docker-compose.yml:</h3><pre style="margin-top:10px"><code class="yaml">app:
+  environment:
+    DEBUG: "true"  # Переменная окружения
+    APP_NAME: "MyApp"</code></pre></div><div class="fragment" style="margin-top:15px"><pre><code class="bash">docker-compose up --build app -d
+# Проверить: http://localhost:8000/debug</code></pre></div><div class="fragment" style="margin-top:15px;text-align:center"><p style="color:#f39c12;font-size:1.1em"><strong>Изучили:</strong> переменные окружения, пересборка</p></div></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 5: Задание 4 - Volumes</h2><div style="text-align:left;font-size:.7em"><div class="fragment"><h3 style="color:#3498db">Добавить в конец docker-compose.yml:</h3><pre style="margin-top:10px"><code class="yaml">volumes:
+  app_data:  # Именованный volume</code></pre></div><div class="fragment" style="margin-top:15px"><h3 style="color:#2ecc71">В сервисе app:</h3><pre style="margin-top:10px"><code class="yaml">app:
+  volumes:
+    - app_data:/app/data  # volume:путь_в_контейнере</code></pre></div><div class="fragment" style="margin-top:15px"><pre><code class="bash">docker-compose up -d
+docker volume ls  # Проверить volumes</code></pre></div><div class="fragment" style="margin-top:15px;text-align:center"><p style="color:#f39c12;font-size:1.1em"><strong>Изучили:</strong> volumes, сохранение данных</p></div></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 6: Задание 5 - .env файл</h2><div style="text-align:left;font-size:.7em"><div class="fragment"><h3 style="color:#3498db">Создать файл .env:</h3><pre style="margin-top:10px"><code class="bash">DEBUG=true
+APP_NAME=MyApp
+PORT=8000</code></pre></div><div class="fragment" style="margin-top:15px"><h3 style="color:#2ecc71">В docker-compose.yml:</h3><pre style="margin-top:10px"><code class="yaml">app:
+  env_file:
+    - .env  # Загрузить переменные из файла</code></pre></div><div class="fragment" style="margin-top:15px"><pre><code class="bash">docker-compose up --build</code></pre></div><div class="fragment" style="margin-top:15px;text-align:center"><p style="color:#f39c12;font-size:1.1em"><strong>Изучили:</strong> .env файлы, env_file</p></div></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 7: Задание 6 - Healthcheck</h2><div style="text-align:left;font-size:.65em"><div class="fragment"><h3 style="color:#3498db">В docker-compose.yml:</h3><pre style="margin-top:10px"><code class="yaml">app:
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+    interval: 30s  # Проверять каждые 30 сек
+    timeout: 10s   # Ждать ответ 10 сек
+    retries: 3     # 3 неудачи = нездоров</code></pre></div><div class="fragment" style="margin-top:15px"><h3 style="color:#2ecc71">Зачем нужен:</h3><ul style="margin-left:40px"><li>Автоматический перезапуск при сбоях</li><li>Мониторинг состояния приложения</li><li>Оркестраторы используют эту информацию</li></ul></div><div class="fragment" style="margin-top:15px"><pre><code class="bash">docker-compose ps  # Проверить статус (healthy/unhealthy)</code></pre></div></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 8: Задание 7 - Масштабирование</h2><div style="text-align:left;font-size:.7em"><div class="fragment"><h3 style="color:#3498db">Диапазон портов:</h3><pre style="margin-top:10px"><code class="yaml">app:
+  ports:
+    - "8000-8002:8000"  # 3 порта для 3 копий</code></pre></div><div class="fragment" style="margin-top:15px"><h3 style="color:#2ecc71">Запуск 3 копий:</h3><pre style="margin-top:10px"><code class="bash">docker-compose up --scale app=3 -d
+
+# Проверить
+docker-compose ps
+# Увидим: app_1, app_2, app_3 на портах 8000, 8001, 8002</code></pre></div><div class="fragment" style="margin-top:15px;text-align:center"><p style="color:#f39c12;font-size:1.1em"><strong>Изучили:</strong> масштабирование, диапазон портов</p></div></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 9: Задание 8 - Nginx балансировщик</h2><div style="text-align:left;font-size:.65em"><div class="fragment"><h3 style="color:#3498db">nginx.conf:</h3><pre style="margin-top:10px"><code class="nginx">upstream app {
+    server app:8000;  # Адрес FastAPI
+}
+
+server {
+    listen 80;
+    location / {
+        proxy_pass http://app;  # Перенаправление
+    }
+}</code></pre></div><div class="fragment" style="margin-top:15px"><h3 style="color:#2ecc71">docker-compose.yml:</h3><pre style="margin-top:10px"><code class="yaml">nginx:
+  volumes:
+    - ./nginx.conf:/etc/nginx/conf.d/default.conf
+  depends_on:
+    - app</code></pre></div><div class="fragment" style="margin-top:15px"><pre><code class="bash">docker-compose up --scale app=2
+# http://localhost/hit → nginx → app</code></pre></div></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 10: Основные команды</h2><div style="text-align:left;font-size:.7em"><div style="background:rgba(52,152,219,0.2);padding:20px;border-radius:10px;border-left:5px solid #3498db"><pre style="margin:0"><code class="bash"># Запуск всех сервисов
+docker-compose up -d
+
+# Остановка всех сервисов
+docker-compose down
+
+# Просмотр статуса
+docker-compose ps
+
+# Просмотр логов
+docker-compose logs app
+
+# Масштабирование
+docker-compose up --scale app=3
+
+# Пересборка
+docker-compose up --build
+
+# Просмотр volumes
+docker volume ls</code></pre></div><div class="fragment" style="margin-top:20px;text-align:center"><p style="color:#2ecc71;font-size:1.2em"><strong>⚠️ Важно:</strong> Все команды выполнять в папке LAB_COMPOSE!</p></div></div></section>
+
+</div></div><script src="js/reveal.min.js"></script><script src="js/notes.min.js"></script><script src="js/markdown.min.js"></script><script src="js/highlight.min.js"></script><script>Reveal.initialize({hash:true,transition:'slide',controls:true,progress:true,slideNumber:true,center:false,margin:0.02,plugins:[RevealMarkdown,RevealHighlight,RevealNotes]});</script></body></html>

@@ -1,5 +1,3 @@
-Вот подробный **сценарий практического занятия** для студентов выпускных курсов на тему:
-
 > **«Почему PostgreSQL “хромает” под высокой конкурентной нагрузкой и как Redis помогает сохранить данные»**
 
 ---
@@ -38,16 +36,35 @@ stress-demo/
 
 ## 1️⃣ Шаг 1: Подготовка среды (Docker Compose)
 
+
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY app/ .
+
+EXPOSE 8000
+
+CMD ["python", "-c", "import uvicorn; from main import app; uvicorn.run(app, host='0.0.0.0', port=8000)"]
+
+```
+
+
+
 **`docker-compose.yml`**
 ```yaml
 version: '3.8'
 services:
   db:
-    image: postgres:16
+    image: postgres:17
     environment:
-      POSTGRES_DB: demo
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: student_db
+      POSTGRES_USER: student
+      POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
     command: >
@@ -66,9 +83,11 @@ services:
       - db
       - redis
     environment:
-      DATABASE_URL: postgresql+asyncpg://user:pass@db:5432/demo
+      DATABASE_URL: postgresql+asyncpg://student:password@db:5432/student_db
       REDIS_URL: redis://redis:6379
 ```
+
+
 
 > ⚠️ Обратите внимание: `max_connections=20` — **намеренно уменьшено**, чтобы быстрее достичь лимита.
 
@@ -99,7 +118,8 @@ class Counter(Base):
 ```python
 from fastapi import FastAPI, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from .models import Counter, SessionLocal, engine, Base
+from models import Counter, SessionLocal, engine, Base
+import uvicorn
 
 app = FastAPI()
 
@@ -121,6 +141,9 @@ async def hit(db: AsyncSession = Depends(get_db)):
     counter.value += 1
     await db.commit()
     return {"count": counter.value}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8000)
 ```
 
 ---
@@ -130,11 +153,21 @@ async def hit(db: AsyncSession = Depends(get_db)):
 ### Запуск:
 ```bash
 docker-compose up --build
+docker-compose up --build -d
+docker-compose up app --build
 ```
 
 ### Нагрузочный тест (в другом терминале):
 ```bash
-ab -n 1000 -c 50 http://localhost:8000/hit
+# Создать файл с пустыми POST данными
+echo '{}' > post_data.json
+
+# Тест POST эндпоинта
+ab -n 1000 -c 50 -p post_data.json -T "application/json" http://localhost:8000/hit
+
+ab -n 10000 -c 500 -p post_data.json -T "application/json" http://localhost:8000/hit
+
+
 ```
 
 ### 🔴 Что увидят студенты:
@@ -232,22 +265,3 @@ ab -n 1000 -c 100 http://localhost:8000/hit
 
 ---
 
-## 🧪 Дополнительно (для сильных студентов)
-- Реализовать **фоновый worker** на `asyncio` + `APScheduler`, который каждые 5 секунд вызывает `/process`.
-- Добавить **очередь событий** вместо счётчика (например, логирование действий).
-- Заменить Redis на **Kafka** — сравнить сложность и надёжность.
-
----
-
-## ✅ Итог занятия
-
-Студенты **на практике увидят**:
-- Уязвимость реляционной БД под нагрузкой.
-- Как простой **буфер в Redis** спасает от потери данных.
-- Архитектурный паттерн: **"быстрый приём → отложенная обработка"**.
-
-Это напрямую применимо в **реальных системах** (аналитика, логирование, уведомления, счётчики лайков и т.п.).
-
----
-
-Хочешь — пришлю полный архив с `Dockerfile`, `requirements.txt` и `locustfile.py` для нагрузки.
