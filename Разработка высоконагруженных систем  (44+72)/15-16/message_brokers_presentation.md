@@ -277,6 +277,9 @@ def process_emails():
 
 ## Слайд 17: RabbitMQ - Архитектура
 
+Direct
+Fanout 
+Topic
 ```
 Producer → Exchange → Queue → Consumer
               ↓
@@ -302,7 +305,7 @@ Producer → Exchange → Queue → Consumer
 ![](./img/rabbitmq.gif)
 
 
-## Слайд 18: RabbitMQ - Установка
+## Слайд 22: RabbitMQ - Установка
 
 ```bash
 # Docker
@@ -327,7 +330,7 @@ channel.queue_declare(queue='tasks', durable=True)
 
 ---
 
-## Слайд 19: RabbitMQ - Producer
+## Слайд 23: RabbitMQ - Producer
 
 ```python
 import pika
@@ -357,7 +360,7 @@ connection.close()
 
 ---
 
-## Слайд 20: RabbitMQ - Consumer
+## Слайд 24: RabbitMQ - Consumer
 
 ```python
 import pika
@@ -388,7 +391,7 @@ channel.start_consuming()
 
 ---
 
-## Слайд 21: RabbitMQ + FastAPI
+## Слайд 25: RabbitMQ + FastAPI
 
 ```python
 from fastapi import FastAPI
@@ -421,7 +424,7 @@ async def create_task(task_type: str, data: dict):
 
 ---
 
-## Слайд 22: RabbitMQ - Topic Exchange
+## Слайд 26: RabbitMQ - Topic Exchange
 
 ```python
 # Producer
@@ -485,7 +488,7 @@ Producer → Topic (Partition 0, 1, 2) → Consumer Group
 
 ---
 
-## Слайд 26: Kafka - Установка
+## Слайд 30: Kafka - Установка
 
 ```bash
 # Docker Compose
@@ -510,7 +513,7 @@ pip install kafka-python
 
 ---
 
-## Слайд 27: Kafka - Producer
+## Слайд 31: Kafka - Producer
 
 ```python
 from kafka import KafkaProducer
@@ -538,7 +541,7 @@ producer.close()
 
 ---
 
-## Слайд 28: Kafka - Consumer
+## Слайд 32: Kafka - Consumer
 
 ```python
 from kafka import KafkaConsumer
@@ -563,7 +566,7 @@ for message in consumer:
 
 ---
 
-## Слайд 29: Kafka + FastAPI - Producer
+## Слайд 33: Kafka + FastAPI - Producer
 
 ```python
 from fastapi import FastAPI
@@ -597,7 +600,7 @@ async def send_event(event_type: str, data: dict):
 
 ---
 
-## Слайд 30: Kafka + FastAPI - Consumer
+## Слайд 34: Kafka + FastAPI - Consumer
 
 ```python
 from kafka import KafkaConsumer
