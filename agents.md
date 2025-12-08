@@ -1,3 +1,8 @@
+<div class="checkbox-item">
+                <input type="checkbox" id="task1-4">
+                <label for="task1-4">Задание {} выполнено</label>
+            </div>
+
 
 перенеси на отдельный слайд
 
