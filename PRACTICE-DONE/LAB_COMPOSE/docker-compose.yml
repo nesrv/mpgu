@@ -1,0 +1,20 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000-8002:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    env_file:
+      - .env
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+
+volumes:
+  app_data:

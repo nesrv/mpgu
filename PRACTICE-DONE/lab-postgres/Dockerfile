@@ -1,0 +1,7 @@
+FROM postgres:17
+
+ENV POSTGRES_DB=students_db
+ENV POSTGRES_USER=student
+ENV POSTGRES_PASSWORD=password
+
+EXPOSE 5432
