@@ -1105,60 +1105,6 @@ print(f"Всего загружено: {len(books)} книг")</div>
             });
         });
 
-        function highlightJSON(code) {
-            let result = code
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-            
-            result = result.replace(/("[^"]*")\s*:/g, '<span class="string">$1</span>:');
-            result = result.replace(/:\s*("[^"]*")/g, ': <span class="string">$1</span>');
-            result = result.replace(/\b(true|false|null)\b/g, '<span class="keyword">$1</span>');
-            result = result.replace(/\b(\d+)\b/g, '<span class="number">$1</span>');
-            result = result.replace(/(GET|POST|PUT|DELETE)\s/g, '<span class="keyword">$1</span> ');
-            result = result.replace(/(\/[\w\/_-]+)/g, '<span class="function">$1</span>');
-            result = result.replace(/\/\/<span class="function">/g, '<span class="comment">//');
-            result = result.replace(/<\/span>([^<]*$)/gm, '</span><span class="comment">$1</span>');
-            
-            return result;
-        }
-
-        document.querySelectorAll('.code-textarea').forEach(textarea => {
-            const wrapper = document.createElement('div');
-            wrapper.style.position = 'relative';
-            textarea.parentNode.insertBefore(wrapper, textarea);
-            wrapper.appendChild(textarea);
-
-            const preview = document.createElement('div');
-            preview.className = 'code-block';
-            preview.style.display = 'none';
-            preview.style.cursor = 'pointer';
-            wrapper.appendChild(preview);
-
-            textarea.addEventListener('blur', () => {
-                saveToStorage();
-                setTimeout(() => {
-                    if (textarea.value.trim()) {
-                        preview.innerHTML = highlightJSON(textarea.value);
-                        preview.style.display = 'block';
-                        textarea.style.display = 'none';
-                    }
-                }, 200);
-            });
-
-            preview.addEventListener('click', () => {
-                preview.style.display = 'none';
-                textarea.style.display = 'block';
-                textarea.focus();
-            });
-            
-            if (textarea.value.trim()) {
-                preview.innerHTML = highlightJSON(textarea.value);
-                preview.style.display = 'block';
-                textarea.style.display = 'none';
-            }
-        });
-
         function saveToPDF() {
             const studentName = document.getElementById('student-name').value || 'Не указано';
             const group = document.getElementById('group').value || 'Не указано';
