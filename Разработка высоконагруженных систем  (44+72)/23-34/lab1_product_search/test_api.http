@@ -1,0 +1,29 @@
+### Создать товар
+POST http://localhost:8000/products
+Content-Type: application/json
+
+{
+  "name": "iPad Air",
+  "description": "Планшет Apple с дисплеем 10.9 дюймов",
+  "price": 59990,
+  "category": "Электроника",
+  "popularity": 75
+}
+
+### Получить товар по ID
+GET http://localhost:8000/products/1
+
+### Поиск по запросу
+GET http://localhost:8000/search?q=iPhone
+
+### Поиск с фильтрами
+GET http://localhost:8000/search?q=смартфон&category=Электроника&min_price=50000&max_price=100000
+
+### Автодополнение
+GET http://localhost:8000/suggest?q=iph
+
+### Поиск по категории
+GET http://localhost:8000/search?category=Аксессуары
+
+### Поиск по цене
+GET http://localhost:8000/search?min_price=10000&max_price=30000
