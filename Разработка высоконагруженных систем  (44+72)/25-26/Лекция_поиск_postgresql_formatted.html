@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Полнотекстовый поиск в PostgreSQL</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            border-bottom: 4px solid #667eea;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #764ba2;
+            margin-top: 40px;
+            padding-left: 10px;
+            border-left: 5px solid #764ba2;
+        }
+        h3 {
+            color: #555;
+            margin-top: 25px;
+        }
+        .slide {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .slide-number {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        ul {
+            line-height: 1.8;
+        }
+        li {
+            margin: 8px 0;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #d63384;
+        }
+        .highlight {
+            background: #fff3cd;
+            padding: 15px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+        .operator {
+            font-weight: bold;
+            color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Полнотекстовый поиск в PostgreSQL</h1>
+
+        <div class="slide">
+            <p class="slide-number">Слайд 1</p>
+            <h2>Содержание</h2>
+            <ul>
+                <li>Зачем нужен полнотекстовый поиск?</li>
+                <li>Документы и запросы</li>
+                <li>Анализаторы</li>
+                <li>Словари и шаблоны</li>
+                <li>Конфигурации</li>
+                <li>Индексная поддержка</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <p class="slide-number">Слайд 2</p>
+            <h2>Зачем текстовый поиск?</h2>
+            
+            <h3>Средства SQL — LIKE, регулярные выражения</h3>
+            <ul>
+                <li>❌ нет морфологического поиска</li>
+                <li>❌ нет возможности ранжирования результатов</li>
+                <li>❌ нет индексной поддержки</li>
+            </ul>
+
+            <h3>Внешние поисковые системы</h3>
+            <ul>
+                <li>❌ сложно синхронизировать с базой данных</li>
+                <li>❌ отсутствие транзакционности</li>
+                <li>❌ нет доступа к метаданным</li>
+                <li>❌ сложности с разграничением доступа</li>
+            </ul>
+
+            <div class="highlight">
+                <strong>Полнотекстовый поиск позволяет преодолеть ограничения обычных средств SQL и сохранить все их преимущества</strong>
+            </div>
+        </div>
+
+        <div class="slide">
+            <p class="slide-number">Слайд 3</p>
+            <h2>Документы и запросы</h2>
+            
+            <h3>Документ</h3>
+            <ul>
+                <li>произвольный текст, который можно разобрать на слова (лексемы)</li>
+                <li>docx, pdf и т. п. надо предварительно преобразовать в текст</li>
+                <li>внутреннее компактное представление <code>tsvector</code></li>
+            </ul>
+
+            <h3>Запрос</h3>
+            <p>Одна или несколько лексем, соединенных логическими связками:</p>
+            <ul>
+                <li><span class="operator">&</span> — и</li>
+                <li><span class="operator">|</span> — или</li>
+                <li><span class="operator">!</span> — не</li>
+                <li><span class="operator">&lt;-&gt;</span> — предшествует (фразовый поиск)</li>
+                <li><span class="operator">( )</span> — для изменения приоритета</li>
+            </ul>
+            <p>Внутреннее представление <code>tsquery</code></p>
+        </div>
+
+        <div class="slide">
+            <p class="slide-number">Слайд 4</p>
+            <h2>Соответствие</h2>
+            
+            <h3>Соответствие документа запросу</h3>
+            <p>Оператор <code>@@</code></p>
+
+            <h3>Релевантность</h3>
+            <ul>
+                <li>веса лексем (A, B, C, D в порядке убывания важности)</li>
+                <li><code>ts_rank</code> — по частоте найденных лексем</li>
+                <li><code>ts_rank_cd</code> — также учитывает близость лексем</li>
+                <li>оператор расстояния <code>&lt;=&gt;</code> (расширение rum)</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <p class="slide-number">Слайд 5</p>
+            <h2>Анализатор</h2>
+            
+            <p><strong>документ → анализатор → фрагмент+тип, фрагмент+тип, …</strong></p>
+
+            <h3>Функции анализатора</h3>
+            <ul>
+                <li>Выделяет в тексте документа фрагменты</li>
+                <li>Назначает фрагментам типы</li>
+            </ul>
+
+            <h3>Штатный анализатор <code>default</code></h3>
+            <p>23 типа фрагментов (слова, числа, адреса, теги XML и т. п.)</p>
+
+            <h3>Другие анализаторы</h3>
+            <ul>
+                <li>расширения</li>
+                <li>набор функций на языке C</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <p class="slide-number">Слайд 6</p>
+            <h2>Словари</h2>
+            
+            <p><strong>фрагмент → словарь → лексема, лексема, …</strong></p>
+
+            <h3>Словарь превращает фрагмент в лексему</h3>
+            <ul>
+                <li>убрать стоп-слова</li>
+                <li>привести буквы к одному регистру</li>
+                <li>привести словоформы к общему виду</li>
+                <li>привести синонимы к одному варианту</li>
+                <li>и т. п.</li>
+            </ul>
+
+            <h3>Штатные словари</h3>
+            <ul>
+                <li><code>simple</code> — нижний регистр и стоп-слова</li>
+                <li>стемминг для 28 языков</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <p class="slide-number">Слайд 7</p>
+            <h2>Шаблоны словарей</h2>
+            
+            <p><strong>Словарь — параметризованный шаблон</strong> (набор функций на языке C)</p>
+
+            <h3>Штатные шаблоны</h3>
+            <ul>
+                <li>простой словарь</li>
+                <li>стеммер snowball</li>
+                <li>словарь ispell</li>
+                <li>синонимы: приведение синонимов к одному виду</li>
+                <li>тезаурус: приведение фраз к одному виду</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <p class="slide-number">Слайд 8</p>
+            <h2>Конфигурация</h2>
+            
+            <p><strong>документ → анализатор → фрагмент+тип → словари → лексемы</strong></p>
+
+            <h3>Цепочка обработки</h3>
+            <ul>
+                <li>Своя цепочка словарей для каждого типа фрагмента</li>
+                <li>Первый словарь, распознавший фрагмент, возвращает лексему</li>
+                <li>Фильтрующий словарь передает лексему дальше по цепочке</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <p class="slide-number">Слайд 9</p>
+            <h2>Индексная поддержка</h2>
+            
+            <h3>GiST</h3>
+            <ul>
+                <li>неточное представление с обязательной перепроверкой по таблице</li>
+                <li>эффективность уменьшается при увеличении количества слов</li>
+                <li>поддержка INCLUDE</li>
+                <li>✅ быстрое обновление (зависит от числа документов)</li>
+            </ul>
+
+            <h3>GIN</h3>
+            <ul>
+                <li>✅ точное и компактное представление</li>
+                <li>✅ эффективность не теряется при увеличении количества слов</li>
+                <li>❌ медленное обновление (зависит от числа слов в документах)</li>
+            </ul>
+
+            <h3>RUM (расширение на основе GIN)</h3>
+            <ul>
+                <li>дополнительная информация в индексе (позиции лексем и др.)</li>
+                <li>✅ выдача результатов сразу в порядке релевантности</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <p class="slide-number">Слайд 10</p>
+            <h2>Итоги</h2>
+            
+            <h3>Интегрированный полнотекстовый поиск обеспечивает:</h3>
+            <ul>
+                <li>✅ актуальность результатов</li>
+                <li>✅ транзакционность</li>
+                <li>✅ учет языковых особенностей</li>
+                <li>✅ фразовый поиск</li>
+                <li>✅ ранжирование результатов</li>
+                <li>✅ индексную поддержку</li>
+            </ul>
+
+            <div class="highlight">
+                <p><strong>Поиск охватывает любую информацию, приводимую к текстовому виду</strong></p>
+                <p><strong>Возможна тонкая настройка под конкретные нужды</strong></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
