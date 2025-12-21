@@ -1,0 +1,50 @@
+### Автодополнение - поиск iPhone
+GET http://localhost:8000/suggest?q=iph
+
+### Автодополнение - поиск Samsung
+GET http://localhost:8000/suggest?q=sam
+
+### Автодополнение - поиск MacBook
+GET http://localhost:8000/suggest?q=mac
+
+### Автодополнение - поиск по одной букве
+GET http://localhost:8000/suggest?q=a
+
+### Автодополнение - пустой результат
+GET http://localhost:8000/suggest?q=xyz
+
+### Автодополнение - кириллица
+GET http://localhost:8000/suggest?q=яндекс
+
+### Поиск товаров - текстовый запрос
+GET http://localhost:8000/search?q=phone
+
+### Поиск товаров - фильтр по категории
+GET http://localhost:8000/search?category=Смартфоны
+
+### Поиск товаров - фильтр по цене
+GET http://localhost:8000/search?min_price=50000&max_price=100000
+
+### Поиск товаров - комбинированные фильтры
+GET http://localhost:8000/search?q=samsung&category=Смартфоны&min_price=80000
+
+### Поиск всех товаров
+GET http://localhost:8000/search
+
+### Создание товара
+POST http://localhost:8000/products
+Content-Type: application/json
+
+{
+  "name": "Test Product",
+  "description": "Test Description",
+  "price": 9999.99,
+  "category": "Test Category",
+  "popularity": 50
+}
+
+### Получение товара по ID
+GET http://localhost:8000/products/1
+
+### Получение несуществующего товара
+GET http://localhost:8000/products/999

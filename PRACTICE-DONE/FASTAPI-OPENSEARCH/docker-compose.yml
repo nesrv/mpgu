@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:18
+    env_file: .env
+    ports:
+      - "5437:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+  opensearch:
+    image: opensearchproject/opensearch:2.11.0
+    env_file: .env
+    ports:
+      - "9200:9200"
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+
+volumes:
+  postgres_data:
+  opensearch_data:
