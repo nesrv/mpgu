@@ -1,3 +1,11 @@
+<div class="code-block"><code class="language-json hljs" data-highlighted="yes">
+
+
+на основе laba_gpaphQL.md
+создай веб-методичку (нужно взять всю информацию из исходного md файла)
+
+референс
+25-26\laba_postgresql_search.html
 
 
 Сделай html-презентацию на основе 29-30\lect.md
