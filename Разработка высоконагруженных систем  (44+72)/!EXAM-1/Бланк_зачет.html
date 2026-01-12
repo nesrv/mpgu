@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Электронный зачет - Разработка высоконагруженных систем</title>
+<style media="print">
+body{font-family:Arial,sans-serif;font-size:12px}.container{box-shadow:none;background:white}.header{background:white!important;color:black!important}.save-btn{display:none!important}.section{page-break-inside:avoid}
+</style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;line-height:1.6;color:#333;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh}.container{max-width:1200px;margin:20px auto;padding:20px;background:white;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}.header{text-align:center;padding:30px;background:linear-gradient(135deg,#005EB8,#003D82);color:white;border-radius:10px;margin-bottom:30px}.header h1{font-size:2.5em;margin-bottom:10px}.student-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:30px;padding:20px;background:#f8f9fa;border-radius:10px}.form-group{margin-bottom:20px}.form-group label{display:block;margin-bottom:5px;font-weight:bold;color:#003D82}.form-group input,.form-group textarea{width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px;font-size:16px}.form-group input:focus,.form-group textarea:focus{outline:none;border-color:#005EB8}.section{margin-bottom:40px;padding:25px;background:#fff;border-left:5px solid #005EB8;border-radius:0 10px 10px 0;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.section h2{color:#003D82;margin-bottom:20px;font-size:1.8em}.section h3{color:#005EB8;margin:20px 0 10px;font-size:1.3em}.question{margin:20px 0;padding:15px;background:#f8f9fa;border-radius:8px}.question-text{font-weight:bold;margin-bottom:10px;color:#003D82}.checkbox-item{margin:10px 0;padding:12px 15px;background:white;border:2px solid #e1e5e9;border-radius:8px;display:flex;align-items:center;transition:all 0.3s}.checkbox-item:hover{border-color:#005EB8;background:#f8f9fa}.checkbox-item input[type="checkbox"],.checkbox-item input[type="radio"]{width:20px;height:20px;margin-right:12px;cursor:pointer}.checkbox-item label{cursor:pointer;flex:1}.save-btn{background:linear-gradient(135deg,#005EB8,#003D82);color:white;border:none;padding:15px 30px;font-size:18px;border-radius:10px;cursor:pointer;display:block;margin:30px auto}.code-block{background:#282c34;color:#e2e8f0;padding:20px;border-radius:8px;margin:15px 0;font-family:'Courier New',monospace;overflow-x:auto;white-space:pre;font-size:14px}.answer-input{width:100%;min-height:100px;padding:12px;border:2px solid #e1e5e9;border-radius:8px;font-family:'Courier New',monospace;font-size:14px;resize:vertical}.answer-input:focus{outline:none;border-color:#005EB8}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>📝 Электронный зачет</h1>
+<h2>Разработка высоконагруженных систем</h2>
+</div>
+
+<div class="student-info">
+<div class="form-group"><label for="student-name">ФИО студента:</label><input type="text" id="student-name"></div>
+<div class="form-group"><label for="group">Группа:</label><input type="text" id="group"></div>
+<div class="form-group"><label for="ticket">Номер билета:</label><input type="text" id="ticket"></div>
+</div>
+
+<div class="section">
+<h2>📚 Теоретическая часть</h2>
+
+<h3>Часть 1: Вопросы с выбором одного ответа (14 вопросов)</h3>
+
+<div class="question">
+<div class="question-text">1. Какая из следующих метрик НЕ является метрикой производительности системы?</div>
+<div class="checkbox-item"><input type="radio" name="q1" id="q1a"><label for="q1a">Throughput (пропускная способность)</label></div>
+<div class="checkbox-item"><input type="radio" name="q1" id="q1b"><label for="q1b">Latency (задержка)</label></div>
+<div class="checkbox-item"><input type="radio" name="q1" id="q1c"><label for="q1c">CPU utilization (использование CPU)</label></div>
+<div class="checkbox-item"><input type="radio" name="q1" id="q1d"><label for="q1d">Code coverage (покрытие кода)</label></div>
+</div>
+
+<div class="question">
+<div class="question-text">2. Согласно CAP-теореме, система может гарантировать одновременно только два из трех свойств. Какие?</div>
+<div class="checkbox-item"><input type="radio" name="q2" id="q2a"><label for="q2a">Consistency, Availability, Partition tolerance</label></div>
+<div class="checkbox-item"><input type="radio" name="q2" id="q2b"><label for="q2b">Consistency, Atomicity, Persistence</label></div>
+<div class="checkbox-item"><input type="radio" name="q2" id="q2c"><label for="q2c">Consistency, Availability, Durability</label></div>
+<div class="checkbox-item"><input type="radio" name="q2" id="q2d"><label for="q2d">Consistency, Isolation, Partition tolerance</label></div>
+</div>
+
+<div class="question">
+<div class="question-text">3. Какой тип индекса в PostgreSQL лучше всего подходит для полнотекстового поиска?</div>
+<div class="checkbox-item"><input type="radio" name="q3" id="q3a"><label for="q3a">B-tree</label></div>
+<div class="checkbox-item"><input type="radio" name="q3" id="q3b"><label for="q3b">Hash</label></div>
+<div class="checkbox-item"><input type="radio" name="q3" id="q3c"><label for="q3c">GIN</label></div>
+<div class="checkbox-item"><input type="radio" name="q3" id="q3d"><label for="q3d">GiST</label></div>
+</div>
+
+<div class="question">
+<div class="question-text">4. Что такое Redis?</div>
+<div class="checkbox-item"><input type="radio" name="q4" id="q4a"><label for="q4a">Реляционная СУБД</label></div>
+<div class="checkbox-item"><input type="radio" name="q4" id="q4b"><label for="q4b">In-Memory СУБД (key-value хранилище)</label></div>
+<div class="checkbox-item"><input type="radio" name="q4" id="q4c"><label for="q4c">Документо-ориентированная СУБД</label></div>
+<div class="checkbox-item"><input type="radio" name="q4" id="q4d"><label for="q4d">Графовая СУБД</label></div>
+</div>
+
+<div class="question">
+<div class="question-text">5. Какой протокол используется для GraphQL Subscriptions в реальном времени?</div>
+<div class="checkbox-item"><input type="radio" name="q5" id="q5a"><label for="q5a">HTTP</label></div>
+<div class="checkbox-item"><input type="radio" name="q5" id="q5b"><label for="q5b">WebSocket</label></div>
+<div class="checkbox-item"><input type="radio" name="q5" id="q5c"><label for="q5c">TCP</label></div>
+<div class="checkbox-item"><input type="radio" name="q5" id="q5d"><label for="q5d">UDP</label></div>
+</div>
+
+<div class="question">
+<div class="question-text">6. Что означает аббревиатура ORM?</div>
+<div class="checkbox-item"><input type="radio" name="q6" id="q6a"><label for="q6a">Object-Relational Mapping</label></div>
+<div class="checkbox-item"><input type="radio" name="q6" id="q6b"><label for="q6b">Object-Relational Model</label></div>
+<div class="checkbox-item"><input type="radio" name="q6" id="q6c"><label for="q6c">Operational Resource Management</label></div>
+<div class="checkbox-item"><input type="radio" name="q6" id="q6d"><label for="q6d">Object-Record Mapping</label></div>
+</div>
+
+<div class="question">
+<div class="question-text">7. Какой тип индекса в PostgreSQL обеспечивает самый быстрый поиск, но медленные INSERT/UPDATE?</div>
+<div class="checkbox-item"><input type="radio" name="q7" id="q7a"><label for="q7a">B-tree</label></div>
+<div class="checkbox-item"><input type="radio" name="q7" id="q7b"><label for="q7b">GIN</label></div>
+<div class="checkbox-item"><input type="radio" name="q7" id="q7c"><label for="q7c">GiST</label></div>
+<div class="checkbox-item"><input type="radio" name="q7" id="q7d"><label for="q7d">Hash</label></div>
+</div>
+
+<div class="question">
+<div class="question-text">8. Что такое курсор (портал) в PostgreSQL?</div>
+<div class="checkbox-item"><input type="radio" name="q8" id="q8a"><label for="q8a">Указатель на текущую позицию в результате запроса</label></div>
+<div class="checkbox-item"><input type="radio" name="q8" id="q8b"><label for="q8b">Индекс для ускорения поиска</label></div>
+<div class="checkbox-item"><input type="radio" name="q8" id="q8c"><label for="q8c">Триггер для автоматического обновления данных</label></div>
+<div class="checkbox-item"><input type="radio" name="q8" id="q8d"><label for="q8d">Представление (view) в базе данных</label></div>
+</div>
+
+<div class="question">
+<div class="question-text">9. Какая функция PostgreSQL используется для полнотекстового поиска?</div>
+<div class="checkbox-item"><input type="radio" name="q9" id="q9a"><label for="q9a">LIKE</label></div>
+<div class="checkbox-item"><input type="radio" name="q9" id="q9b"><label for="q9b">to_tsvector</label></div>
+<div class="checkbox-item"><input type="radio" name="q9" id="q9c"><label for="q9c">CONTAINS</label></div>
+<div class="checkbox-item"><input type="radio" name="q9" id="q9d"><label for="q9d">MATCH</label></div>
+</div>
+
+<div class="question">
+<div class="question-text">10. Что такое микросервисная архитектура?</div>
+<div class="checkbox-item"><input type="radio" name="q10" id="q10a"><label for="q10a">Архитектура, где все компоненты находятся в одном процессе</label></div>
+<div class="checkbox-item"><input type="radio" name="q10" id="q10b"><label for="q10b">Архитектура, где приложение разбито на независимые сервисы</label></div>
+<div class="checkbox-item"><input type="radio" name="q10" id="q10c"><label for="q10c">Архитектура с одной монолитной базой данных</label></div>
+<div class="checkbox-item"><input type="radio" name="q10" id="q10d"><label for="q10d">Архитектура без использования API</label></div>
+</div>
+
+<div class="question">
+<div class="question-text">11. Что такое представление (view) в PostgreSQL?</div>
+<div class="checkbox-item"><input type="radio" name="q11" id="q11a"><label for="q11a">Виртуальная таблица, основанная на результате SQL-запроса</label></div>
+<div class="checkbox-item"><input type="radio" name="q11" id="q11b"><label for="q11b">Физическая таблица с данными</label></div>
+<div class="checkbox-item"><input type="radio" name="q11" id="q11c"><label for="q11c">Индекс для ускорения поиска</label></div>
+<div class="checkbox-item"><input type="radio" name="q11" id="q11d"><label for="q11d">Триггер для автоматических действий</label></div>
+</div>
+
+<div class="question">
+<div class="question-text">12. Какое преимущество имеет хранимая функция PostgreSQL по сравнению с ORM?</div>
+<div class="checkbox-item"><input type="radio" name="q12" id="q12a"><label for="q12a">Выполняется на стороне сервера, меньше сетевых запросов</label></div>
+<div class="checkbox-item"><input type="radio" name="q12" id="q12b"><label for="q12b">Требует больше памяти</label></div>
+<div class="checkbox-item"><input type="radio" name="q12" id="q12c"><label for="q12c">Медленнее выполняется</label></div>
+<div class="checkbox-item"><input type="radio" name="q12" id="q12d"><label for="q12d">Не поддерживает транзакции</label></div>
+</div>
+
+<div class="question">
+<div class="question-text">13. Что такое Elasticsearch (OpenSearch)?</div>
+<div class="checkbox-item"><input type="radio" name="q13" id="q13a"><label for="q13a">Реляционная СУБД</label></div>
+<div class="checkbox-item"><input type="radio" name="q13" id="q13b"><label for="q13b">Поисковый движок на базе Apache Lucene</label></div>
+<div class="checkbox-item"><input type="radio" name="q13" id="q13c"><label for="q13c">In-Memory хранилище</label></div>
+<div class="checkbox-item"><input type="radio" name="q13" id="q13d"><label for="q13d">Графовая СУБД</label></div>
+</div>
+
+<div class="question">
+<div class="question-text">14. Что такое Docker Compose?</div>
+<div class="checkbox-item"><input type="radio" name="q14" id="q14a"><label for="q14a">Инструмент для управления одним контейнером</label></div>
+<div class="checkbox-item"><input type="radio" name="q14" id="q14b"><label for="q14b">Инструмент для оркестрации нескольких контейнеров</label></div>
+<div class="checkbox-item"><input type="radio" name="q14" id="q14c"><label for="q14c">Язык программирования</label></div>
+<div class="checkbox-item"><input type="radio" name="q14" id="q14d"><label for="q14d">База данных</label></div>
+</div>
+
+<h3>Часть 2: Вопросы с выбором нескольких ответов (3 вопроса)</h3>
+
+<div class="question">
+<div class="question-text">15. Какие типы индексов поддерживает PostgreSQL? (Выберите все верные)</div>
+<div class="checkbox-item"><input type="checkbox" id="q15a"><label for="q15a">B-tree</label></div>
+<div class="checkbox-item"><input type="checkbox" id="q15b"><label for="q15b">Hash</label></div>
+<div class="checkbox-item"><input type="checkbox" id="q15c"><label for="q15c">GIN</label></div>
+<div class="checkbox-item"><input type="checkbox" id="q15d"><label for="q15d">GiST</label></div>
+<div class="checkbox-item"><input type="checkbox" id="q15e"><label for="q15e">RUM</label></div>
+</div>
+
+<div class="question">
+<div class="question-text">16. Какие из следующих функций являются оконными функциями в PostgreSQL? (Выберите все верные)</div>
+<div class="checkbox-item"><input type="checkbox" id="q16a"><label for="q16a">ROW_NUMBER()</label></div>
+<div class="checkbox-item"><input type="checkbox" id="q16b"><label for="q16b">RANK()</label></div>
+<div class="checkbox-item"><input type="checkbox" id="q16c"><label for="q16c">COUNT()</label></div>
+<div class="checkbox-item"><input type="checkbox" id="q16d"><label for="q16d">LAG()</label></div>
+<div class="checkbox-item"><input type="checkbox" id="q16e"><label for="q16e">LEAD()</label></div>
+</div>
+
+<div class="question">
+<div class="question-text">17. Какие из следующих преимуществ имеет Redis? (Выберите все верные)</div>
+<div class="checkbox-item"><input type="checkbox" id="q17a"><label for="q17a">Очень высокая скорость работы (in-memory)</label></div>
+<div class="checkbox-item"><input type="checkbox" id="q17b"><label for="q17b">Поддержка различных структур данных</label></div>
+<div class="checkbox-item"><input type="checkbox" id="q17c"><label for="q17c">Поддержка транзакций ACID</label></div>
+<div class="checkbox-item"><input type="checkbox" id="q17d"><label for="q17d">Поддержка Pub/Sub</label></div>
+<div class="checkbox-item"><input type="checkbox" id="q17e"><label for="q17e">Поддержка репликации</label></div>
+</div>
+
+<h3>Часть 3: Открытые вопросы (3 вопроса)</h3>
+
+<div class="question">
+<div class="question-text">18. Назовите основное отличие между RESTful и GraphQL API (одно предложение):</div>
+<textarea class="answer-input" id="q18" placeholder="Ваш ответ..."></textarea>
+</div>
+
+<div class="question">
+<div class="question-text">19. Какая функция PostgreSQL используется для преобразования текста в вектор для полнотекстового поиска?</div>
+<textarea class="answer-input" id="q19" placeholder="Ваш ответ..."></textarea>
+</div>
+
+<div class="question">
+<div class="question-text">20. Назовите основной протокол, используемый для GraphQL Subscriptions:</div>
+<textarea class="answer-input" id="q20" placeholder="Ваш ответ..."></textarea>
+</div>
+</div>
+
+<div class="section">
+<h2>💻 Практическая часть</h2>
+<h3>Задание из билета:</h3>
+<textarea class="answer-input" id="task-text" style="min-height:200px" placeholder="Вставьте текст задания из вашего билета..."></textarea>
+
+<h3>Ваше решение:</h3>
+<textarea class="answer-input" id="solution" style="min-height:400px" placeholder="Напишите ваше решение здесь..."></textarea>
+</div>
+
+<button class="save-btn" onclick="window.print()">💾 Сохранить в PDF</button>
+</div>
+
+<script>
+if(!sessionStorage.getItem('exam-loaded')){localStorage.clear();sessionStorage.setItem('exam-loaded','true')}
+['student-name','group','ticket'].forEach(id=>{const el=document.getElementById(id);el.value=localStorage.getItem(id)||'';el.addEventListener('input',()=>localStorage.setItem(id,el.value))});
+document.querySelectorAll('input[type="checkbox"],input[type="radio"]').forEach(cb=>{if(localStorage.getItem(cb.id)==='true')cb.checked=true;cb.addEventListener('change',()=>localStorage.setItem(cb.id,cb.checked))});
+document.querySelectorAll('textarea').forEach((ta,i)=>{const saved=localStorage.getItem('ta-'+i);if(saved)ta.value=saved;ta.addEventListener('input',()=>localStorage.setItem('ta-'+i,ta.value))});
+</script>
+</body>
+</html>

@@ -1,3 +1,16 @@
+
+на основе файлов в 
+Разработка высоконагруженных систем  (44+72)\!EXAM-1\for student
+
+придумай 15 практических заданий на темы: Fastapi, SQLalchemy, 
+Оконные функции, процедуры, функции, полнотекстовый поиск в Postgresql
+Работа с Nosql: MongoDB, Redis
+Поиск с помощью Opensearch,
+Fastapi и Graphql
+
+
+
+
 <div class="code-block"><code class="language-json hljs" data-highlighted="yes">
 
 для выполнения этой лабораторной работы студентам необхимо напомнить про

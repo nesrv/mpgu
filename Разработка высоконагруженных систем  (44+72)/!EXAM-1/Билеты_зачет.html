@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Билеты для экзамена - Разработка высоконагруженных систем</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;line-height:1.6;color:#333;background:linear-gradient(135deg,#667eea,#764ba2);padding:20px}.container{max-width:1200px;margin:0 auto;background:white;border-radius:15px;padding:30px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}.header{text-align:center;padding:30px;background:linear-gradient(135deg,#005EB8,#003D82);color:white;border-radius:10px;margin-bottom:30px}.header h1{font-size:2.5em;margin-bottom:10px}.ticket{margin-bottom:40px;padding:25px;background:#f8f9fa;border-left:5px solid #005EB8;border-radius:0 10px 10px 0;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.ticket h2{color:#003D82;margin-bottom:20px;font-size:1.8em}.ticket h3{color:#005EB8;margin:20px 0 10px;font-size:1.3em}.theory{background:#e3f2fd;padding:15px;border-radius:8px;margin:15px 0}.practice{background:white;padding:15px;border-radius:8px;margin:15px 0}.code-block{background:#282c34;color:#e2e8f0;padding:15px;border-radius:8px;margin:10px 0;font-family:'Courier New',monospace;overflow-x:auto;font-size:14px;white-space:pre}.code-block .keyword{color:#c678dd;font-weight:bold}.code-block .string{color:#98c379}.code-block .number{color:#d19a66}.code-block .comment{color:#5c6370;font-style:italic}.code-block .function{color:#61afef}.task{background:#fff3cd;padding:15px;border-radius:8px;margin:10px 0;border-left:4px solid #ffc107}.requirements{background:#d1ecf1;padding:15px;border-radius:8px;margin:10px 0;border-left:4px solid #17a2b8}.note{background:#f8d7da;padding:15px;border-radius:8px;margin:10px 0;border-left:4px solid#dc3545}ul{margin-left:20px;margin-top:10px}li{margin:5px 0}hr{border:none;border-top:2px solid #e1e5e9;margin:30px 0}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>📚 Билеты для экзамена</h1>
+<h2>Разработка высоконагруженных систем</h2>
+</div>
+
+<div class="ticket">
+<h2>Билет 1: FastAPI + SQLAlchemy - API для задач</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое ORM и какие преимущества дает SQLAlchemy?</p>
+<p>2. Разница между sync и async операциями в FastAPI</p>
+<p>3. Для чего нужны Pydantic модели?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block"><span class="keyword">CREATE TABLE</span> tasks (
+    id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    title <span class="keyword">VARCHAR</span>(<span class="number">200</span>),
+    description <span class="keyword">TEXT</span>,
+    status <span class="keyword">VARCHAR</span>(<span class="number">20</span>),
+    user_id <span class="keyword">INTEGER</span>,
+    created_at <span class="keyword">TIMESTAMP DEFAULT NOW</span>()
+);
+
+<span class="keyword">INSERT INTO</span> tasks (title, description, status, user_id) <span class="keyword">VALUES</span>
+(<span class="string">'Изучить FastAPI'</span>, <span class="string">'Пройти документацию'</span>, <span class="string">'done'</span>, <span class="number">1</span>),
+(<span class="string">'Настроить БД'</span>, <span class="string">'PostgreSQL + SQLAlchemy'</span>, <span class="string">'in_progress'</span>, <span class="number">1</span>),
+(<span class="string">'Написать тесты'</span>, <span class="string">'Pytest для API'</span>, <span class="string">'todo'</span>, <span class="number">2</span>),
+(<span class="string">'Деплой'</span>, <span class="string">'Docker + CI/CD'</span>, <span class="string">'todo'</span>, <span class="number">2</span>);</div>
+<div class="task">
+<strong>Задание:</strong> Создайте REST API с эндпоинтами:
+<ul>
+<li>GET /tasks - список задач с фильтром по статусу</li>
+<li>POST /tasks - создание задачи</li>
+<li>PUT /tasks/{id} - обновление статуса</li>
+<li>DELETE /tasks/{id} - удаление</li>
+</ul>
+</div>
+<div class="requirements">
+<strong>Требования:</strong> async SQLAlchemy, Pydantic валидация, обработка ошибок
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 2: PostgreSQL - Оконные функции для рейтинга</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое оконные функции и чем они отличаются от GROUP BY?</p>
+<p>2. Разница между RANK, DENSE_RANK и ROW_NUMBER</p>
+<p>3. Что делает PARTITION BY в оконных функциях?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block"><span class="keyword">CREATE TABLE</span> students (
+    id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    name <span class="keyword">VARCHAR</span>(<span class="number">100</span>),
+    subject <span class="keyword">VARCHAR</span>(<span class="number">50</span>),
+    score <span class="keyword">INTEGER</span>,
+    exam_date <span class="keyword">DATE</span>
+);
+
+<span class="keyword">INSERT INTO</span> students (name, subject, score, exam_date) <span class="keyword">VALUES</span>
+(<span class="string">'Иванов'</span>, <span class="string">'Математика'</span>, <span class="number">85</span>, <span class="string">'2025-01-10'</span>),
+(<span class="string">'Петров'</span>, <span class="string">'Математика'</span>, <span class="number">92</span>, <span class="string">'2025-01-10'</span>),
+(<span class="string">'Сидоров'</span>, <span class="string">'Математика'</span>, <span class="number">78</span>, <span class="string">'2025-01-10'</span>),
+(<span class="string">'Иванов'</span>, <span class="string">'Физика'</span>, <span class="number">88</span>, <span class="string">'2025-01-11'</span>),
+(<span class="string">'Петров'</span>, <span class="string">'Физика'</span>, <span class="number">95</span>, <span class="string">'2025-01-11'</span>),
+(<span class="string">'Сидоров'</span>, <span class="string">'Физика'</span>, <span class="number">82</span>, <span class="string">'2025-01-11'</span>);</div>
+<div class="task">
+<strong>Задание:</strong> Напишите запросы:
+<ul>
+<li>1. Ранг студента по баллам в каждом предмете (RANK)</li>
+<li>2. Разница баллов с предыдущим студентом (LAG)</li>
+<li>3. Средний балл по предмету и отклонение каждого студента</li>
+<li>4. Топ-2 студента в каждом предмете</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 3: PostgreSQL - Функция расчета скидки</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Разница между функциями и процедурами в PostgreSQL</p>
+<p>2. Что такое PL/pgSQL?</p>
+<p>3. Как обрабатывать исключения в функциях?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block"><span class="keyword">CREATE TABLE</span> user_orders (
+    user_id <span class="keyword">INTEGER</span>,
+    order_amount <span class="keyword">DECIMAL</span>(<span class="number">10</span>,<span class="number">2</span>),
+    order_date <span class="keyword">DATE</span>
+);
+
+<span class="keyword">INSERT INTO</span> user_orders <span class="keyword">VALUES</span>
+(<span class="number">1</span>, <span class="number">5000</span>, <span class="string">'2025-01-01'</span>),
+(<span class="number">1</span>, <span class="number">8000</span>, <span class="string">'2025-01-05'</span>),
+(<span class="number">1</span>, <span class="number">12000</span>, <span class="string">'2025-01-10'</span>),
+(<span class="number">2</span>, <span class="number">3000</span>, <span class="string">'2025-01-02'</span>),
+(<span class="number">2</span>, <span class="number">4000</span>, <span class="string">'2025-01-08'</span>);</div>
+<div class="task">
+<strong>Задание:</strong> Создайте функцию get_discount(user_id INT, amount DECIMAL):
+<ul>
+<li>Если сумма покупок > 20000 → скидка 10%</li>
+<li>Если сумма покупок > 10000 → скидка 5%</li>
+<li>Иначе → скидка 0%</li>
+</ul>
+Функция должна вернуть итоговую сумму со скидкой.
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 4: PostgreSQL - Полнотекстовый поиск товаров</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое tsvector и tsquery?</p>
+<p>2. Для чего нужен GIN индекс?</p>
+<p>3. Как работает ts_rank для ранжирования результатов?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block"><span class="keyword">CREATE TABLE</span> products (
+    id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    name <span class="keyword">VARCHAR</span>(<span class="number">200</span>),
+    description <span class="keyword">TEXT</span>
+);
+
+<span class="keyword">INSERT INTO</span> products (name, description) <span class="keyword">VALUES</span>
+(<span class="string">'iPhone 15 Pro'</span>, <span class="string">'Смартфон Apple с процессором A17'</span>),
+(<span class="string">'Samsung Galaxy S24'</span>, <span class="string">'Флагманский смартфон Samsung'</span>),
+(<span class="string">'MacBook Pro'</span>, <span class="string">'Ноутбук Apple для профессионалов'</span>),
+(<span class="string">'Наушники AirPods'</span>, <span class="string">'Беспроводные наушники Apple'</span>);</div>
+<div class="task">
+<strong>Задание:</strong>
+<ul>
+<li>1. Добавьте tsvector колонку для поиска</li>
+<li>2. Создайте GIN индекс</li>
+<li>3. Напишите запрос поиска по слову "Apple" с ранжированием</li>
+<li>4. Добавьте подсветку найденных слов (ts_headline)</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 5: Redis - Счетчик просмотров и кэш</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Какие типы данных поддерживает Redis?</p>
+<p>2. Что такое TTL и для чего он нужен?</p>
+<p>3. Разница между SET и HASH в Redis</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<div class="task">
+<strong>Задание:</strong> Реализуйте в FastAPI:
+<ul>
+<li>1. Эндпоинт GET /articles/{id} - возвращает статью</li>
+<li>2. Кэширование статьи в Redis (TTL 5 минут)</li>
+<li>3. Счетчик просмотров (INCR) для каждой статьи</li>
+<li>4. Эндпоинт GET /articles/popular - топ-5 по просмотрам (ZSET)</li>
+</ul>
+</div>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block">articles = {
+    <span class="number">1</span>: {<span class="string">"title"</span>: <span class="string">"Python tips"</span>, <span class="string">"content"</span>: <span class="string">"..."</span>},
+    <span class="number">2</span>: {<span class="string">"title"</span>: <span class="string">"FastAPI guide"</span>, <span class="string">"content"</span>: <span class="string">"..."</span>},
+    <span class="number">3</span>: {<span class="string">"title"</span>: <span class="string">"Redis cache"</span>, <span class="string">"content"</span>: <span class="string">"..."</span>}
+}</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 6: MongoDB - Агрегация заказов</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое aggregation pipeline в MongoDB?</p>
+<p>2. Для чего используется $unwind?</p>
+<p>3. Разница между $match и $filter</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block">db.orders.<span class="function">insertMany</span>([
+  {customer: <span class="string">"Иванов"</span>, items: [{name: <span class="string">"Товар1"</span>, price: <span class="number">1000</span>, qty: <span class="number">2</span>}], date: <span class="function">ISODate</span>(<span class="string">"2025-01-10"</span>)},
+  {customer: <span class="string">"Петров"</span>, items: [{name: <span class="string">"Товар2"</span>, price: <span class="number">500</span>, qty: <span class="number">3</span>}], date: <span class="function">ISODate</span>(<span class="string">"2025-01-10"</span>)},
+  {customer: <span class="string">"Иванов"</span>, items: [{name: <span class="string">"Товар1"</span>, price: <span class="number">1000</span>, qty: <span class="number">1</span>}], date: <span class="function">ISODate</span>(<span class="string">"2025-01-11"</span>)},
+  {customer: <span class="string">"Сидоров"</span>, items: [{name: <span class="string">"Товар3"</span>, price: <span class="number">2000</span>, qty: <span class="number">1</span>}], date: <span class="function">ISODate</span>(<span class="string">"2025-01-11"</span>)}
+])</div>
+<div class="task">
+<strong>Задание:</strong> Напишите агрегации:
+<ul>
+<li>1. Общая сумма заказов по каждому клиенту</li>
+<li>2. Средний чек по дням</li>
+<li>3. Топ-3 товара по количеству продаж ($unwind)</li>
+<li>4. Клиенты с суммой заказов > 2000</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 7: MongoDB + FastAPI - API категорий</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое Motor и чем он отличается от PyMongo?</p>
+<p>2. Как реализовать пагинацию в MongoDB?</p>
+<p>3. Преимущества NoSQL перед реляционными БД</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block">db.categories.<span class="function">insertMany</span>([
+  {name: <span class="string">"Электроника"</span>, products: [<span class="string">"Телефон"</span>, <span class="string">"Ноутбук"</span>], count: <span class="number">150</span>},
+  {name: <span class="string">"Одежда"</span>, products: [<span class="string">"Куртка"</span>, <span class="string">"Джинсы"</span>], count: <span class="number">320</span>},
+  {name: <span class="string">"Книги"</span>, products: [<span class="string">"Роман"</span>, <span class="string">"Учебник"</span>], count: <span class="number">89</span>}
+])</div>
+<div class="task">
+<strong>Задание:</strong> Создайте API с Motor:
+<ul>
+<li>GET /categories - список с пагинацией (skip, limit)</li>
+<li>GET /categories/{name} - поиск по имени</li>
+<li>POST /categories - создание категории</li>
+<li>PUT /categories/{id} - обновление count</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 8: OpenSearch - Индекс для поиска статей</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое mapping в OpenSearch?</p>
+<p>2. Разница между text и keyword типами</p>
+<p>3. Для чего нужны агрегации (aggregations)?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block">[
+  {<span class="string">"title"</span>: <span class="string">"Python для начинающих"</span>, <span class="string">"content"</span>: <span class="string">"Основы языка Python"</span>, <span class="string">"views"</span>: <span class="number">1500</span>},
+  {<span class="string">"title"</span>: <span class="string">"FastAPI tutorial"</span>, <span class="string">"content"</span>: <span class="string">"Создание API на FastAPI"</span>, <span class="string">"views"</span>: <span class="number">2300</span>},
+  {<span class="string">"title"</span>: <span class="string">"PostgreSQL guide"</span>, <span class="string">"content"</span>: <span class="string">"Работа с PostgreSQL"</span>, <span class="string">"views"</span>: <span class="number">890</span>}
+]</div>
+<div class="task">
+<strong>Задание:</strong>
+<ul>
+<li>1. Создайте индекс с mapping (title: text, content: text, views: integer)</li>
+<li>2. Загрузите данные</li>
+<li>3. Поиск по слову "Python" с фильтром views > 1000</li>
+<li>4. Агрегация: средний views по результатам поиска</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 9: OpenSearch + FastAPI - Поиск с фильтрами</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое bool query и его компоненты (must, should, filter)?</p>
+<p>2. Как работает highlight в OpenSearch?</p>
+<p>3. Разница между query и filter context</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<div class="task">
+<strong>Задание:</strong> Создайте эндпоинт GET /search:
+<ul>
+<li>Параметры: q (текст), min_views, max_views</li>
+<li>Bool query: must (текст), filter (диапазон views)</li>
+<li>Сортировка по релевантности и views</li>
+<li>Highlight для найденных слов</li>
+</ul>
+<p><em>Используйте данные из задания 8</em></p>
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 10: FastAPI + GraphQL - API пользователей</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Чем GraphQL отличается от REST API?</p>
+<p>2. Что такое resolver в GraphQL?</p>
+<p>3. Что такое N+1 problem и как его решить?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block"><span class="keyword">CREATE TABLE</span> users (id <span class="keyword">SERIAL PRIMARY KEY</span>, name <span class="keyword">VARCHAR</span>(<span class="number">100</span>), email <span class="keyword">VARCHAR</span>(<span class="number">100</span>));
+<span class="keyword">CREATE TABLE</span> posts (id <span class="keyword">SERIAL PRIMARY KEY</span>, title <span class="keyword">VARCHAR</span>(<span class="number">200</span>), user_id <span class="keyword">INTEGER</span>);
+
+<span class="keyword">INSERT INTO</span> users <span class="keyword">VALUES</span> (<span class="number">1</span>, <span class="string">'Иван'</span>, <span class="string">'ivan@mail.ru'</span>), (<span class="number">2</span>, <span class="string">'Мария'</span>, <span class="string">'maria@mail.ru'</span>);
+<span class="keyword">INSERT INTO</span> posts <span class="keyword">VALUES</span> (<span class="number">1</span>, <span class="string">'Первый пост'</span>, <span class="number">1</span>), (<span class="number">2</span>, <span class="string">'Второй пост'</span>, <span class="number">1</span>), (<span class="number">3</span>, <span class="string">'Пост Марии'</span>, <span class="number">2</span>);</div>
+<div class="task">
+<strong>Задание:</strong> Создайте GraphQL схему:
+<ul>
+<li>Query: user(id), users, post(id)</li>
+<li>Mutation: createPost(title, userId)</li>
+<li>Nested: user { posts { title } }</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 11: GraphQL Subscriptions - Чат</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое GraphQL Subscriptions?</p>
+<p>2. Как работает WebSocket протокол?</p>
+<p>3. Что такое Pub/Sub паттерн?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<div class="task">
+<strong>Задание:</strong> Реализуйте:
+<ul>
+<li>1. Mutation sendMessage(room, text, user)</li>
+<li>2. Subscription messageAdded(room) - новые сообщения в комнате</li>
+<li>3. Query messages(room, limit) - история сообщений</li>
+</ul>
+</div>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block">messages = []  <span class="comment"># in-memory хранилище</span></div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 12: FastAPI + PostgreSQL + Redis - Корзина</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Когда использовать Redis, а когда PostgreSQL?</p>
+<p>2. Что такое транзакция в БД?</p>
+<p>3. Как обеспечить консистентность данных между Redis и PostgreSQL?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block"><span class="keyword">CREATE TABLE</span> products (id <span class="keyword">SERIAL PRIMARY KEY</span>, name <span class="keyword">VARCHAR</span>(<span class="number">100</span>), price <span class="keyword">DECIMAL</span>(<span class="number">10</span>,<span class="number">2</span>));
+<span class="keyword">INSERT INTO</span> products <span class="keyword">VALUES</span> (<span class="number">1</span>, <span class="string">'Товар1'</span>, <span class="number">1000</span>), (<span class="number">2</span>, <span class="string">'Товар2'</span>, <span class="number">1500</span>), (<span class="number">3</span>, <span class="string">'Товар3'</span>, <span class="number">2000</span>);</div>
+<div class="task">
+<strong>Задание:</strong>
+<ul>
+<li>1. POST /cart/add - добавить товар в корзину (Redis Hash)</li>
+<li>2. GET /cart/{user_id} - получить корзину</li>
+<li>3. POST /cart/checkout - создать заказ в PostgreSQL, очистить корзину</li>
+<li>4. GET /orders/{user_id} - история заказов</li>
+</ul>
+</div>
+<div class="note">
+<strong>Пояснения:</strong>
+<ul>
+<li>Корзина хранится в Redis как Hash: cart:{user_id} → {product_id: quantity}</li>
+<li>При checkout: начать транзакцию в PostgreSQL, создать заказ, удалить корзину из Redis</li>
+<li>Если транзакция не удалась - корзина остается в Redis</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 13: PostgreSQL - Процедура отчета продаж</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Когда использовать процедуры вместо функций?</p>
+<p>2. Что такое VOLATILE, STABLE, IMMUTABLE функции?</p>
+<p>3. Как оптимизировать запросы с оконными функциями?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block"><span class="keyword">CREATE TABLE</span> sales (product_id <span class="keyword">INT</span>, amount <span class="keyword">DECIMAL</span>, sale_date <span class="keyword">DATE</span>);
+<span class="keyword">INSERT INTO</span> sales <span class="keyword">VALUES</span>
+(<span class="number">1</span>, <span class="number">5000</span>, <span class="string">'2025-01-10'</span>), (<span class="number">2</span>, <span class="number">3000</span>, <span class="string">'2025-01-10'</span>),
+(<span class="number">1</span>, <span class="number">4000</span>, <span class="string">'2025-01-11'</span>), (<span class="number">3</span>, <span class="number">8000</span>, <span class="string">'2025-01-11'</span>);</div>
+<div class="task">
+<strong>Задание:</strong> Создайте процедуру daily_sales_report():
+<ul>
+<li>1. Рассчитывает сумму продаж по дням (оконная функция)</li>
+<li>2. Ранг товаров по продажам</li>
+<li>3. Сохраняет в таблицу reports</li>
+<li>4. Возвращает количество записей</li>
+</ul>
+</div>
+<div class="note">
+<strong>Пояснения:</strong>
+<ul>
+<li>Используйте SUM() OVER (ORDER BY sale_date) для нарастающего итога</li>
+<li>RANK() OVER (PARTITION BY sale_date ORDER BY amount DESC) для ранжирования</li>
+<li>CREATE TABLE reports (sale_date DATE, product_id INT, total DECIMAL, rank INT)</li>
+<li>Процедура должна очищать старые данные перед вставкой</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 14: MongoDB + Redis - Кэш агрегаций</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое cache invalidation?</p>
+<p>2. Стратегии кэширования (Cache-Aside, Write-Through)</p>
+<p>3. Когда кэш может быть вреден?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block">db.sales.<span class="function">insertMany</span>([
+  {product: <span class="string">"A"</span>, category: <span class="string">"Electronics"</span>, amount: <span class="number">5000</span>},
+  {product: <span class="string">"B"</span>, category: <span class="string">"Electronics"</span>, amount: <span class="number">3000</span>},
+  {product: <span class="string">"C"</span>, category: <span class="string">"Books"</span>, amount: <span class="number">1000</span>}
+])</div>
+<div class="task">
+<strong>Задание:</strong>
+<ul>
+<li>1. Агрегация: сумма продаж по категориям</li>
+<li>2. Кэширование результата в Redis (TTL 10 минут)</li>
+<li>3. Middleware: проверка кэша перед запросом к MongoDB</li>
+<li>4. Инвалидация при добавлении новой продажи</li>
+</ul>
+</div>
+<div class="note">
+<strong>Пояснения:</strong>
+<ul>
+<li>Ключ кэша: sales:by_category</li>
+<li>Агрегация: db.sales.aggregate([{$group: {_id: "$category", total: {$sum: "$amount"}}}])</li>
+<li>Middleware проверяет Redis → если нет, запрос к MongoDB → сохранить в Redis</li>
+<li>При POST /sales - удалить ключ sales:by_category из Redis</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 15: Docker Compose - Полный стек</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое Docker Compose и для чего он нужен?</p>
+<p>2. Разница между volumes и bind mounts</p>
+<p>3. Что такое healthcheck и зачем он нужен?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<div class="task">
+<strong>Задание:</strong> Создайте docker-compose.yml:
+<ul>
+<li>1. FastAPI приложение (порт 8000)</li>
+<li>2. PostgreSQL (порт 5432)</li>
+<li>3. Redis (порт 6379)</li>
+<li>4. MongoDB (порт 27017)</li>
+<li>5. Nginx как reverse proxy (порт 80)</li>
+</ul>
+</div>
+<div class="requirements">
+<strong>Требования:</strong>
+<ul>
+<li>Volumes для данных БД</li>
+<li>Healthcheck для всех сервисов</li>
+<li>Environment variables через .env</li>
+<li>Зависимости между сервисами (depends_on)</li>
+</ul>
+</div>
+</div>
+</div>
+
+</div>
+</body>
+</html>
