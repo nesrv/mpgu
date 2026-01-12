@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Билеты для зачета - Продвинутая веб-разработка</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;line-height:1.6;color:#333;background:linear-gradient(135deg,#667eea,#764ba2);padding:20px}.container{max-width:1200px;margin:0 auto;background:white;border-radius:15px;padding:30px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}.header{text-align:center;padding:30px;background:linear-gradient(135deg,#005EB8,#003D82);color:white;border-radius:10px;margin-bottom:30px}.header h1{font-size:2.5em;margin-bottom:10px}.ticket{margin-bottom:40px;padding:25px;background:#f8f9fa;border-left:5px solid #005EB8;border-radius:0 10px 10px 0;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.ticket h2{color:#003D82;margin-bottom:20px;font-size:1.8em}.ticket h3{color:#005EB8;margin:20px 0 10px;font-size:1.3em}.theory{background:#e3f2fd;padding:15px;border-radius:8px;margin:15px 0}.practice{background:white;padding:15px;border-radius:8px;margin:15px 0}.code-block{background:#282c34;color:#e2e8f0;padding:15px;border-radius:8px;margin:10px 0;font-family:'Courier New',monospace;overflow-x:auto;font-size:14px;white-space:pre}.code-block .keyword{color:#c678dd;font-weight:bold}.code-block .string{color:#98c379}.code-block .number{color:#d19a66}.code-block .comment{color:#5c6370;font-style:italic}.code-block .function{color:#61afef}.task{background:#fff3cd;padding:15px;border-radius:8px;margin:10px 0;border-left:4px solid #ffc107}.requirements{background:#d1ecf1;padding:15px;border-radius:8px;margin:10px 0;border-left:4px solid #17a2b8}.note{background:#f8d7da;padding:15px;border-radius:8px;margin:10px 0;border-left:4px solid #dc3545}ul{margin-left:20px;margin-top:10px}li{margin:5px 0}hr{border:none;border-top:2px solid #e1e5e9;margin:30px 0}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>📚 Билеты для зачета</h1>
+<h2>Продвинутая веб-разработка</h2>
+</div>
+
+<div class="ticket">
+<h2>Билет 1: FastAPI + SQLAlchemy - API для задач</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое FastAPI и каковы его основные преимущества?</p>
+<p>2. В чем разница между синхронным и асинхронным SQLAlchemy?</p>
+<p>3. Как работает dependency injection в FastAPI?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block"><span class="keyword">CREATE TABLE</span> tasks (
+    id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    title <span class="keyword">VARCHAR</span>(<span class="number">200</span>),
+    description <span class="keyword">TEXT</span>,
+    status <span class="keyword">VARCHAR</span>(<span class="number">20</span>),
+    user_id <span class="keyword">INTEGER</span>,
+    created_at <span class="keyword">TIMESTAMP DEFAULT NOW</span>()
+);
+
+<span class="keyword">INSERT INTO</span> tasks (title, description, status, user_id) <span class="keyword">VALUES</span>
+(<span class="string">'Изучить FastAPI'</span>, <span class="string">'Пройти документацию'</span>, <span class="string">'done'</span>, <span class="number">1</span>),
+(<span class="string">'Настроить БД'</span>, <span class="string">'PostgreSQL + SQLAlchemy'</span>, <span class="string">'in_progress'</span>, <span class="number">1</span>),
+(<span class="string">'Написать тесты'</span>, <span class="string">'Pytest для API'</span>, <span class="string">'todo'</span>, <span class="number">2</span>),
+(<span class="string">'Деплой'</span>, <span class="string">'Docker + CI/CD'</span>, <span class="string">'todo'</span>, <span class="number">2</span>);</div>
+<div class="task">
+<strong>Задание:</strong> Создайте REST API с эндпоинтами:
+<ul>
+<li>GET /tasks - список задач с фильтром по статусу</li>
+<li>POST /tasks - создание задачи</li>
+<li>PUT /tasks/{id} - обновление статуса</li>
+<li>DELETE /tasks/{id} - удаление</li>
+</ul>
+</div>
+<div class="requirements">
+<strong>Требования:</strong> async SQLAlchemy, Pydantic валидация, обработка ошибок
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 2: PostgreSQL - Функция расчета скидки</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое хранимые функции (stored functions) в PostgreSQL?</p>
+<p>2. Какие типы данных можно возвращать из функции PostgreSQL?</p>
+<p>3. В чем разница между функциями и процедурами в PostgreSQL?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block"><span class="keyword">CREATE TABLE</span> user_orders (
+    user_id <span class="keyword">INTEGER</span>,
+    order_amount <span class="keyword">DECIMAL</span>(<span class="number">10</span>,<span class="number">2</span>),
+    order_date <span class="keyword">DATE</span>
+);
+
+<span class="keyword">INSERT INTO</span> user_orders <span class="keyword">VALUES</span>
+(<span class="number">1</span>, <span class="number">5000</span>, <span class="string">'2025-01-01'</span>),
+(<span class="number">1</span>, <span class="number">8000</span>, <span class="string">'2025-01-05'</span>),
+(<span class="number">1</span>, <span class="number">12000</span>, <span class="string">'2025-01-10'</span>),
+(<span class="number">2</span>, <span class="number">3000</span>, <span class="string">'2025-01-02'</span>),
+(<span class="number">2</span>, <span class="number">4000</span>, <span class="string">'2025-01-08'</span>);</div>
+<div class="task">
+<strong>Задание:</strong> Создайте функцию get_discount(user_id INT, amount DECIMAL):
+<ul>
+<li>Если сумма покупок > 20000 → скидка 10%</li>
+<li>Если сумма покупок > 10000 → скидка 5%</li>
+<li>Иначе → скидка 0%</li>
+</ul>
+Функция должна вернуть итоговую сумму со скидкой.
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 3: Redis - Счетчик просмотров и кэш</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое Redis и для чего он используется?</p>
+<p>2. В чем разница между обычными ключами (strings) и отсортированными множествами (ZSET) в Redis?</p>
+<p>3. Что такое TTL (Time To Live) в Redis и как он работает?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<div class="task">
+<strong>Задание:</strong> Реализуйте в FastAPI:
+<ul>
+<li>1. Эндпоинт GET /articles/{id} - возвращает статью</li>
+<li>2. Кэширование статьи в Redis (TTL 5 минут)</li>
+<li>3. Счетчик просмотров (INCR) для каждой статьи</li>
+<li>4. Эндпоинт GET /articles/popular - топ-5 по просмотрам (ZSET)</li>
+</ul>
+</div>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block">articles = {
+    <span class="number">1</span>: {<span class="string">"title"</span>: <span class="string">"Python tips"</span>, <span class="string">"content"</span>: <span class="string">"..."</span>},
+    <span class="number">2</span>: {<span class="string">"title"</span>: <span class="string">"FastAPI guide"</span>, <span class="string">"content"</span>: <span class="string">"..."</span>},
+    <span class="number">3</span>: {<span class="string">"title"</span>: <span class="string">"Redis cache"</span>, <span class="string">"content"</span>: <span class="string">"..."</span>}
+}</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 4: Docker Compose - Полный стек</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое Docker Compose и для чего он используется?</p>
+<p>2. В чем разница между volumes и bind mounts в Docker Compose?</p>
+<p>3. Как работает depends_on и чем он отличается от healthcheck?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<div class="task">
+<strong>Задание:</strong> Создайте docker-compose.yml:
+<ul>
+<li>1. FastAPI приложение (порт 8000)</li>
+<li>2. PostgreSQL (порт 5432)</li>
+<li>3. Redis (порт 6379)</li>
+<li>4. Nginx как reverse proxy (порт 80)</li>
+</ul>
+</div>
+<div class="requirements">
+<strong>Требования:</strong>
+<ul>
+<li>Volumes для данных БД</li>
+<li>Healthcheck для всех сервисов</li>
+<li>Environment variables через .env</li>
+<li>Зависимости между сервисами (depends_on)</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 5: SQLAlchemy - Связи один-ко-многим</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое relationship в SQLAlchemy?</p>
+<p>2. Разница между lazy='select' и lazy='joined'</p>
+<p>3. Что такое back_populates?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block"><span class="keyword">CREATE TABLE</span> authors (
+    id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    name <span class="keyword">VARCHAR</span>(<span class="number">100</span>),
+    email <span class="keyword">VARCHAR</span>(<span class="number">100</span>)
+);
+
+<span class="keyword">CREATE TABLE</span> books (
+    id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    title <span class="keyword">VARCHAR</span>(<span class="number">200</span>),
+    author_id <span class="keyword">INTEGER REFERENCES</span> authors(id),
+    published_date <span class="keyword">DATE</span>
+);
+
+<span class="keyword">INSERT INTO</span> authors (name, email) <span class="keyword">VALUES</span>
+(<span class="string">'Пушкин'</span>, <span class="string">'pushkin@mail.ru'</span>),
+(<span class="string">'Толстой'</span>, <span class="string">'tolstoy@mail.ru'</span>);
+
+<span class="keyword">INSERT INTO</span> books (title, author_id, published_date) <span class="keyword">VALUES</span>
+(<span class="string">'Евгений Онегин'</span>, <span class="number">1</span>, <span class="string">'1833-01-01'</span>),
+(<span class="string">'Капитанская дочка'</span>, <span class="number">1</span>, <span class="string">'1836-01-01'</span>),
+(<span class="string">'Война и мир'</span>, <span class="number">2</span>, <span class="string">'1869-01-01'</span>);</div>
+<div class="task">
+<strong>Задание:</strong> Создайте модели SQLAlchemy:
+<ul>
+<li>1. Author с relationship к Book</li>
+<li>2. Book с relationship к Author</li>
+<li>3. Эндпоинт GET /authors/{id}/books - список книг автора</li>
+<li>4. Эндпоинт POST /books - создание книги с привязкой к автору</li>
+</ul>
+</div>
+<div class="requirements">
+<strong>Требования:</strong> использовать relationship, back_populates, async SQLAlchemy
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 6: SQLAlchemy - Агрегация и группировка</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Как использовать func в SQLAlchemy?</p>
+<p>2. Что такое group_by и having?</p>
+<p>3. Разница между filter и filter_by</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block"><span class="keyword">CREATE TABLE</span> orders (
+    id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    product_name <span class="keyword">VARCHAR</span>(<span class="number">100</span>),
+    quantity <span class="keyword">INTEGER</span>,
+    price <span class="keyword">DECIMAL</span>(<span class="number">10</span>,<span class="number">2</span>),
+    order_date <span class="keyword">DATE</span>
+);
+
+<span class="keyword">INSERT INTO</span> orders (product_name, quantity, price, order_date) <span class="keyword">VALUES</span>
+(<span class="string">'Товар A'</span>, <span class="number">5</span>, <span class="number">1000</span>, <span class="string">'2025-01-10'</span>),
+(<span class="string">'Товар B'</span>, <span class="number">3</span>, <span class="number">1500</span>, <span class="string">'2025-01-10'</span>),
+(<span class="string">'Товар A'</span>, <span class="number">2</span>, <span class="number">1000</span>, <span class="string">'2025-01-11'</span>),
+(<span class="string">'Товар C'</span>, <span class="number">10</span>, <span class="number">500</span>, <span class="string">'2025-01-11'</span>),
+(<span class="string">'Товар B'</span>, <span class="number">1</span>, <span class="number">1500</span>, <span class="string">'2025-01-12'</span>);</div>
+<div class="task">
+<strong>Задание:</strong> Используя SQLAlchemy создайте эндпоинты:
+<ul>
+<li>1. GET /orders/stats - общая сумма и количество заказов</li>
+<li>2. GET /orders/by-product - группировка по товарам (название, количество, сумма)</li>
+<li>3. GET /orders/by-date - группировка по дням</li>
+<li>4. GET /orders/top-products?limit=3 - топ товаров по выручке</li>
+</ul>
+</div>
+<div class="requirements">
+<strong>Требования:</strong> использовать func.sum(), func.count(), group_by(), order_by()
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 7: PostgreSQL - Представления (Views)</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое представление (view) в PostgreSQL?</p>
+<p>2. Разница между обычным и материализованным представлением</p>
+<p>3. Когда использовать представления?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block"><span class="keyword">CREATE TABLE</span> employees (
+    id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    name <span class="keyword">VARCHAR</span>(<span class="number">100</span>),
+    department <span class="keyword">VARCHAR</span>(<span class="number">50</span>),
+    salary <span class="keyword">DECIMAL</span>(<span class="number">10</span>,<span class="number">2</span>),
+    hire_date <span class="keyword">DATE</span>
+);
+
+<span class="keyword">CREATE TABLE</span> projects (
+    id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    name <span class="keyword">VARCHAR</span>(<span class="number">100</span>),
+    employee_id <span class="keyword">INTEGER REFERENCES</span> employees(id),
+    budget <span class="keyword">DECIMAL</span>(<span class="number">10</span>,<span class="number">2</span>),
+    status <span class="keyword">VARCHAR</span>(<span class="number">20</span>)
+);
+
+<span class="keyword">INSERT INTO</span> employees (name, department, salary, hire_date) <span class="keyword">VALUES</span>
+(<span class="string">'Иванов'</span>, <span class="string">'IT'</span>, <span class="number">100000</span>, <span class="string">'2020-01-15'</span>),
+(<span class="string">'Петров'</span>, <span class="string">'IT'</span>, <span class="number">120000</span>, <span class="string">'2019-03-20'</span>),
+(<span class="string">'Сидорова'</span>, <span class="string">'HR'</span>, <span class="number">80000</span>, <span class="string">'2021-06-10'</span>);
+
+<span class="keyword">INSERT INTO</span> projects (name, employee_id, budget, status) <span class="keyword">VALUES</span>
+(<span class="string">'Проект A'</span>, <span class="number">1</span>, <span class="number">500000</span>, <span class="string">'active'</span>),
+(<span class="string">'Проект B'</span>, <span class="number">1</span>, <span class="number">300000</span>, <span class="string">'completed'</span>),
+(<span class="string">'Проект C'</span>, <span class="number">2</span>, <span class="number">800000</span>, <span class="string">'active'</span>);</div>
+<div class="task">
+<strong>Задание:</strong>
+<ul>
+<li>1. Создайте представление employee_stats с полями: name, department, salary, projects_count, total_budget</li>
+<li>2. Создайте материализованное представление department_summary: department, avg_salary, employees_count, total_projects</li>
+<li>3. Напишите SQL для обновления материализованного представления</li>
+<li>4. Создайте эндпоинт FastAPI GET /stats/employees - данные из представления</li>
+</ul>
+</div>
+<div class="requirements">
+<strong>Требования:</strong> использовать CREATE VIEW, CREATE MATERIALIZED VIEW, REFRESH MATERIALIZED VIEW
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 8: Pydantic - Валидация и сериализация в FastAPI</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое Pydantic и для чего он нужен?</p>
+<p>2. Разница между BaseModel и dataclass</p>
+<p>3. Что такое Field и для чего используются валидаторы?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block"><span class="keyword">CREATE TABLE</span> users (
+    id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    username <span class="keyword">VARCHAR</span>(<span class="number">50</span>) <span class="keyword">UNIQUE</span>,
+    email <span class="keyword">VARCHAR</span>(<span class="number">100</span>) <span class="keyword">UNIQUE</span>,
+    age <span class="keyword">INTEGER</span>,
+    is_active <span class="keyword">BOOLEAN DEFAULT</span> true,
+    created_at <span class="keyword">TIMESTAMP DEFAULT NOW</span>()
+);
+
+<span class="keyword">INSERT INTO</span> users (username, email, age) <span class="keyword">VALUES</span>
+(<span class="string">'ivan123'</span>, <span class="string">'ivan@mail.ru'</span>, <span class="number">25</span>),
+(<span class="string">'maria_p'</span>, <span class="string">'maria@mail.ru'</span>, <span class="number">30</span>),
+(<span class="string">'alex_dev'</span>, <span class="string">'alex@mail.ru'</span>, <span class="number">22</span>);</div>
+<div class="task">
+<strong>Задание:</strong> Создайте Pydantic модели и эндпоинты:
+<ul>
+<li>1. UserCreate - валидация при создании:
+   <ul>
+   <li>username: 3-50 символов, только буквы и цифры</li>
+   <li>email: валидный email</li>
+   <li>age: от 18 до 100</li>
+   <li>password: минимум 8 символов, обязательно</li>
+   </ul>
+</li>
+<li>2. UserResponse - для ответа (без password)</li>
+<li>3. UserUpdate - для обновления (все поля опциональные)</li>
+<li>4. POST /users - создание с валидацией</li>
+<li>5. GET /users/{id} - получение пользователя</li>
+<li>6. PATCH /users/{id} - частичное обновление</li>
+</ul>
+</div>
+<div class="requirements">
+<strong>Требования:</strong> использовать Field, validator, EmailStr, constr, model_validator
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 9: FastAPI - Маршрутизация и APIRouter</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое APIRouter и зачем он нужен?</p>
+<p>2. Как работают префиксы и теги в роутерах?</p>
+<p>3. Что такое dependencies в FastAPI?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block"><span class="keyword">CREATE TABLE</span> products (
+    id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    name <span class="keyword">VARCHAR</span>(<span class="number">100</span>),
+    price <span class="keyword">DECIMAL</span>(<span class="number">10</span>,<span class="number">2</span>),
+    category <span class="keyword">VARCHAR</span>(<span class="number">50</span>)
+);
+
+<span class="keyword">CREATE TABLE</span> reviews (
+    id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    product_id <span class="keyword">INTEGER REFERENCES</span> products(id),
+    rating <span class="keyword">INTEGER</span>,
+    comment <span class="keyword">TEXT</span>
+);
+
+<span class="keyword">INSERT INTO</span> products (name, price, category) <span class="keyword">VALUES</span>
+(<span class="string">'Ноутбук'</span>, <span class="number">50000</span>, <span class="string">'electronics'</span>),
+(<span class="string">'Книга'</span>, <span class="number">500</span>, <span class="string">'books'</span>),
+(<span class="string">'Наушники'</span>, <span class="number">3000</span>, <span class="string">'electronics'</span>);
+
+<span class="keyword">INSERT INTO</span> reviews (product_id, rating, comment) <span class="keyword">VALUES</span>
+(<span class="number">1</span>, <span class="number">5</span>, <span class="string">'Отличный товар'</span>),
+(<span class="number">1</span>, <span class="number">4</span>, <span class="string">'Хорошо'</span>),
+(<span class="number">3</span>, <span class="number">5</span>, <span class="string">'Супер звук'</span>);</div>
+<div class="task">
+<strong>Задание:</strong> Создайте структуру с роутерами:
+<ul>
+<li>1. products_router.py:
+   <ul>
+   <li>GET /products - список товаров с фильтром по категории</li>
+   <li>GET /products/{id} - товар по ID</li>
+   <li>POST /products - создание товара</li>
+   </ul>
+</li>
+<li>2. reviews_router.py:
+   <ul>
+   <li>GET /products/{product_id}/reviews - отзывы товара</li>
+   <li>POST /products/{product_id}/reviews - добавить отзыв</li>
+   </ul>
+</li>
+<li>3. main.py - подключить роутеры с префиксами /api/v1/products и /api/v1/reviews</li>
+<li>4. Добавить dependency для проверки существования товара</li>
+<li>5. Добавить теги для документации</li>
+</ul>
+</div>
+<div class="requirements">
+<strong>Требования:</strong> использовать APIRouter, prefix, tags, dependencies, include_router
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 10: SQLAlchemy - Связи многие-ко-многим</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. Что такое связь многие-ко-многим (many-to-many) в SQLAlchemy?</p>
+<p>2. Зачем нужна промежуточная таблица (association table)?</p>
+<p>3. Разница между relationship с secondary и Table в SQLAlchemy?</p>
+<p>4. Что такое back_populates в контексте many-to-many?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block"><span class="keyword">CREATE TABLE</span> actors (
+    id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    name <span class="keyword">VARCHAR</span>(<span class="number">100</span>),
+    birth_date <span class="keyword">DATE</span>,
+    nationality <span class="keyword">VARCHAR</span>(<span class="number">50</span>)
+);
+
+<span class="keyword">CREATE TABLE</span> movies (
+    id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    title <span class="keyword">VARCHAR</span>(<span class="number">200</span>),
+    release_year <span class="keyword">INTEGER</span>,
+    genre <span class="keyword">VARCHAR</span>(<span class="number">50</span>),
+    director <span class="keyword">VARCHAR</span>(<span class="number">100</span>)
+);
+
+<span class="keyword">CREATE TABLE</span> actor_movie (
+    actor_id <span class="keyword">INTEGER REFERENCES</span> actors(id) <span class="keyword">ON DELETE CASCADE</span>,
+    movie_id <span class="keyword">INTEGER REFERENCES</span> movies(id) <span class="keyword">ON DELETE CASCADE</span>,
+    role_name <span class="keyword">VARCHAR</span>(<span class="number">100</span>),
+    <span class="keyword">PRIMARY KEY</span> (actor_id, movie_id)
+);
+
+<span class="keyword">INSERT INTO</span> actors (name, birth_date, nationality) <span class="keyword">VALUES</span>
+(<span class="string">'Леонардо ДиКаприо'</span>, <span class="string">'1974-11-11'</span>, <span class="string">'USA'</span>),
+(<span class="string">'Кейт Уинслет'</span>, <span class="string">'1975-10-05'</span>, <span class="string">'UK'</span>),
+(<span class="string">'Том Хэнкс'</span>, <span class="string">'1956-07-09'</span>, <span class="string">'USA'</span>),
+(<span class="string">'Мэрил Стрип'</span>, <span class="string">'1949-06-22'</span>, <span class="string">'USA'</span>);
+
+<span class="keyword">INSERT INTO</span> movies (title, release_year, genre, director) <span class="keyword">VALUES</span>
+(<span class="string">'Титаник'</span>, <span class="number">1997</span>, <span class="string">'drama'</span>, <span class="string">'Джеймс Кэмерон'</span>),
+(<span class="string">'Форрест Гамп'</span>, <span class="number">1994</span>, <span class="string">'drama'</span>, <span class="string">'Роберт Земекис'</span>),
+(<span class="string">'Дьявол носит Prada'</span>, <span class="number">2006</span>, <span class="string">'comedy'</span>, <span class="string">'Дэвид Френкел'</span>);
+
+<span class="keyword">INSERT INTO</span> actor_movie (actor_id, movie_id, role_name) <span class="keyword">VALUES</span>
+(<span class="number">1</span>, <span class="number">1</span>, <span class="string">'Джек Доусон'</span>),
+(<span class="number">2</span>, <span class="number">1</span>, <span class="string">'Роза Дьюитт Бьюкейтер'</span>),
+(<span class="number">3</span>, <span class="number">2</span>, <span class="string">'Форрест Гамп'</span>),
+(<span class="number">1</span>, <span class="number">2</span>, <span class="string">'Бенджамин Баффет'</span>),
+(<span class="number">4</span>, <span class="number">3</span>, <span class="string">'Миранда Пристли'</span>),
+(<span class="number">2</span>, <span class="number">3</span>, <span class="string">'Эмили Чарлтон'</span>);</div>
+<div class="task">
+<strong>Задание:</strong> Создайте модели SQLAlchemy:
+<ul>
+<li>1. Actor с relationship к Movie через промежуточную таблицу</li>
+<li>2. Movie с relationship к Actor через промежуточную таблицу</li>
+<li>3. Association table для связи с дополнительным полем role_name</li>
+<li>4. Эндпоинт GET /actors/{id}/movies - список фильмов актера</li>
+<li>5. Эндпоинт GET /movies/{id}/actors - список актеров фильма</li>
+<li>6. Эндпоинт POST /movies/{movie_id}/actors/{actor_id} - добавить актера в фильм с указанием роли</li>
+<li>7. Эндпоинт DELETE /movies/{movie_id}/actors/{actor_id} - удалить актера из фильма</li>
+</ul>
+</div>
+<div class="requirements">
+<strong>Требования:</strong>
+<ul>
+<li>Использовать relationship с параметром secondary</li>
+<li>Использовать Table для промежуточной таблицы</li>
+<li>Использовать back_populates для двусторонней связи</li>
+<li>Поддержка дополнительных полей в association table (role_name)</li>
+<li>Async SQLAlchemy</li>
+<li>Обработка ошибок (актер/фильм не найден, дублирование связи)</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="ticket">
+<h2>Билет 11: PostgreSQL - Хранимые процедуры</h2>
+<div class="theory">
+<h3>Теоретическая часть:</h3>
+<p>1. В чем разница между функцией (FUNCTION) и процедурой (PROCEDURE) в PostgreSQL?</p>
+<p>2. Что такое транзакции в процедурах и как они работают?</p>
+<p>3. Для чего используются параметры IN, OUT и INOUT в процедурах?</p>
+</div>
+<div class="practice">
+<h3>Практическая часть:</h3>
+<p><strong>Тестовые данные:</strong></p>
+<div class="code-block"><span class="keyword">CREATE TABLE</span> accounts (
+    id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    account_number <span class="keyword">VARCHAR</span>(<span class="number">20</span>) <span class="keyword">UNIQUE</span>,
+    balance <span class="keyword">DECIMAL</span>(<span class="number">10</span>,<span class="number">2</span>) <span class="keyword">DEFAULT</span> <span class="number">0</span>,
+    owner_name <span class="keyword">VARCHAR</span>(<span class="number">100</span>)
+);
+
+<span class="keyword">CREATE TABLE</span> transactions (
+    id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    from_account_id <span class="keyword">INTEGER REFERENCES</span> accounts(id),
+    to_account_id <span class="keyword">INTEGER REFERENCES</span> accounts(id),
+    amount <span class="keyword">DECIMAL</span>(<span class="number">10</span>,<span class="number">2</span>),
+    transaction_date <span class="keyword">TIMESTAMP DEFAULT NOW</span>(),
+    status <span class="keyword">VARCHAR</span>(<span class="number">20</span>)
+);
+
+<span class="keyword">INSERT INTO</span> accounts (account_number, balance, owner_name) <span class="keyword">VALUES</span>
+(<span class="string">'ACC001'</span>, <span class="number">10000.00</span>, <span class="string">'Иванов Иван'</span>),
+(<span class="string">'ACC002'</span>, <span class="number">5000.00</span>, <span class="string">'Петров Петр'</span>),
+(<span class="string">'ACC003'</span>, <span class="number">15000.00</span>, <span class="string">'Сидорова Мария'</span>);</div>
+<div class="task">
+<strong>Задание:</strong> Создайте хранимую процедуру transfer_money:
+<ul>
+<li>1. Параметры: from_account VARCHAR, to_account VARCHAR, amount DECIMAL</li>
+<li>2. Логика:
+   <ul>
+   <li>Проверить существование обоих счетов</li>
+   <li>Проверить достаточность средств на счете отправителя</li>
+   <li>Выполнить перевод (уменьшить баланс отправителя, увеличить баланс получателя)</li>
+   <li>Создать запись в таблице transactions со статусом 'completed'</li>
+   <li>Если ошибка - откатить транзакцию и записать статус 'failed'</li>
+   </ul>
+</li>
+<li>3. Использовать транзакции (BEGIN/COMMIT/ROLLBACK)</li>
+<li>4. Обработать ошибки с помощью EXCEPTION</li>
+</ul>
+</div>
+<div class="requirements">
+<strong>Требования:</strong>
+<ul>
+<li>Использовать CREATE PROCEDURE</li>
+<li>Обработка ошибок через EXCEPTION</li>
+<li>Валидация входных данных</li>
+</ul>
+</div>
+</div>
+</div>
+
+</div>
+</body>
+</html>
