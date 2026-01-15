@@ -1,0 +1,184 @@
+<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>PostgreSQL: Полнотекстовый поиск</title><link rel="stylesheet" href="../15-16/css/reveal.min.css"><link rel="stylesheet" href="../15-16/css/black.min.css"><link rel="stylesheet" href="../15-16/css/monokai.min.css"><style>.reveal .slides{width:80%!important;height:90%!important;transform:scale(1.2)!important;position:absolute!important;left:50%!important;top:0!important;transform:translateX(calc(-50% + 5%)) scale(1.2)!important;transform-origin:top center!important}.reveal h1{font-size:1.8em!important;margin-top:0!important;margin-bottom:.4em!important}.reveal h2{font-size:0.75em!important;margin-top:0!important;margin-bottom:.4em!important;text-transform:none!important;text-align:right!important;margin-right:10%!important}.reveal h3{font-size:1.1em!important;margin-top:0!important;margin-bottom:.3em!important;text-transform:none!important}.reveal .slides section{padding:15px!important;font-size:1em!important}.reveal p,.reveal ul,.reveal ol{font-size:.9em!important}pre code{font-size:.975em;max-height:none;overflow:hidden}pre{max-height:none;overflow:hidden;margin:10px 0!important}table{font-size:.75em!important}</style></head><body><div class="reveal"><div class="slides">
+
+<section data-background-color="#1a1a2e"><div style="background:rgba(22,33,62,0.9);padding:40px;border:8px solid #0f3460"><h1 style="color:#FFD700">🔍 PostgreSQL: Полнотекстовый поиск</h1><h2 style="color:#90EE90">Full-Text Search без внешних поисковиков</h2><p style="color:#FFF;font-size:1em">🏫 МПГУ, 4 курс, 2025</p></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 2: Содержание</h2><div style="text-align:left;font-size:.7em"><ul style="margin-left:40px"><li>Зачем нужен полнотекстовый поиск?</li><li>Документы и запросы</li><li>Анализаторы</li><li>Словари и шаблоны</li><li>Конфигурации</li><li>Индексная поддержка</li></ul></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 3: Проблемы LIKE и регулярных выражений</h2><div style="text-align:left;font-size:.65em"><p style="margin-left:20px"><strong style="color:#e74c3c">Проблемы SQL средств (LIKE, регулярки):</strong></p><ul style="margin-left:40px"><li>❌ Нет морфологического поиска</li><li>❌ Нет ранжирования результатов</li><li>❌ Нет индексной поддержки</li></ul><pre><code class="language-sql">WHERE name LIKE '%иван%'
+-- Найдет "Иван", но не "Ивана", "Ивану", "Иваном"</code></pre><p style="margin-left:20px;margin-top:10px"><strong style="color:#3498db">Full table scan даже с индексом:</strong> база "умирает" на больших таблицах</p></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 4: Проблемы внешних поисковиков</h2><div style="text-align:left;font-size:.65em"><p style="margin-left:20px"><strong style="color:#e74c3c">Внешние поисковики (Elasticsearch, Solr):</strong></p><ul style="margin-left:40px"><li>🔄 Сложно синхронизировать с БД</li><li>❌ Отсутствие транзакционности</li><li>🔒 Нет доступа к метаданным</li><li>⚠️ Сложности с разграничением доступа</li></ul><pre><code class="language-javascript">// Классический баг:
+await db.insert(post);     // ✅ Успех
+await elastic.index(post); // ❌ Упало
+// Данные в БД есть, в поиске нет!</code></pre></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 5: PostgreSQL FTS — лучшее из двух миров</h2><div style="text-align:left;font-size:.7em"><p style="margin-left:20px"><strong style="color:#2ecc71">Преимущества встроенного FTS:</strong></p><ul style="margin-left:40px"><li>✅ Транзакционность (ACID)</li><li>✅ Актуальность результатов (real-time)</li><li>✅ Морфологический поиск</li><li>✅ Ранжирование по релевантности</li><li>✅ Индексная поддержка (GIN, GiST, RUM)</li><li>✅ Нет "зоопарка технологий"</li></ul></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 6: Документы — tsvector</h2><div style="text-align:left;font-size:.65em"><p style="margin-left:20px"><strong>Документ</strong> — произвольный текст, разобранный на лексемы</p><p style="margin-left:20px;margin-top:10px"><strong>Внутреннее представление:</strong> <code>tsvector</code></p><pre><code class="language-sql">SELECT to_tsvector('russian', 'Разработчики разрабатывают разработку');
+-- Результат: 'разработ':1,2,3
+-- Все словоформы → одна лексема!</code></pre><p style="margin-left:20px;margin-top:10px"><strong>Аналогия:</strong> tsvector — это сериализованный JSON для поиска</p></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 7: Запросы — tsquery</h2><div style="text-align:left;font-size:.65em"><p style="margin-left:20px"><strong>Запрос</strong> — лексемы с логическими связками</p><p style="margin-left:20px;margin-top:10px"><strong>Операторы:</strong></p><ul style="margin-left:40px"><li><code>&</code> — И (AND)</li><li><code>|</code> — ИЛИ (OR)</li><li><code>!</code> — НЕ (NOT)</li><li><code>&lt;-&gt;</code> — предшествует (фразовый поиск)</li><li><code>( )</code> — группировка</li></ul><pre><code class="language-sql">-- Булева логика
+'postgres & (performance | optimization)'
+-- Фразовый поиск
+'full <-> text <-> search'
+-- NOT оператор
+'python & !django'</code></pre></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 8: Оператор соответствия @@</h2><div style="text-align:left;font-size:.65em"><p style="margin-left:20px"><strong>Оператор @@</strong> — проверка соответствия документа запросу</p><pre><code class="language-sql">SELECT * FROM articles 
+WHERE to_tsvector('russian', content) @@ to_tsquery('postgres & performance');
+-- Вернет только те статьи, где есть ОБА слова</code></pre><p style="margin-left:20px;margin-top:15px"><strong>Аналогия:</strong> @@ — это как <code>==</code> для текстового поиска</p></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 9: Релевантность — веса лексем</h2><div style="text-align:left;font-size:.65em"><p style="margin-left:20px"><strong>Веса лексем (A, B, C, D):</strong></p><ul style="margin-left:40px"><li><strong>A</strong> — заголовок (самый важный)</li><li><strong>B</strong> — подзаголовок</li><li><strong>C</strong> — аннотация</li><li><strong>D</strong> — тело документа (default)</li></ul><pre><code class="language-sql">SELECT ts_rank(
+  setweight(to_tsvector(title), 'A') || 
+  setweight(to_tsvector(body), 'D'),
+  query
+) as rank
+-- Слово в title весит больше, чем в body</code></pre></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 10: Функции ранжирования</h2><div style="text-align:left;font-size:.7em"><p style="margin-left:20px"><strong>ts_rank</strong> — по частоте найденных лексем (TF — Term Frequency)</p><p style="margin-left:20px;margin-top:10px"><strong>ts_rank_cd</strong> — учитывает близость лексем (proximity)</p><pre><code class="language-sql">SELECT title, ts_rank(fts, query) AS rank
+FROM articles, to_tsquery('russian', 'postgres') query
+WHERE fts @@ query
+ORDER BY rank DESC;</code></pre><p style="margin-left:20px;margin-top:10px"><strong>RUM индекс:</strong> оператор <code>&lt;=&gt;</code> возвращает "расстояние" между документом и запросом</p></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 11: Анализатор (Parser)</h2><div style="text-align:left;font-size:.65em"><p style="margin-left:20px"><strong>Анализатор</strong> — токенайзер, разбивает текст на фрагменты с типами</p><pre><code class="language-text">Входная строка:
+"Купи слона за 1000$ на example.com!"
+
+Результат:
+"Купи"        → word (слово)
+"слона"       → word
+"1000"        → uint (число)
+"$"           → symbol
+"example.com" → url (адрес)
+"!"           → symbol</code></pre><p style="margin-left:20px;margin-top:10px"><strong>23 типа токенов:</strong> word, email, url, numword, tag, entity и др.</p></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 12: Штатный анализатор default</h2><div style="text-align:left;font-size:.7em"><p style="margin-left:20px"><strong>Штатный анализатор <code>default</code>:</strong></p><ul style="margin-left:40px"><li>23 типа фрагментов</li><li>Распознает слова, числа, адреса, теги XML и т.п.</li></ul><p style="margin-left:20px;margin-top:15px"><strong>Кастомные анализаторы:</strong></p><ul style="margin-left:40px"><li>Пишутся на C (как расширение Postgres)</li><li>Полезны для специфичных задач: индексация кода, химических формул</li><li><code>pg_tsparser</code> — не ломает snake_case и kebab-case</li></ul></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 13: Словари — нормализация</h2><div style="text-align:left;font-size:.65em"><p style="margin-left:20px"><strong>Словарь</strong> превращает фрагмент в лексему</p><p style="margin-left:20px;margin-top:10px"><strong>Что делает словарь:</strong></p><ol style="margin-left:40px"><li>Фильтрация стоп-слов ("и", "или", "в", "на")</li><li>Приведение к lowercase</li><li>Стемминг (отрезание окончаний)</li><li>Синонимы (PostgreSQL → postgres)</li></ol><pre><code class="language-text">"разработчик"  → "разработ"
+"разработчика" → "разработ"
+"разработке"   → "разработ"</code></pre></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 14: Встроенные словари</h2><div style="text-align:left;font-size:.7em"><p style="margin-left:20px"><strong>Штатные словари:</strong></p><ul style="margin-left:40px"><li><strong>simple</strong> — lowercase + стоп-слова (быстро, примитивно)</li><li><strong>russian, english, etc.</strong> — стемминг для 28 языков (алгоритм Snowball)</li></ul><p style="margin-left:20px;margin-top:15px"><strong>Стемминг vs Лемматизация:</strong></p><ul style="margin-left:40px"><li>Стемминг (быстро, грубо): "бежал" → "беж"</li><li>Лемматизация (медленно, точно): "бежал" → "бежать"</li></ul><p style="margin-left:20px;margin-top:10px">Postgres использует стемминг — скорость важнее точности</p></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 15: Шаблоны словарей</h2><div style="text-align:left;font-size:.65em"><p style="margin-left:20px"><strong>Шаблон</strong> — параметризованный словарь (как абстрактный класс)</p><pre><code class="language-sql">CREATE TEXT SEARCH DICTIONARY my_russian (
+  TEMPLATE = snowball,
+  Language = russian,
+  StopWords = russian
+);</code></pre><p style="margin-left:20px;margin-top:15px"><strong>Встроенные шаблоны:</strong></p><ul style="margin-left:40px"><li><strong>simple</strong> — минималистичный</li><li><strong>snowball</strong> — стеммер (самый популярный)</li><li><strong>ispell</strong> — морфологический словарь</li><li><strong>synonym</strong> — маппинг синонимов</li><li><strong>thesaurus</strong> — замена фраз</li></ul></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 16: Шаблон synonym</h2><div style="text-align:left;font-size:.7em"><p style="margin-left:20px"><strong>Synonym</strong> — маппинг синонимов</p><pre><code class="language-text">postgres : postgresql
+pg       : postgresql</code></pre><p style="margin-left:20px;margin-top:10px">Все варианты → одна лексема</p><p style="margin-left:20px;margin-top:15px"><strong>Thesaurus</strong> — замена фраз (как макросы)</p><pre><code class="language-text">machine learning : ml
+artificial intelligence : ai</code></pre><p style="margin-left:20px;margin-top:10px">Целые фразы → сокращения</p></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 17: Конфигурация — routing правила</h2><div style="text-align:left;font-size:.6em"><p style="margin-left:20px"><strong>Конфигурация</strong> определяет цепочку словарей для каждого типа фрагмента</p><pre><code class="language-sql">CREATE TEXT SEARCH CONFIGURATION my_config (COPY = russian);
+
+ALTER TEXT SEARCH CONFIGURATION my_config
+  ALTER MAPPING FOR word WITH synonym, russian_stem;
+  -- Для типа 'word': сначала synonym, потом russian_stem
+
+ALTER TEXT SEARCH CONFIGURATION my_config
+  ALTER MAPPING FOR email WITH simple;
+  -- Для типа 'email': только simple</code></pre></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 18: Цепочка словарей</h2><div style="text-align:left;font-size:.65em"><p style="margin-left:20px"><strong>Chain of Responsibility паттерн:</strong></p><pre><code class="language-text">Токен "PostgreSQL" (тип: word)
+  ↓
+[synonym] → нашел! → "postgres" → STOP
+  ↓ (если не нашел)
+[russian_stem] → "postgresql" → STOP
+  ↓ (если не нашел)
+[simple] → "postgresql" → STOP</code></pre><p style="margin-left:20px;margin-top:15px"><strong>Поведение:</strong></p><ul style="margin-left:40px"><li>Фильтр (return null) — удалить стоп-слово</li><li>Замена и STOP (return value)</li><li>Пропуск (next()) — передать дальше</li></ul></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 19: Индекс GiST</h2><div style="text-align:left;font-size:.7em"><p style="margin-left:20px"><strong>GiST (Generalized Search Tree)</strong></p><p style="margin-left:20px;margin-top:10px"><strong style="color:#2ecc71">Плюсы:</strong></p><ul style="margin-left:40px"><li>⚡ Быстрый INSERT/UPDATE</li><li>📦 Поддержка INCLUDE (covering index)</li></ul><p style="margin-left:20px;margin-top:10px"><strong style="color:#e74c3c">Минусы:</strong></p><ul style="margin-left:40px"><li>🐌 Медленный поиск (lossy index — нужна recheck)</li><li>📉 Деградация при росте числа уникальных слов</li></ul><p style="margin-left:20px;margin-top:10px"><strong>Когда использовать:</strong> блоги, комментарии (много записей, мало изменений)</p></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 20: Индекс GIN</h2><div style="text-align:left;font-size:.65em"><p style="margin-left:20px"><strong>GIN (Generalized Inverted Index) — король FTS</strong></p><p style="margin-left:20px;margin-top:10px"><strong style="color:#2ecc71">Плюсы:</strong></p><ul style="margin-left:40px"><li>🚀 Очень быстрый поиск (inverted index)</li><li>📈 Производительность не падает с ростом словаря</li><li>💾 Компактный</li></ul><p style="margin-left:20px;margin-top:10px"><strong style="color:#e74c3c">Минусы:</strong></p><ul style="margin-left:40px"><li>🐢 Медленный INSERT/UPDATE</li></ul><pre><code class="language-text">Структура:
+Лексема → [doc_id1, doc_id2, ...]
+"postgres" → [1, 5, 42, 100]</code></pre></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 21: Индекс RUM</h2><div style="text-align:left;font-size:.65em"><p style="margin-left:20px"><strong>RUM (RUM Index) — GIN на стероидах</strong></p><p style="margin-left:20px;margin-top:10px"><strong>Что добавляет к GIN:</strong></p><ul style="margin-left:40px"><li>📍 Хранит позиции лексем в документе</li><li>⚖️ Хранит веса (A, B, C, D)</li><li>🎯 Оператор <code>&lt;=&gt;</code> для сортировки по релевантности БЕЗ вычислений</li></ul><pre><code class="language-sql">-- RUM: сортировка прямо по индексу!
+SELECT * FROM docs 
+ORDER BY fts <=> query;
+-- Index Scan using rum_idx</code></pre></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 22: Выбор индекса — cheat sheet</h2><div style="text-align:left;font-size:.7em"><p style="margin-left:20px"><strong>Когда использовать:</strong></p><ul style="margin-left:40px"><li><strong>GIN</strong> — много записей, read-heavy нагрузка</li><li><strong>GiST</strong> — частые обновления</li><li><strong>RUM</strong> — нужна сортировка по релевантности</li></ul><p style="margin-left:20px;margin-top:15px"><strong>Золотое правило:</strong> Размер шарда = 10-50 ГБ</p></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 23: Создание индекса GIN</h2><div style="text-align:left;font-size:.7em"><pre><code class="language-sql">-- Создание индекса
+CREATE INDEX idx_fts ON articles 
+USING GIN (to_tsvector('russian', content));
+
+-- Использование индекса
+SELECT * FROM articles 
+WHERE to_tsvector('russian', content) @@ to_tsquery('postgres');</code></pre><p style="margin-left:20px;margin-top:15px"><strong>Важно:</strong> Выражение в индексе должно совпадать с выражением в запросе!</p></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 24: Хранение tsvector в таблице</h2><div style="text-align:left;font-size:.65em"><pre><code class="language-sql">-- Добавить колонку
+ALTER TABLE articles ADD COLUMN fts tsvector;
+
+-- Заполнить колонку
+UPDATE articles 
+SET fts = to_tsvector('russian', title || ' ' || content);
+
+-- Создать индекс
+CREATE INDEX idx_fts ON articles USING GIN (fts);
+
+-- Поиск
+SELECT * FROM articles WHERE fts @@ to_tsquery('postgres');</code></pre></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 25: Автоматическое обновление tsvector</h2><div style="text-align:left;font-size:.6em"><pre><code class="language-sql">-- Триггер для автообновления
+CREATE TRIGGER tsvector_update BEFORE INSERT OR UPDATE
+ON articles FOR EACH ROW EXECUTE FUNCTION
+tsvector_update_trigger(fts, 'pg_catalog.russian', title, content);
+
+-- Теперь при INSERT/UPDATE fts обновляется автоматически
+INSERT INTO articles (title, content) 
+VALUES ('PostgreSQL', 'Полнотекстовый поиск');
+
+SELECT * FROM articles WHERE fts @@ to_tsquery('поиск');</code></pre></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 26: Подсветка результатов — ts_headline</h2><div style="text-align:left;font-size:.65em"><pre><code class="language-sql">SELECT 
+  title,
+  ts_headline('russian', content, query) AS snippet
+FROM articles, to_tsquery('russian', 'postgres') query
+WHERE fts @@ query;
+
+-- Результат:
+-- "...использование <b>Postgres</b> для поиска..."</code></pre><p style="margin-left:20px;margin-top:15px"><strong>ts_headline</strong> — выделяет найденные слова в контексте (как в Google)</p></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 27: Фразовый поиск</h2><div style="text-align:left;font-size:.7em"><pre><code class="language-sql">-- Найти "machine learning" именно в таком порядке
+SELECT * FROM articles 
+WHERE fts @@ phraseto_tsquery('english', 'machine learning');
+
+-- С расстоянием (до 2 слов между)
+SELECT * FROM articles 
+WHERE fts @@ to_tsquery('machine <2> learning');</code></pre><p style="margin-left:20px;margin-top:15px"><strong>Фразовый поиск</strong> — слова должны идти в определенном порядке</p></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 28: Мультиязычный поиск</h2><div style="text-align:left;font-size:.65em"><pre><code class="language-sql">-- Русский
+SELECT to_tsvector('russian', 'разработчики разрабатывают');
+-- 'разработ':1,2
+
+-- Английский
+SELECT to_tsvector('english', 'developers develop');
+-- 'develop':1,2
+
+-- Мультиязычный индекс
+CREATE INDEX idx_multi ON docs USING GIN (
+  to_tsvector('russian', title) || 
+  to_tsvector('english', title)
+);</code></pre></div></section>
+
+<section data-background-color="#2c3e50"><h2 style="color:#FFD700">Слайд 29: Поиск по JSON</h2><div style="text-align:left;font-size:.65em"><pre><code class="language-sql">-- JSON
+SELECT * FROM products 
+WHERE to_tsvector(metadata::text) @@ 'waterproof';
+
+-- JSONB с индексом
+CREATE INDEX ON products USING GIN (
+  to_tsvector('english', 
+    jsonb_path_query_array(metadata, '$.**.text')::text
+  )
+);
+
+-- Массивы
+SELECT * FROM posts 
+WHERE to_tsvector(array_to_string(tags, ' ')) @@ 'postgresql';</code></pre></div></section>
+
+<section data-background-color="#16213e"><h2 style="color:#FFD700">Слайд 30: Когда PostgreSQL FTS достаточно</h2><div style="text-align:left;font-size:.7em"><p style="margin-left:20px"><strong style="color:#2ecc71">PostgreSQL FTS достаточно:</strong></p><ul style="margin-left:40px"><li>✅ До 10-100 млн документов</li><li>✅ Простой поиск (не ML-ранжирование)</li><li>✅ Нужна транзакционность</li><li>✅ Хочется избежать "зоопарка технологий"</li></ul><p style="margin-left:20px;margin-top:15px"><strong style="color:#e74c3c">Нужен Elasticsearch/Solr:</strong></p><ul style="margin-left:40px"><li>❌ Миллиарды документов</li><li>❌ Сложная аналитика (aggregations, facets)</li><li>❌ ML-ранжирование</li><li>❌ Распределенный поиск (sharding)</li></ul></div></section>
+
+</div></div><script src="../15-16/js/reveal.min.js"></script><script src="../15-16/js/notes.min.js"></script><script src="../15-16/js/markdown.min.js"></script><script src="../15-16/js/highlight.min.js"></script><script>Reveal.initialize({hash:true,transition:'slide',controls:true,progress:true,slideNumber:true,center:false,margin:0.02,plugins:[RevealMarkdown,RevealHighlight,RevealNotes]});</script></body></html>
