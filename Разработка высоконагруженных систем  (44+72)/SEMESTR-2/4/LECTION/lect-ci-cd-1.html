@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>CI/CD: Непрерывная интеграция и доставка</title>
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/reveal.min.css">
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/black.min.css">
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/monokai.min.css">
+  <style>
+    .reveal .slides { width:80%!important; height:90%!important; transform:scale(1.2)!important; position:absolute!important; left:50%!important; top:0!important; transform:translateX(calc(-50% + 5%)) scale(1.2)!important; transform-origin:top center!important }
+    .reveal h1 { font-size:1.8em!important; margin-top:0!important; margin-bottom:.4em!important }
+    .reveal h2 { font-size:0.75em!important; margin-top:0!important; margin-bottom:.4em!important; text-transform:none!important; text-align:right!important; margin-right:10%!important }
+    .reveal h3 { font-size:1.1em!important; margin-top:0!important; margin-bottom:.3em!important; text-transform:none!important }
+    .reveal .slides section { padding:15px!important; font-size:1em!important; max-width:100%!important; width:100%!important; overflow-x:hidden!important; box-sizing:border-box!important }
+    .reveal .slides section p,
+    .reveal .slides section div { max-width:100%!important; width:100%!important; min-width:0!important; overflow-wrap:break-word!important; word-wrap:break-word!important; word-break:break-word!important; box-sizing:border-box!important }
+    .reveal .slides section li { overflow-wrap:break-word!important; word-wrap:break-word!important; word-break:break-word!important }
+    .reveal .slides section > div { max-width:min(100%, 92vw)!important }
+    .reveal p, .reveal ul, .reveal ol { font-size:.9em!important }
+    pre code { font-size:.75em; max-height:320px; overflow:auto }
+    pre { max-height:340px; overflow:auto; margin:10px 0!important; max-width:100%!important }
+    table { font-size:.75em!important; max-width:100%!important }
+    .reveal section img { max-height:280px; max-width:100%!important }
+  </style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- Слайд 1 -->
+<section data-background-color="#1a1a2e">
+  <div style="background:rgba(22,33,62,0.9);padding:40px;border:8px solid #0f3460">
+    <h1 style="color:#FFD700">CI/CD: Методология Непрерывной Интеграции и Доставки</h1>
+    <h2 style="color:#90EE90">Введение</h2>
+    <p><img src="gif-0.gif" alt="intro"></p>
+    <p style="color:#FFF;font-size:0.85em">Многие разработчики слышат про CI/CD как про что-то обязательное, но не понимают, как это работает на практике. В лекции простым языком — как устроены пайплайны, зачем автоматизация и почему без CI/CD современная разработка превращается в хаос.</p>
+  </div>
+</section>
+
+<!-- Слайд 2 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Что такое CI/CD и какие проблемы он решает?</h2>
+  <p><img src="gif-3.gif" alt="ci/cd"></p>
+  <div style="text-align:left;font-size:.7em">
+    <p><strong>CI/CD</strong> — автоматизация цепочки от коммита до работающего кода на сервере.</p>
+    <ul>
+      <li><strong>Страх деплоя</strong> → «деплоим 10 раз в день и не боимся»</li>
+      <li><strong>Человеческие ошибки</strong> — забыл миграцию, не обновил конфиг — с CI/CD такого не будет</li>
+      <li><strong>Всегда работает</strong> — если тесты прошли в пайплайне, код рабочий</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Слайд 3 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">После цикла занятий вы</h2>
+  <p><img src="gif-2.gif" alt="goals"></p>
+  <div style="text-align:left;font-size:.75em">
+    <ul>
+      <li>Поймёте пайплайны, стейджи, джобы</li>
+      <li>Напишете конфигурации для GitLab CI и Jenkins</li>
+      <li>Разберётесь с Docker в контексте CI/CD</li>
+      <li>Узнаете инструменты российских компаний</li>
+      <li>Получите базу для Kubernetes, ArgoCD, мониторинга</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Слайд 4 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Как работает современная разработка?</h2>
+  <p><img src="image.png" alt="dev process"></p>
+  <div style="text-align:left;font-size:.65em">
+    <p>В реальных проектах при команде больше 3–5 человек всё сложнее: планирование, разработка, тестирование, развёртывание происходят одновременно и непрерывно.</p>
+  </div>
+</section>
+
+<!-- Слайд 5 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Рост и масштабирование</h2>
+  <p><img src="image-1.png" alt="scale"></p>
+  <div style="text-align:left;font-size:.65em">
+    <p>Команда 10 разработчиков, тестировщики, менеджер, микросервисы, БД — простая схема превращается в сложную систему. Релизы должны быть частыми, качество — высоким.</p>
+  </div>
+</section>
+
+<!-- Слайд 6 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Ключевые характеристики современного подхода</h2>
+  <p><img src="image-2.png" alt="characteristics"></p>
+  <div style="text-align:left;font-size:.65em">
+    <ul>
+      <li><strong>Командная работа</strong> — десятки людей, синхронизация</li>
+      <li><strong>Частые релизы</strong> — обновления несколько раз в день</li>
+      <li><strong>Высокие требования к качеству</strong> — пользователи не прощают багов</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Слайд 7 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Типичный день в жизни кода</h2>
+  <pre><code>День 1: Планирование
+├─ Менеджер создаёт задачу в Jira
+├─ Команда обсуждает
+└─ Разработчик берёт задачу в работу
+
+День 2-3: Разработка
+├─ Ветка в Git, код, локальные тесты, коммиты
+
+День 4: Код-ревью
+├─ Pull Request, проверка коллег, подтверждение 2+
+
+День 5: Тестирование
+├─ Мердж в develop, автотесты, ручное тестирование
+
+День 6-7: Подготовка к релизу
+├─ Исправление багов, мердж в release, стейджинг
+
+День 8: Релиз
+├─ Деплой на продакшн, мониторинг, откат или успех</code></pre>
+  <p style="font-size:.6em">Восемь дней на одну фичу — и это оптимистичный сценарий.</p>
+</section>
+
+<!-- Слайд 8 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Инструменты современной разработки</h2>
+  <pre><code>GitHub, GitLab, Bitbucket
+Jira, Trello
+Microsoft Teams, Mattermost, Telegram</code></pre>
+  <div style="text-align:left;font-size:.7em">
+    <p>Git — стандарт контроля версий. Таск-трекеры организуют задачи. Системы коммуникации — уведомления о коммитах, тестах, деплоях. Плюс инструменты тестирования под каждую платформу.</p>
+  </div>
+</section>
+
+<!-- Слайд 9 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Реальный пример процесса разработки</h2>
+  <p><img src="image-3.png" alt="process"></p>
+  <div style="text-align:left;font-size:.6em">
+    <p>Средняя продуктовая компания, маркетплейс, 30 человек. Дейлики, демо раз в две недели. Проблемы при релизе: фронт/бэкенд/мобилка не синхронизированы, баги, разные версии на стейджинге и проде. <strong>Координация</strong> — главная проблема; сложность растёт экспоненциально с размером команды.</p>
+  </div>
+</section>
+
+<!-- Слайд 10 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Проблемы координации и деплоя</h2>
+  <p><img src="image-4.png" alt="problems"></p>
+  <div style="text-align:left;font-size:.65em">
+    <p>Тестирование вручную — дни. Деплой — лотерея. Попытки без автоматизации: жёсткие код-ревью, фризы, чек-листы на 50 пунктов — костыли, люди ошибаются, процессы замедляются.</p>
+  </div>
+</section>
+
+<!-- Слайд 11 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Начало автоматизации</h2>
+  <pre><code>Что если сервер сам будет:
+- Проверять код при каждом коммите?
+- Запускать тесты?
+- Деплоить на тестовый сервер?
+- Откатывать изменения при проблемах?</code></pre>
+  <p><strong style="color:#2ecc71">Это и есть CI/CD</strong> — подход, который решает большинство описанных проблем. Автоматизация требует времени на настройку, зато релизы становятся предсказуемыми и безопасными.</p>
+</section>
+
+<!-- Слайд 12 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Ручной vs автоматический процесс</h2>
+  <pre><code>РУЧНОЙ ПРОЦЕСС                    АВТОМАТИЧЕСКИЙ
+14:00  Чек-лист 30 пунктов         14:00  git push → пайплайн
+14:15  SSH, забыл пароль           14:01  ✓ Тесты прошли
+14:25  git pull — конфликт!         14:03  ✓ Деплой на staging
+14:40  npm install — нет места      14:06  ✓ Деплой в продакшн
+...
+18:30  Починил. Уже поздно         14:07  ✓ Healthcheck OK</code></pre>
+  <p style="font-size:.65em">Цена ошибки в ручном процессе — человеческий фактор; найти причину сложно.</p>
+</section>
+
+<!-- Слайд 13 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Проблема масштабирования</h2>
+  <pre><code>Время на ручной деплой:
+├─ 1 сервер:     30 минут
+├─ 5 серверов:   2.5 часа
+├─ 20 серверов:  10 часов
+└─ 100 серверов: Невозможно
+
+Время на ручное тестирование:
+├─ 10 тест-кейсов:   1 час
+├─ 200 тест-кейсов:  3 дня
+└─ 1000:             Никто не будет делать</code></pre>
+  <p style="font-size:.7em">Команды срезают углы — тестируют только критичное, откладывают обновления → риск катастрофы.</p>
+</section>
+
+<!-- Слайд 14 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Реальная история из российской практики</h2>
+  <pre><code>E-commerce, 20 человек. Релизы по четвергам, целый день:
+Утром — 200 тест-кейсов, 3 тестировщика
+Обед — 5-7 багов, разработчики чинят
+15:00 — повторное тестирование
+17:00 — деплой 8 серверов по чек-листу
+На 5-м сервере другая версия PHP — откат
+20:00 — не проверили мобильное приложение, API изменился
+22:00 — релиз закончен, все измотаны</code></pre>
+  <p style="font-size:.65em">Через месяц — деплой не той ветки, откат 3 часа, потери для бизнеса. Ручные процессы создают стресс и «героическую» культуру.</p>
+</section>
+
+<!-- Слайд 15 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Решение: Continuous Integration</h2>
+  <pre><code>Continuous Integration (CI) — практика, при которой
+разработчики регулярно интегрируют код в общий репозиторий,
+и каждая интеграция автоматически проверяется сборкой и тестами.</code></pre>
+  <p style="font-size:.75em">«Continuous» = непрерывный, «Integration» = объединение кода. Ключевая идея: находить проблемы как можно раньше. Баг через 5 минут — исправление за минуты; баг через месяц в проде — дни.</p>
+</section>
+
+<!-- Слайд 16 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Минимальный пример CI (GitLab)</h2>
+  <pre><code>test:
+  script:
+    - npm install
+    - npm test</code></pre>
+  <p><img src="image-5.png" alt="ci pipeline"></p>
+  <p style="font-size:.7em">При каждом пуше GitLab запускает эти команды. Упали тесты — сразу видно.</p>
+</section>
+
+<!-- Слайд 17 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Как работает CI: пошаговый разбор</h2>
+  <p><img src="image-6.png" alt="ci cycle"></p>
+  <p style="font-size:.7em">Цикл обычно 5–15 минут. Уведомление о результате; при падении — какой тест, на какой строке.</p>
+</section>
+
+<!-- Слайд 18 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Основные компоненты CI</h2>
+  <pre><code>1. Триггеры — когда запускаться (пуш, MR и т.д.)
+2. Окружение выполнения — сервер, Docker, раннер (чистое, воспроизводимое)
+3. Набор проверок — тесты, метрики, стандарты кода
+4. Оповещения — чат, почта, чтобы команда реагировала</code></pre>
+</section>
+
+<!-- Слайд 19 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Принципы эффективного CI</h2>
+  <pre><code>1. Частая интеграция — пушить хотя бы раз в день
+2. Автоматизация всего — сборка, тесты, линт, документация
+3. Быстрая обратная связь — пайплайн 5–10 минут идеально</code></pre>
+  <p style="font-size:.7em">Чем дольше код в изолированной ветке, тем сложнее мердж. Если ждать час — контекст потерян.</p>
+</section>
+
+<!-- Слайд 20 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">CI меняет культуру разработки</h2>
+  <pre><code>До CI:                     После CI:
+"Работает у меня"    →     "Проходят все тесты"
+"Потом починим"      →     "Чиним сразу"
+"Кто-то сломал"      →     "CI показывает кто и когда"
+"Не знаю почему упало" →   "Вот лог с ошибкой"
+"Боюсь мержить"      →     "CI проверил, всё ок"</code></pre>
+  <p style="font-size:.7em">«Зелёная сборка» = можно деплоить. Красная = сначала починить.</p>
+</section>
+
+<!-- Слайд 21 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Метрики эффективности CI</h2>
+  <pre><code>Время пайплайна — 5–10 мин хорошо, 30+ тормозит
+Частота запусков — десятки раз в день = норма
+Процент успешных сборок — 85–95% идеал
+  (100% — возможно, тесты слишком мягкие)</code></pre>
+</section>
+
+<!-- Слайд 22 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">CI в российских реалиях</h2>
+  <pre><code>Санкции — GitHub Actions может быть недоступен, Travis — карты.
+Альтернативы: self-hosted GitLab, Jenkins, TeamCity (JetBrains).
+
+В небольших компаниях — не хватает инфраструктуры.
+Контейнеризация помогает запускать CI на том же железе.
+
+Тренд: все двигаются к автоматизации, скорость — ключевой фактор.</code></pre>
+</section>
+
+<!-- Слайд 23 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Путь к зрелому CI</h2>
+  <pre><code>Уровень 0: Нет CI — всё вручную
+Уровень 1: Сборка при пуше, уведомления
+Уровень 2: Unit-тесты, проверка стиля
+Уровень 3: Интеграционные тесты, безопасность, покрытие
+Уровень 4: Автодеплой на тестовые среды, параллельность
+Уровень 5: Кеширование, выборочные тесты, ML</code></pre>
+  <p style="font-size:.7em">Большинство на 2–3. CI — про культуру постоянной интеграции, не только про инструменты.</p>
+</section>
+
+<!-- Слайд 24 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Что такое Continuous Delivery (CD)?</h2>
+  <pre><code>Continuous Delivery (CD) — код автоматически
+подготавливается к релизу после всех проверок.
+Ключевое: подготавливается. Решение о релизе — человек.</code></pre>
+  <p style="font-size:.7em">CI: «работает ли код?» CD: «готов ли к релизу?» Цель CD — сделать релизы скучными: без стресса, одним кликом.</p>
+</section>
+
+<!-- Слайд 25 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Минимальный пример CD (GitLab)</h2>
+  <pre><code>stages: [ test, build, deploy ]
+test:   stage: test; script: [ npm test ]
+build:  stage: build; script: [ npm run build, docker build..., docker push... ]
+deploy_staging:  stage: deploy; script: [ ssh ... docker pull/run ]; environment: staging
+deploy_production: stage: deploy; when: manual  # Ручное подтверждение!</code></pre>
+  <p style="font-size:.65em">После авто-стейджей код готов к прод-релизу, кнопку нажимает человек.</p>
+</section>
+
+<!-- Слайд 26 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Как CD расширяет CI</h2>
+  <pre><code>CI: клонирование, зависимости, линтинг, unit/integration тесты, безопасность
+       ↓ все проверки прошли
+CD: сборка, Docker-образ, реестр, деплой dev → тесты → staging → тесты
+    [MANUAL] Деплой на продакшн</code></pre>
+  <p style="font-size:.7em">CI — качество кода. CD — подготовка к релизу. Вместе — быстрая и безопасная доставка.</p>
+</section>
+
+<!-- Слайд 27 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Артефакты — основа CD</h2>
+  <pre><code>Артефакт = готовый к деплою пакет (Docker, JAR, ZIP...)
+Принцип "Build once, deploy many":
+  Один артефакт (версия по commit SHA) → Dev, Test, Staging, Prod
+  Тот же артефакт везде = гарантия идентичности</code></pre>
+  <p style="font-size:.7em">Никакой пересборки для продакшна — в прод попадает то, что тестировали на стейджинге.</p>
+</section>
+
+<!-- Слайд 28 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Окружения в CD</h2>
+  <pre><code>Development — нестабильное, каждый коммит
+Testing/QA — для тестировщиков, стабильнее
+Staging — копия продакшна (железо, данные, настройки)
+Production — боевое, только проверенный код</code></pre>
+</section>
+
+<!-- Слайд 29 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Стратегии деплоя</h2>
+  <pre><code>Blue-Green: два окружения, переключение трафика 100% с Blue на Green
+Canary: 5% → 25% → 50% → 100% трафика, метрики под контролем
+Rolling: обновление реплик по одной, приложение доступно</code></pre>
+</section>
+
+<!-- Слайд 30 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Автоматизация релиз-процессов</h2>
+  <pre><code>Заметки релиза — из коммитов и PR автоматически
+Версионирование — Semantic Versioning по типам коммитов
+Конфигурация — переменные, секреты в пайплайне, без ручного правления на сервере</code></pre>
+</section>
+
+<!-- Слайд 31 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Метрики и мониторинг в CD</h2>
+  <pre><code>После деплоя — интеграция с мониторингом.
+Если метрики ухудшаются (ошибки, производительность) —
+автоматический откат (automated rollback).</code></pre>
+</section>
+
+<!-- Слайд 32 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Delivery vs Deployment</h2>
+  <pre><code>Continuous Delivery — деплой в прод с ручным подтверждением
+Continuous Deployment — деплой в прод полностью автоматический
+  (все проверки прошли → код сам в проде)</code></pre>
+  <p style="font-size:.7em">Delivery подходит большинству. Deployment — высокая зрелость процессов.</p>
+</section>
+
+<!-- Слайд 33 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Что такое Continuous Deployment?</h2>
+  <pre><code>Continuous Deployment — каждое изменение, прошедшее
+все автопроверки, автоматически попадает в продакшн
+без ручного вмешательства. Push → тесты → 15–30 мин → у пользователей.</code></pre>
+  <p style="font-size:.7em">В Delivery решение принимает человек, в Deployment — машина по результатам тестов.</p>
+</section>
+
+<!-- Слайд 34 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Пример Continuous Deployment</h2>
+  <pre><code>stages: [ test, build, deploy ]
+test: unit + integration + e2e
+build: docker build & push с $CI_COMMIT_SHA
+deploy_production: kubectl set image... ; check_deployment_health.sh
+  only: [ main ]   # Без when: manual!</code></pre>
+  <p style="font-size:.65em">Никаких кнопок — код сам доезжает до продакшна при зелёных проверках.</p>
+</section>
+
+<!-- Слайд 35 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Полный цикл Continuous Deployment</h2>
+  <pre><code>09:30  push → 09:31 unit → 09:33 integration → 09:36 e2e
+→ 09:41 образ → 09:43 деплой 1% → мониторинг
+→ 09:50 10% → 10:00 50% → 10:10 100%
+Итого: ~40 минут от пуша до продакшна у всех</code></pre>
+  <p style="font-size:.65em">Amazon — деплой каждые 11 сек, Netflix — каждые 16 мин.</p>
+</section>
+
+<!-- Слайд 36 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Предпосылки для Continuous Deployment</h2>
+  <pre><code>1. Культура качества — код может попасть в прод через полчаса
+2. Покрытие тестами — unit, integration, e2e, контракты, производительность
+3. Мониторинг и observability — метрики, логи, трейсы</code></pre>
+</section>
+
+<!-- Слайд 37 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Progressive Rollout</h2>
+  <pre><code>Canary: 1–2% трафика → мониторинг 10–15 мин
+Early Adopters: 5–10%
+Partial: 25–50% → A/B старая/новая версия
+Full Rollout: 100%
+На каждом шаге — откат при проблемах</code></pre>
+</section>
+
+<!-- Слайд 38 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Feature Flags</h2>
+  <pre><code>// Код в проде, но выключен; включение — конфиг без деплоя
+if (featureFlags.isEnabled('new-payment-system'))
+  return newPaymentProcessor.process(order);
+else
+  return legacyPaymentProcessor.process(order);
+
+// Конфиг: percentage, users (beta-testers)</code></pre>
+</section>
+
+<!-- Слайд 39 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Инфраструктура для CD</h2>
+  <pre><code>Kubernetes — rolling updates, перезапуск подов
+Service Mesh (Istio) — маршрутизация трафика (1% на новую версию), метрики
+Prometheus + Grafana — мониторинг в реальном времени</code></pre>
+</section>
+
+<!-- Слайд 40 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Когда НЕ нужен Continuous Deployment</h2>
+  <pre><code>Регулируемые индустрии (банки, медицина) — ручной контроль, комплаенс
+B2B с крупными клиентами — клиенты хотят знать об изменениях заранее
+Embedded и десктоп — обновления скачивает пользователь; IoT может быть офлайн</code></pre>
+</section>
+
+<!-- Слайд 41 -->
+<section data-background-color="#2c3e50">
+  <h2 style="color:#FFD700">Continuous Deployment в России</h2>
+  <p style="font-size:.75em">Яндекс, VK, Авито используют для части сервисов. Большинство — на Continuous Delivery. Препятствия — менталитет («а вдруг сломается?»), недостаток опыта. Молодые стартапы строят автоматизацию сразу; крупные компании пробуют CD на внутренних сервисах.</p>
+</section>
+
+<!-- Слайд 42 -->
+<section data-background-color="#16213e">
+  <h2 style="color:#FFD700">Преимущества CI/CD для команды и бизнеса</h2>
+  <pre><code>Время обнаружения проблемы:
+                Без CI/CD    С CI/CD
+Синтаксическая ошибка  2 ч      30 сек
+Сломанный тест        1 день    2 мин
+Проблема интеграции   1 нед    10 мин
+Баг в продакшне       2 нед    30 мин
+Стоимость исправления растёт со временем!</code></pre>
+  <p style="font-size:.7em">Зелёный пайплайн = уверенность в коде. Регрессию делают автотесты; тестировщики занимаются исследовательским тестированием и проектированием тест-кейсов.</p>
+</section>
+
+</div></div>
+<script src="../../../SEMESTR-1/15-16/js/reveal.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/notes.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/markdown.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/highlight.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    transition: 'slide',
+    controls: true,
+    progress: true,
+    slideNumber: true,
+    center: false,
+    margin: 0.02,
+    plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+  });
+</script>
+</body>
+</html>

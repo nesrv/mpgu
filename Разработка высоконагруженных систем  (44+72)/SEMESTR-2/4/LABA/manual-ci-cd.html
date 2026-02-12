@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Практическое занятие: Изучение CI/CD</title>
+<style media="print">
+body{font-family:Arial,sans-serif;font-size:12px}.container{box-shadow:none;background:white}.header{background:white!important;color:black!important}.save-btn{display:none!important}.section{page-break-inside:avoid}
+</style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;line-height:1.6;color:#333;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh}.container{max-width:1200px;margin:20px auto;padding:20px;background:white;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}.header{text-align:center;padding:30px;background:linear-gradient(135deg,#005EB8,#003D82);color:white;border-radius:10px;margin-bottom:30px}.header h1{font-size:2.5em;margin-bottom:10px}.student-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:30px;padding:20px;background:#f8f9fa;border-radius:10px}.form-group{margin-bottom:20px}.form-group label{display:block;margin-bottom:5px;font-weight:bold;color:#003D82}.form-group input,.form-group textarea{width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px;font-size:16px}.form-group input:focus,.form-group textarea:focus{outline:none;border-color:#005EB8}.section{margin-bottom:40px;padding:25px;background:#fff;border-left:5px solid #005EB8;border-radius:0 10px 10px 0;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.section h2{color:#003D82;margin-bottom:20px;font-size:1.8em}.section h3{color:#005EB8;margin:20px 0 10px;font-size:1.3em}.code-block{background:#282c34;color:#e2e8f0;padding:20px;border-radius:8px;margin:15px 0;font-family:'Courier New',monospace;overflow-x:auto;white-space:pre-wrap;font-size:14px}ul{list-style:none;padding-left:0}ul li{padding:8px 0 8px 30px;position:relative}ul li::before{content:'▸';position:absolute;left:0;color:#005EB8;font-size:18px}.save-btn{background:linear-gradient(135deg,#005EB8,#003D82);color:white;border:none;padding:15px 30px;font-size:18px;border-radius:10px;cursor:pointer;display:block;margin:30px auto}.checkbox-item{margin:15px 0;padding:15px 20px;background:linear-gradient(135deg,#005EB8,#003D82);border-radius:10px;display:flex;align-items:center}.checkbox-item input[type="checkbox"]{appearance:none;width:24px;height:24px;border:3px solid white;border-radius:6px;margin-right:15px;cursor:pointer;background:transparent}.checkbox-item input[type="checkbox"]:checked{background:white}.checkbox-item input[type="checkbox"]:checked::after{content:'✓';position:absolute;font-size:18px;color:#005EB8;font-weight:bold}.checkbox-item label{color:white;font-weight:500;cursor:pointer}table{width:100%;border-collapse:collapse;margin:15px 0}table th,table td{border:1px solid #ddd;padding:12px;text-align:left}table th{background:#005EB8;color:white}table tr:nth-child(even){background:#f8f9fa}.code-input-wrap{margin:15px 0}.code-input-wrap label{display:block;margin-bottom:8px;font-weight:bold;color:#003D82}.code-input{width:100%;min-height:320px;padding:20px;border:2px solid #005EB8;border-radius:8px;background:#282c34;color:#e2e8f0;font-family:'Courier New',Consolas,monospace;font-size:14px;line-height:1.5;resize:vertical;white-space:pre;overflow-x:auto}.code-input:focus{outline:none;border-color:#003D82;box-shadow:0 0 0 3px rgba(0,94,184,0.2)}.code-input-wrap .CodeMirror{min-height:320px;border:2px solid #005EB8;border-radius:8px;font-size:14px}.code-input-wrap .CodeMirror-focused{border-color:#003D82;box-shadow:0 0 0 3px rgba(0,94,184,0.2)}.code-editor-resizable{resize:both;overflow:auto;min-height:320px;min-width:200px;height:320px;display:block;border-radius:8px}.code-editor-resizable .CodeMirror{height:100%!important;min-height:0!important;border-radius:6px}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/darcula.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>🔄 Практическое занятие</h1>
+<h2>Изучение CI/CD</h2>
+<p>На примере E-Shop FastAPI (минималистичный учебный проект)</p>
+</div>
+<div class="student-info">
+<div class="form-group"><label for="student-name">ФИО:</label><input type="text" id="student-name"></div>
+<div class="form-group"><label for="group">Группа:</label><input type="text" id="group"></div>
+<div class="form-group"><label for="date">Дата:</label><input type="date" id="date"></div>
+</div>
+
+<div class="section">
+<h2>🎯 Цели</h2>
+<ul>
+<li>Объяснить минимальный CI (GitHub Actions) и как он запускается.</li>
+<li>Дать практические задания для закрепления знаний.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>📋 Требования</h2>
+<ul>
+<li>Python 3.13+</li>
+<li>Git (для работы с репозиторием и CI)</li>
+<li>Рекомендуется виртуальное окружение</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>📁 Структура проекта (корневая)</h2>
+<ul>
+<li><code>main.py</code> — основное FastAPI приложение</li>
+<li><code>shop.json</code> — данные товаров</li>
+<li><code>.github/workflows/ci.yml</code> — минимальный CI workflow</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>📖 Базовые понятия CI/CD</h2>
+<h3>CI — Continuous Integration</h3>
+<p>Непрерывная интеграция — это автоматическая проверка кода при каждом:</p>
+<ul>
+<li><code>push</code></li>
+<li><code>pull request</code></li>
+</ul>
+<p>Обычно включает:</p>
+<ul>
+<li>установку зависимостей;</li>
+<li>запуск тестов;</li>
+<li>линтинг;</li>
+<li>проверку форматирования.</li>
+</ul>
+<h3>CD — Continuous Delivery / Deployment</h3>
+<p>Непрерывная доставка — автоматическая:</p>
+<ul>
+<li>сборка приложения;</li>
+<li>публикация образов;</li>
+<li>деплой на сервер (опционально).</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>⚙️ Введение в GitHub Actions</h2>
+<h3>Основные сущности</h3>
+<ul>
+<li><strong>Workflow</strong> — файл автоматизации</li>
+<li><strong>Job</strong> — логический этап</li>
+<li><strong>Step</strong> — отдельная команда</li>
+<li><strong>Runner</strong> — среда выполнения</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>🔧 Практическая часть 1: Развертывание стенда</h2>
+<h3>1. Исходник main.py</h3>
+<div class="code-block"><code class="language-python">import json
+from datetime import datetime
+from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel
+from pathlib import Path
+
+class Product(BaseModel):
+    name: str
+    price: float
+    description: str
+    created_at: str
+
+
+app = FastAPI(title="E-Shop-СI-CD")
+
+with open(Path(__file__).parent / "shop.json", "r", encoding="utf-8") as f:
+    PRODUCTS = json.load(f)
+
+@app.get("/products")
+async def get_products():
+    return PRODUCTS
+
+@app.get("/product/{pid}")
+async def get_product(pid: int):
+    if 0 <= pid < len(PRODUCTS):
+        return PRODUCTS[pid]
+    raise HTTPException(status_code=404, detail="Not found")
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "products": len(PRODUCTS)}</code></div>
+
+<h3>2. Создайте и активируйте виртуальное окружение</h3>
+<p><strong>Windows:</strong></p>
+<div class="code-block"><code class="language-bash">python -m venv venv
+venv\Scripts\activate</code></div>
+<p><strong>Linux/macOS:</strong></p>
+<div class="code-block"><code class="language-bash">python -m venv venv
+source venv/bin/activate</code></div>
+
+<h3>3. Установите зависимости</h3>
+<div class="code-block"><code class="language-bash">python -m pip install --upgrade pip
+pip install fastapi uvicorn pydantic</code></div>
+<div class="checkbox-item"><input type="checkbox" id="t1"><label for="t1">Стенд развернут</label></div>
+</div>
+
+<div class="section">
+<h2>🚀 Запуск приложения</h2>
+<p>Для разработки с авто-перезагрузкой:</p>
+<div class="code-block"><code class="language-bash">uvicorn main:app --reload</code></div>
+<p>После запуска приложение доступно по адресу: <code>http://localhost:8000</code>.<br>Интерактивная документация: <code>http://localhost:8000/docs</code>.</p>
+</div>
+
+<div class="section">
+<h2>📡 Короткое описание API (минимум)</h2>
+<ul>
+<li><code>GET /products</code> — получить список всех товаров</li>
+<li><code>GET /product/{id}</code> — получить товар по ID (ID начинается с 0)</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>🔗 Привяжите проект к репо на GitHub</h2>
+<p>Создайте репозиторий на GitHub и привяжите локальный проект (git remote add origin …).</p>
+<div class="checkbox-item"><input type="checkbox" id="t2"><label for="t2">Проект привязан к GitHub</label></div>
+</div>
+
+<div class="section">
+<h2>📄 Минимальный CI (GitHub Actions)</h2>
+<p>Файл workflow расположен в <code>.github/workflows/ci.yml</code>. Его задача — быстро проверить, что <code>main.py</code> не содержит синтаксических ошибок и успешно импортируется.</p>
+<p>Создание каталога для workflow: <code>mkdir -p .github/workflows</code> (Linux/macOS) или вручную в Windows.</p>
+<div class="code-block"><code class="language-yaml"># Учебный CI: проверка синтаксиса и импорта Python-приложения
+
+name: CI
+
+# Когда запускать: при push и PR в ветку main
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check:
+    name: Syntax and import check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      # --- Python ---
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+      - run: |
+          pip install --upgrade pip
+          pip install fastapi pydantic uvicorn
+      # --- Проверки ---
+      - run: python -m py_compile main.py
+      - run: python -c "import main; print('imported OK')"</code></div>
+
+<h3>Триггеры</h3>
+<ul>
+<li>пуш в ветку <code>main</code></li>
+<li>Pull Request в <code>main</code></li>
+</ul>
+
+<h3>Основные шаги workflow</h3>
+<ol style="padding-left:30px">
+<li><code>actions/checkout</code> — получить код репозитория.</li>
+<li><code>actions/setup-python</code> (Python 3.13).</li>
+<li>Установка зависимостей (<code>pip install fastapi pydantic uvicorn</code>).</li>
+<li><code>python -m py_compile main.py</code> — проверка синтаксиса.</li>
+<li><code>python -c "import main"</code> — пробный импорт модуля.</li>
+</ol>
+<p>Где смотреть прогон: вкладка <strong>Actions</strong> в GitHub → выбрать workflow <strong>CI</strong> → посмотреть логи.</p>
+
+<h3>🎯 Что этот workflow проверяет?</h3>
+<ol style="padding-left:30px">
+<li><strong>Синтаксис Python</strong> — корректность отступов, скобок, операторов и отсутствие опечаток в коде</li>
+<li><strong>Импорты</strong> — все ли зависимости установлены, правильно ли они импортируются в модуле main.py</li>
+<li><strong>Базовая компиляция</strong> — может ли main.py быть скомпилирован без синтаксических ошибок</li>
+<li><strong>Целостность модуля</strong> — не вызывает ли импорт main.py исключений или ошибок времени выполнения</li>
+<li><strong>Совместимость зависимостей</strong> — корректно ли устанавливаются и загружаются fastapi, pydantic, uvicorn</li>
+<li><strong>Готовая среда выполнения</strong> — что код запускается в чистом окружении с нуля</li>
+</ol>
+
+<h3>Локальная проверка тех же шагов</h3>
+<div class="code-block"><code class="language-bash">python -m pip install --upgrade pip
+pip install fastapi pydantic uvicorn
+python -m py_compile main.py
+python -c "import main; print('imported OK')"</code></div>
+
+<p><strong>Важно:</strong> Если workflow запускается дважды на один пуш, причина — в <code>.github/workflows/ci.yml</code> указаны оба триггера (<code>push</code> и <code>pull_request</code>). Оставляем только <code>push</code>:</p>
+<div class="code-block"><code class="language-yaml">on:
+  push:
+    branches: [ main ]</code></div>
+<p>Это исключит дублирование для учебного проекта.</p>
+<div class="checkbox-item"><input type="checkbox" id="t3"><label for="t3">CI настроен и проверен</label></div>
+</div>
+
+<div class="section">
+<h2>🐛 Примеры ошибок для обучения (тестирование workflow)</h2>
+<p>Чтобы убедиться, что CI работает и ловит ошибки, можно специально добавить ошибку в <code>main.py</code>, запушить и посмотреть, как workflow её ловит.</p>
+
+<h3>Пример 1: Синтаксическая ошибка</h3>
+<p>Откройте <code>main.py</code> и добавьте ошибку (например, забудьте закрыть скобку):</p>
+<div class="code-block"><code class="language-python">@app.get("/products")
+async def get_products() -> list[dict]
+    return PRODUCTS  # Пропущено двоеточие после скобки выше</code></div>
+<p>При пуше workflow выполнит <code>python -m py_compile main.py</code> и вернёт ошибку:</p>
+<div class="code-block"><code>SyntaxError: invalid syntax</code></div>
+<p>Посмотреть в: вкладка <strong>Actions</strong> → workflow <strong>CI</strong> → log с красной ошибкой.</p>
+
+<h3>Пример 2: Ошибка импорта</h3>
+<p>Добавьте неправильный импорт в начало <code>main.py</code>:</p>
+<div class="code-block"><code class="language-python">from nonexistent_module import something  # Этого модуля не существует</code></div>
+<p>Workflow выполнит <code>python -c "import main"</code> и упадёт:</p>
+<div class="code-block"><code>ModuleNotFoundError: No module named 'nonexistent_module'</code></div>
+
+<h3>Пример 3: Проверка зависимостей</h3>
+<p>Если удалить <code>fastapi</code> из <code>pip install</code>, workflow понимает, что импорт невозможен:</p>
+<div class="code-block"><code>ModuleNotFoundError: No module named 'fastapi'</code></div>
+
+<h3>Как исправить после ошибки</h3>
+<ol style="padding-left:30px">
+<li>Исправьте ошибку в коде локально.</li>
+<li>Проверьте локально: <code>python -m py_compile main.py</code> и <code>python -c "import main"</code>.</li>
+<li>Запушьте исправленный код.</li>
+<li>Workflow снова запустится и должен пройти успешно (зелёная галочка).</li>
+</ol>
+<div class="checkbox-item"><input type="checkbox" id="t4"><label for="t4">Примеры ошибок проверены</label></div>
+</div>
+
+<div class="section">
+<h2>🧪 Практическая часть 2: Тесты с pytest</h2>
+<p>Добавьте тесты с помощью <code>pytest</code> для проверки работы API endpoints.</p>
+<div class="code-block"><code class="language-python">import pytest
+from fastapi.testclient import TestClient
+from main import app
+
+client = TestClient(app)
+
+def test_health():
+    """Проверка endpoint /health"""
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
+
+def test_products():
+    """Проверка endpoint /products"""
+    response = client.get("/products")
+    assert response.status_code == 200
+    assert isinstance(..., list)
+    assert len(...) > 0</code></div>
+
+<p><strong>Протестируйте API локально.</strong></p>
+
+<h3>Способы запуска test_main.py</h3>
+<p>Из корня проекта (где лежит <code>test_main.py</code>):</p>
+<div class="code-block"><code class="language-bash"># Обычный запуск
+pytest test_main.py
+
+# Подробный вывод (verbose): имена тестов и результат
+pytest -v test_main.py
+
+# Ещё подробнее: показывать print и локальные переменные при падении
+pytest -v -s test_main.py
+
+# Запуск одного теста по имени
+pytest -v test_main.py::test_health
+
+# Запуск нескольких тестов по маске (например, все тесты корзины)
+pytest -v test_main.py -k "cart"
+
+# Остановиться на первой упавшей
+pytest -v test_main.py -x
+
+# Показать краткую сводку (сколько прошло/упало)
+pytest test_main.py -q
+
+# Через модуль Python (если pytest не в PATH)
+python -m pytest -v test_main.py</code></div>
+
+<p>В CI (GitHub Actions и т.п.) обычно достаточно: <code>pytest -v test_main.py</code>.</p>
+
+<h3>Добавьте шаг (step) в job</h3>
+<div class="code-block"><code class="language-yaml">      - name: Run tests
+        run: pytest -v test_main.py</code></div>
+
+<p><strong>Запустите пайплайн</strong> и убедитесь, что тесты проходят в CI.</p>
+
+<h3>Подключите линтер Ruff</h3>
+<p><strong>1. Установка и локальный запуск</strong></p>
+<div class="code-block"><code class="language-bash">pip install ruff
+# Проверка всех .py в проекте
+ruff check .
+# Проверка с автоисправлением (где возможно)
+ruff check . --fix
+# Проверка только main.py и test_main.py
+ruff check main.py test_main.py</code></div>
+
+<p><strong>2. Конфигурация (по желанию)</strong></p>
+<p>Создайте <code>pyproject.toml</code> в корне или секцию <code>[tool.ruff]</code> в нём:</p>
+<div class="code-block"><code class="language-toml">[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]   # pycodestyle errors, Pyflakes, isort
+ignore = ["E501"]          # игнорировать длину строки, если мешает</code></div>
+<p>Либо отдельный файл <code>ruff.toml</code> с тем же содержимым.</p>
+
+<p><strong>3. Шаг в CI (GitHub Actions)</strong></p>
+<p>В тот же job после установки зависимостей добавьте шаг:</p>
+<div class="code-block"><code class="language-yaml">      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install fastapi pydantic uvicorn pytest httpx ruff
+
+      # ... остальные шаги (Syntax check, Import app, Run tests) ...
+
+      - name: Lint with Ruff
+        run: ruff check .</code></div>
+
+<p>Либо установить ruff отдельным шагом:</p>
+<div class="code-block"><code class="language-yaml">      - name: Install ruff
+        run: pip install ruff
+
+      - name: Lint with Ruff
+        run: ruff check .</code></div>
+
+<p><strong>4. Добавление в requirements.txt (опционально)</strong></p>
+<div class="code-block"><code>ruff>=0.4.0</code></div>
+
+<p>После настройки перед каждым пушем можно запускать локально: <code>ruff check .</code> — тогда CI не будет падать на линтере.</p>
+<div class="checkbox-item"><input type="checkbox" id="t5"><label for="t5">Тесты и Ruff добавлены в CI</label></div>
+</div>
+
+<div class="section">
+<h2>🛒 Практическая часть 3: Доработка API</h2>
+<p><strong>Добавьте дополнительные эндпоинты</strong> в проект. После добавления каждого эндпоинта запускайте CI/CD.</p>
+<ul>
+<li><code>GET /cart</code> — просмотр корзины (items + total)</li>
+<li><code>POST /cart/add?pid={id}&qty={n}</code> — добавить в корзину</li>
+<li><code>DELETE /cart</code> — очистить корзину</li>
+<li><code>POST /checkout</code> — оформить заказ (из текущей корзины)</li>
+<li><code>GET /orders</code> — список заказов</li>
+<li><code>GET /health</code> — проверка состояния приложения</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>✏️ Самостоятельная часть (выполняется студентом)</h2>
+<p>Пример заглушек эндпоинтов (реализуйте логику):</p>
+<div class="code-block"><code class="language-python">@app.get("/search")
+async def search(q: str = Query(..., min_length=1)):
+    """Поиск товаров по подстроке в названии (q). Регистр не учитывается."""
+    return ...
+
+@app.get("/cart")
+async def get_cart():
+    """Возвращает содержимое корзины и общую сумму."""
+    return ...
+
+@app.post("/cart/add")
+async def add_cart(pid: int, qty: int = 1):
+    """Добавляет товар в корзину по id (pid) и количеству (qty). 404 при неверном pid."""
+    if not (0 <= pid < len(PRODUCTS)):
+        raise HTTPException(status_code=404)
+    p = PRODUCTS[pid]
+    CART.append(...)
+    return {"ok": True}
+
+@app.delete("/cart")
+async def clear_cart():
+    """Очищает корзину полностью."""
+    ...
+    return {"ok": True}
+
+@app.post("/checkout")
+async def checkout():
+    """Оформляет заказ: сохраняет текущую корзину в заказы, очищает корзину. 400 если корзина пуста."""
+    if not CART:
+        raise HTTPException(status_code=400)
+    ...
+    return order
+
+@app.get("/orders")
+async def get_orders():
+    """Возвращает список всех оформленных заказов."""
+    return ORDERS</code></div>
+<div class="code-input-wrap">
+<label for="student-code">Ваш код (вставьте или напишите реализацию эндпоинтов):</label>
+<div class="code-editor-resizable">
+<textarea id="student-code" class="code-input" placeholder="# Вставьте сюда свой код (main.py или фрагменты)&#10;# Сохраняется автоматически в браузере"></textarea>
+</div>
+</div>
+<div class="checkbox-item"><input type="checkbox" id="t6"><label for="t6">Эндпоинты реализованы</label></div>
+<p style="margin-top:20px;"><strong>Допишите тесты для новых эндпоинтов API в файле test_main.py</strong></p>
+<div class="code-input-wrap">
+<label for="student-tests">Ваши тесты (test_main.py или фрагменты):</label>
+<div class="code-editor-resizable">
+<textarea id="student-tests" class="code-input" placeholder="# Добавьте тесты для /cart, /cart/add, /checkout, /orders, /search"></textarea>
+</div>
+</div>
+<div class="checkbox-item"><input type="checkbox" id="t7"><label for="t7">Тесты для новых эндпоинтов написаны</label></div>
+<h3 style="margin-top:24px;">Структура моего ci.yml</h3>
+<p>Вставьте или опишите структуру вашего workflow-файла.</p>
+<div class="code-input-wrap">
+<label for="student-ci-yml">Ваш .github/workflows/ci.yml (или фрагмент):</label>
+<div class="code-editor-resizable">
+<textarea id="student-ci-yml" class="code-input" placeholder="# name: CI&#10;# on: push / pull_request&#10;# jobs: check → steps: checkout, setup-python, install, run tests, ruff"></textarea>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2>📊 Выводы</h2>
+<div class="form-group"><label>Что изучили:</label><textarea rows="4" id="ta0"></textarea></div>
+<div class="form-group"><label>Сложности:</label><textarea rows="4" id="ta1"></textarea></div>
+<div class="form-group"><label>Применение:</label><textarea rows="4" id="ta2"></textarea></div>
+</div>
+
+<button class="save-btn" onclick="window.print()">💾 Сохранить в PDF</button>
+</div>
+
+<script>
+if(!sessionStorage.getItem('ci-cd-loaded')){localStorage.clear();sessionStorage.setItem('ci-cd-loaded','true')}
+['student-name','group','date'].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.value=localStorage.getItem(id)||'';el.addEventListener('input',()=>localStorage.setItem(id,el.value))});
+var dateEl=document.getElementById('date');if(dateEl)dateEl.value=dateEl.value||new Date().toISOString().split('T')[0];
+document.querySelectorAll('input[type="checkbox"]').forEach(cb=>{if(localStorage.getItem(cb.id)==='true')cb.checked=true;cb.addEventListener('change',()=>localStorage.setItem(cb.id,cb.checked))});
+document.querySelectorAll('textarea').forEach((ta,i)=>{if(ta.id==='student-code'||ta.id==='student-tests'||ta.id==='student-ci-yml')return;const key=ta.id||('ta-'+i);const saved=localStorage.getItem(key);if(saved)ta.value=saved;ta.addEventListener('input',()=>localStorage.setItem(key,ta.value))});
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.code-block code').forEach(function(el){try{hljs.highlightElement(el)}catch(e){}});
+  var optsPy={mode:'python',theme:'darcula',lineNumbers:true,lineWrapping:true,indentUnit:4};
+  var optsYaml={mode:'yaml',theme:'darcula',lineNumbers:true,lineWrapping:true,indentUnit:2};
+  function initEditor(id,storageKey,opts){var ta=document.getElementById(id);if(!ta)return;ta.value=localStorage.getItem(storageKey)||'';var editor=CodeMirror.fromTextArea(ta,opts);editor.on('change',function(){localStorage.setItem(storageKey,editor.getValue())});var wrap=ta.closest('.code-editor-resizable');if(wrap&&window.ResizeObserver){new ResizeObserver(function(){editor.refresh()}).observe(wrap);}}
+  initEditor('student-code','student-code',optsPy);
+  initEditor('student-tests','student-tests',optsPy);
+  initEditor('student-ci-yml','student-ci-yml',optsYaml);
+});
+</script>
+</body>
+</html>
