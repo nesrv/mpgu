@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CI/CD · Брокеры · Оркестрация</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      overflow: hidden;
+      background: radial-gradient(ellipse at 50% 50%, #0a0a1a 0%, #050510 50%, #000 100%);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #e0e8ff;
+    }
+
+    .canvas-wrap {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+    }
+    #net {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .labels {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .label {
+      position: absolute;
+      white-space: nowrap;
+      font-weight: 600;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      text-shadow: 0 0 20px currentColor;
+      opacity: 0.85;
+      animation: float 20s ease-in-out infinite;
+    }
+    .label:nth-child(1) { left: 8%;  top: 15%; color: #00d4aa; animation-delay: 0s;      animation-duration: 18s; }
+    .label:nth-child(2) { left: 75%; top: 20%; color: #ff6b9d; animation-delay: -2s;   animation-duration: 22s; }
+    .label:nth-child(3) { left: 20%; top: 70%; color: #ffd93d; animation-delay: -4s;   animation-duration: 19s; }
+    .label:nth-child(4) { left: 65%; top: 65%; color: #6ee7b7; animation-delay: -6s;   animation-duration: 21s; }
+    .label:nth-child(5) { left: 50%; top: 12%; color: #a78bfa; animation-delay: -1s;   animation-duration: 20s; }
+    .label:nth-child(6) { left: 12%; top: 45%; color: #60a5fa; animation-delay: -3s;   animation-duration: 23s; }
+    .label:nth-child(7) { left: 82%; top: 50%; color: #f472b6; animation-delay: -5s;   animation-duration: 17s; }
+    .label:nth-child(8) { left: 45%; top: 82%; color: #34d399; animation-delay: -7s;   animation-duration: 24s; }
+    .label:nth-child(9) { left: 30%; top: 28%; color: #fb923c; animation-delay: -2.5s; animation-duration: 19s; }
+    .label:nth-child(10){ left: 70%; top: 78%; color: #818cf8; animation-delay: -4.5s; animation-duration: 21s; }
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      25%      { transform: translate(15px, -20px) scale(1.05); }
+      50%      { transform: translate(-10px, 10px) scale(0.98); }
+      75%      { transform: translate(-20px, -15px) scale(1.02); }
+    }
+
+    .title {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      font-size: clamp(0.75rem, 1.5vw, 0.95rem);
+      color: rgba(224, 232, 255, 0.5);
+      letter-spacing: 0.2em;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas-wrap">
+    <canvas id="net"></canvas>
+  </div>
+  <div class="labels">
+    <span class="label">postgreSQL</span>
+    <span class="label">хранимки</span>
+    <span class="label">pl/pgSQL</span>
+    <span class="label">правила</span>
+    <span class="label">триггеры</span>
+    <span class="label">асинхронка</span>
+    <span class="label">логическое копирование</span>
+    <span class="label">репликация</span>
+    <span class="label">физическое копирование</span>
+    <span class="label">дамп</span>
+  </div>
+  <p class="title">Высоконагруженные системы</p>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('net');
+      const ctx = canvas.getContext('2d');
+      let w, h, nodes = [], links = [], t = 0;
+
+      function resize() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+        init();
+      }
+
+      function init() {
+        const n = Math.min(40, Math.floor((w * h) / 18000));
+        nodes = [];
+        for (let i = 0; i < n; i++) {
+          nodes.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            vx: (Math.random() - 0.5) * 0.4,
+            vy: (Math.random() - 0.5) * 0.4,
+            r: 1.5 + Math.random() * 1.5,
+            pulse: Math.random() * Math.PI * 2
+          });
+        }
+        links = [];
+        for (let i = 0; i < nodes.length; i++) {
+          for (let j = i + 1; j < nodes.length; j++) {
+            const dx = nodes[i].x - nodes[j].x;
+            const dy = nodes[i].y - nodes[j].y;
+            if (dx * dx + dy * dy < 18000) links.push({ a: i, b: j });
+          }
+        }
+      }
+
+      function draw() {
+        ctx.fillStyle = 'rgba(5, 5, 16, 0.12)';
+        ctx.fillRect(0, 0, w, h);
+
+        t += 0.012;
+        nodes.forEach((n) => {
+          n.x += n.vx;
+          n.y += n.vy;
+          if (n.x < 0 || n.x > w) n.vx *= -1;
+          if (n.y < 0 || n.y > h) n.vy *= -1;
+        });
+
+        links.forEach(({ a, b }) => {
+          const n1 = nodes[a], n2 = nodes[b];
+          const dx = n2.x - n1.x, dy = n2.y - n1.y;
+          const d = Math.hypot(dx, dy);
+          if (d > 180) return;
+          const alpha = (1 - d / 180) * 0.25 * (0.7 + 0.3 * Math.sin(t + n1.pulse));
+          ctx.strokeStyle = `rgba(100, 180, 255, ${alpha})`;
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(n1.x, n1.y);
+          ctx.lineTo(n2.x, n2.y);
+          ctx.stroke();
+        });
+
+        nodes.forEach((n) => {
+          const glow = 0.6 + 0.4 * Math.sin(t * 2 + n.pulse);
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(120, 200, 255, ${glow * 0.9})`;
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r * 2.5, 0, Math.PI * 2);
+          const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 2.5);
+          g.addColorStop(0, `rgba(100, 180, 255, ${glow * 0.3})`);
+          g.addColorStop(1, 'rgba(100, 180, 255, 0)');
+          ctx.fillStyle = g;
+          ctx.fill();
+        });
+
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener('resize', resize);
+      resize();
+      draw();
+    })();
+  </script>
+</body>
+</html>
