@@ -1,0 +1,9 @@
+# PostgreSQL 18 + PL/Python (пакет postgresql-plpython3-18 из Debian Sid)
+FROM postgres:18
+
+RUN echo "deb http://deb.debian.org/debian sid main" > /etc/apt/sources.list.d/sid.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-plpython3-18 \
+    && rm -f /etc/apt/sources.list.d/sid.list \
+    && apt-get update \
+    && rm -rf /var/lib/apt/lists/*
