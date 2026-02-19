@@ -11,15 +11,21 @@
 
 ## ⏱ Структура лекции
 
-| Блок            | Время  |
-| --------------- | ------ |
-| Введение        | 10 мин |
-| PaaS            | 15 мин |
-| cPanel          | 15 мин |
-| VPS             | 20 мин |
-| VPS + Docker    | 25 мин |
-| CI/CD           | 20 мин |
-| Итоги + вопросы | 10 мин |
+
+Введение в деплой               
+Особенности деплой пайтон-проектов  
+uvicorn&Gunicorn        
+Nginx                   
+Деплой Fastapi          
+Деплой Django           
+PaaS                    
+cPanel                  
+VPS                     
+VPS + Docker            
+CI/CD                   
+Django и Docker Compose 
+Fastapi и Kubernetes    
+
 
 ---
 

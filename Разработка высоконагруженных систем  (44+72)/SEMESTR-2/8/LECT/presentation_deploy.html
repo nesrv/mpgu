@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Деплой Python-проектов: Django & FastAPI</title>
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/reveal.min.css">
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/black.min.css">
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/monokai.min.css">
+  <style>
+    .reveal .slides { width:80%!important; height:90%!important; transform:scale(1.2)!important; position:absolute!important; left:50%!important; top:0!important; transform:translateX(calc(-50% + 5%)) scale(1.2)!important; transform-origin:top center!important }
+    .reveal .slides section { display:flex!important; flex-direction:column!important; justify-content:center!important; align-items:center!important; padding:24px 32px!important; font-size:.95em!important; max-width:100%!important; width:100%!important; overflow-x:hidden!important; box-sizing:border-box!important; line-height:1.5!important; text-align:center!important }
+    .reveal h1 { font-size:1.7em!important; margin-top:0!important; margin-bottom:.5em!important; color:#FFD700!important; text-align:center!important }
+    .reveal h2 { font-size:1em!important; margin-top:0!important; margin-bottom:.5em!important; text-transform:none!important; text-align:center!important; padding-bottom:.4em!important; border-bottom:2px solid rgba(255,215,0,0.5)!important; color:#FFD700!important; width:100%!important }
+    .reveal h3 { font-size:1.05em!important; margin-top:.6em!important; margin-bottom:.3em!important; text-transform:none!important; color:#90EE90!important; text-align:center!important }
+    .reveal .slides section p, .reveal .slides section div { max-width:100%!important; min-width:0!important; overflow-wrap:break-word!important; word-wrap:break-word!important; word-break:break-word!important; box-sizing:border-box!important }
+    .reveal .slides section ul, .reveal .slides section ol { text-align:left!important; margin:0 auto!important }
+    .reveal .slides section li { overflow-wrap:break-word!important; word-wrap:break-word!important; word-break:break-word!important; margin-bottom:.4em!important; list-style:none!important; position:relative!important; padding-left:.5em!important }
+    .reveal .slides section ul li::before { content:"\25B8"!important; position:absolute!important; left:-1em!important; color:#FFD700!important; font-size:.85em!important }
+    .reveal p, .reveal ul, .reveal ol { font-size:.92em!important }
+    .reveal .slides section ul { padding-left:1.5em!important }
+    pre { max-height:320px!important; overflow:auto!important; margin:12px auto!important; max-width:95%!important; border-radius:10px!important; border:1px solid rgba(255,215,0,0.4)!important; box-shadow:0 6px 20px rgba(0,0,0,.4)!important; padding:2px!important; text-align:left!important }
+    pre code { font-size:.72em!important; padding:14px 18px!important; line-height:1.4!important }
+    table { font-size:.78em!important; max-width:100%!important; border-collapse:collapse!important; margin:12px auto!important }
+    .reveal table th, .reveal table td { border:1px solid rgba(255,255,255,0.35)!important; padding:8px 12px!important }
+    .reveal table th { background:rgba(0,0,0,0.3)!important; color:#FFD700!important }
+    .slide-card { background:rgba(0,0,0,0.35)!important; border-radius:12px!important; padding:18px 24px!important; border-left:5px solid #FFD700!important; margin-top:12px!important; max-width:95%!important; text-align:left!important; box-shadow:0 4px 16px rgba(0,0,0,.3)!important }
+    .reveal .slides section > div[style*="background"] ul { display:inline-block!important; text-align:left!important }
+  </style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- Слайд 1 -->
+<section data-background-color="#1a1a2e">
+  <div style="background:rgba(22,33,62,0.9);padding:40px;border:8px solid #0f3460;text-align:center;max-width:90%;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+    <h1 style="color:#FFD700">Деплой Python-проектов: Django & FastAPI</h1>
+    <h2 style="color:#90EE90">Цели изучения</h2>
+    <ul>
+      <li>Понять модели деплоя (PaaS, VPS, Docker, Kubernetes)</li>
+      <li>Выбрать подход под задачу</li>
+      <li>Разобраться «под капотом»</li>
+      <li>Получить базу для продакшена</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Слайд 2 -->
+<section data-background-color="#16213e">
+  <h2>Что такое деплой</h2>
+  <div class="slide-card">
+    <p>Процесс доставки приложения в production. Делает приложение доступным пользователям.</p>
+    <h3>Включает:</h3>
+    <ul>
+      <li>сервер</li>
+      <li>окружение</li>
+      <li>конфигурацию</li>
+      <li>безопасность</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Слайд 3 -->
+<section data-background-color="#2c3e50">
+  <h2>1. Введение в деплой</h2>
+  <h3>Что такое деплой?</h3>
+  <p><strong>Deploy</strong> — развёртывание приложения на сервер для доступа пользователей.</p>
+  <ul>
+    <li>Это <strong>не</strong> <code>python manage.py runserver</code></li>
+    <li>Это <strong>production</strong> — боевое окружение</li>
+    <li>Требует: стабильность, безопасность, масштабируемость</li>
+  </ul>
+  <h3>Зачем изучать деплой</h3>
+  <ul>
+    <li>Код ≠ работающий сервис</li>
+    <li>Ошибки чаще всего именно в деплое</li>
+    <li>Понимание деплоя = уверенность разработчика</li>
+  </ul>
+</section>
+
+<!-- Слайд 4 -->
+<section data-background-color="#16213e">
+  <h2>Чем production отличается от dev?</h2>
+  <table>
+    <tr><th>Аспект</th><th>Development</th><th>Production</th></tr>
+    <tr><td>Сервер</td><td>localhost</td><td>Удалённый сервер</td></tr>
+    <tr><td>Отладка</td><td>Включена</td><td>Отключена</td></tr>
+    <tr><td>HTTPS</td><td>Часто нет</td><td>Обязателен</td></tr>
+    <tr><td>Перезапуск</td><td>Вручную</td><td>Автоматически</td></tr>
+    <tr><td>Логи</td><td>Консоль</td><td>Файлы / система</td></tr>
+  </table>
+</section>
+
+<!-- Слайд 5 -->
+<section data-background-color="#2c3e50">
+  <h2>Компоненты продакшен-архитектуры</h2>
+  <pre><code>Browser
+   ↓
+Nginx (reverse proxy, статика)
+   ↓
+Gunicorn / Uvicorn (ASGI/WSGI сервер)
+   ↓
+Django / FastAPI приложение
+   ↓
+PostgreSQL, Redis, ...</code></pre>
+</section>
+
+<!-- Слайд 6 -->
+<section data-background-color="#16213e">
+  <h2>Ключевые роли</h2>
+  <ul>
+    <li><strong>Web-сервер (Nginx)</strong> — принимает HTTP, раздаёт статику, проксирует в приложение</li>
+    <li><strong>Application server (Gunicorn/Uvicorn)</strong> — запускает Python-код</li>
+    <li><strong>База данных</strong> — хранение данных</li>
+    <li><strong>Переменные окружения</strong> — секреты, настройки (не в коде!)</li>
+  </ul>
+  <h3>Этапы деплоя</h3>
+  <ul>
+    <li>Подготовка кода</li>
+    <li>Сборка окружения</li>
+    <li>Настройка сервера</li>
+    <li>Запуск приложения</li>
+    <li>Мониторинг и обновления</li>
+  </ul>
+</section>
+
+<!-- Слайд 7 -->
+<section data-background-color="#2c3e50">
+  <h2>2. Особенности деплоя Python-проектов</h2>
+  <h3>Почему Python — особенный?</h3>
+  <ul>
+    <li><strong>Интерпретируемый</strong> — нужен runtime</li>
+    <li><strong>Зависимости</strong> — pip, virtualenv, poetry, uv</li>
+    <li><strong>Миграции</strong> — Django, Alembic</li>
+    <li><strong>Статика</strong> — сборка фронта, collectstatic</li>
+  </ul>
+</section>
+
+<!-- Слайд 8 -->
+<section data-background-color="#16213e">
+  <h2>Типичные шаги деплоя Python</h2>
+  <ol style="list-style:decimal;padding-left:1.5em">
+    <li>Установить Python + зависимости</li>
+    <li>Настроить виртуальное окружение</li>
+    <li>Применить миграции</li>
+    <li>Собрать статику (Django)</li>
+    <li>Запустить ASGI/WSGI сервер</li>
+    <li>Настроить reverse proxy</li>
+    <li>Выставить переменные окружения</li>
+  </ol>
+</section>
+
+<!-- Слайд 9 -->
+<section data-background-color="#2c3e50">
+  <h2>3. Uvicorn & Gunicorn</h2>
+  <h3>Зачем нужен отдельный сервер?</h3>
+  <p><code>runserver</code> — только для разработки!</p>
+  <ul>
+    <li>Не масштабируется</li>
+    <li>Не поддерживает HTTPS</li>
+    <li>Однопоточный (Django)</li>
+    <li>Не production-ready</li>
+  </ul>
+</section>
+
+<!-- Слайд 10 -->
+<section data-background-color="#16213e">
+  <h2>WSGI vs ASGI</h2>
+  <ul>
+    <li><strong>WSGI</strong> — синхронный стандарт</li>
+    <li><strong>ASGI</strong> — асинхронный стандарт</li>
+    <li>Выбор влияет на сервер и архитектуру</li>
+  </ul>
+  <h3>Gunicorn (WSGI)</h3>
+  <ul>
+    <li>Стандарт для синхронных приложений (Django, Flask)</li>
+    <li>Работает с несколькими worker-процессами</li>
+    <li>Стабильный, проверенный временем</li>
+  </ul>
+  <pre><code>gunicorn myproject.wsgi:application \
+  --bind 0.0.0.0:8000 \
+  --workers 4</code></pre>
+</section>
+
+<!-- Слайд 11 -->
+<section data-background-color="#2c3e50">
+  <h2>Uvicorn (ASGI)</h2>
+  <ul>
+    <li><strong>ASGI</strong> — асинхронный стандарт (FastAPI, Starlette)</li>
+    <li>Поддержка WebSocket, HTTP/2</li>
+    <li>Один процесс, много задач (async)</li>
+  </ul>
+  <pre><code>uvicorn main:app --host 0.0.0.0 --port 8000</code></pre>
+  <h3>Gunicorn + Uvicorn workers</h3>
+  <p>Gunicorn = менеджер процессов, Uvicorn = async worker. Часто в production.</p>
+</section>
+
+<!-- Слайд 12 -->
+<section data-background-color="#16213e">
+  <h2>Gunicorn + Uvicorn (рекомендация для FastAPI)</h2>
+  <p>Gunicorn как мастер, Uvicorn как worker:</p>
+  <pre><code>gunicorn main:app \
+  -k uvicorn.workers.UvicornWorker \
+  -w 4 \
+  --bind 0.0.0.0:8000</code></pre>
+  <ul>
+    <li>Устойчивость к падениям</li>
+    <li>Несколько воркеров</li>
+    <li>ASGI-возможности</li>
+  </ul>
+</section>
+
+<!-- Слайд 13 -->
+<section data-background-color="#2c3e50">
+  <h2>4. Nginx</h2>
+  <h3>Роль Nginx</h3>
+  <ol style="list-style:decimal;padding-left:1.5em">
+    <li><strong>Reverse proxy</strong> — направляет запросы к приложению</li>
+    <li><strong>Статика</strong> — отдаёт CSS, JS, изображения</li>
+    <li><strong>SSL/TLS</strong> — терминация HTTPS</li>
+    <li><strong>Балансировка</strong> — несколько инстансов приложения</li>
+  </ol>
+</section>
+
+<!-- Слайд 14 -->
+<section data-background-color="#16213e">
+  <h2>Пример конфига Nginx (проксирование)</h2>
+  <pre><code>server {
+    listen 80;
+    server_name example.com;
+
+    location /static/ {
+        alias /var/www/static/;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}</code></pre>
+</section>
+
+<!-- Слайд 15 -->
+<section data-background-color="#2c3e50">
+  <h2>Почему Nginx, а не прямой доступ?</h2>
+  <ul>
+    <li>Приложение слушает localhost (безопасность)</li>
+    <li>Nginx обрабатывает статику быстрее</li>
+    <li>Один порт 80/443 для нескольких сервисов</li>
+    <li>Кеширование, сжатие, rate limiting</li>
+  </ul>
+  <h3>Что НЕ делает Nginx</h3>
+  <ul>
+    <li>Не запускает Python</li>
+    <li>Не знает Django/FastAPI</li>
+    <li>Только проксирует</li>
+  </ul>
+</section>
+
+<!-- Слайд 16 -->
+<section data-background-color="#16213e">
+  <h2>5. Деплой FastAPI</h2>
+  <h3>Минимальный стек</h3>
+  <ul>
+    <li>FastAPI приложение</li>
+    <li>Uvicorn (или Gunicorn + UvicornWorker)</li>
+    <li>Nginx</li>
+    <li>База данных (PostgreSQL)</li>
+    <li>Переменные окружения (.env)</li>
+  </ul>
+</section>
+
+<!-- Слайд 17 -->
+<section data-background-color="#2c3e50">
+  <h2>FastAPI: структура проекта</h2>
+  <pre><code>/app
+  main.py          # FastAPI app
+  requirements.txt
+  .env
+Dockerfile
+docker-compose.yml (опционально)</code></pre>
+</section>
+
+<!-- Слайд 18 -->
+<section data-background-color="#16213e">
+  <h2>FastAPI: запуск в production</h2>
+  <pre><code># Через Uvicorn напрямую
+uvicorn main:app --host 0.0.0.0 --port 8000
+
+# Через Gunicorn + Uvicorn (рекомендуется)
+gunicorn main:app \
+  -k uvicorn.workers.UvicornWorker \
+  -w 4 --bind 0.0.0.0:8000</code></pre>
+  <ul>
+    <li>Gunicorn + Uvicorn workers</li>
+    <li>Docker / Kubernetes</li>
+    <li>Отлично подходит для API</li>
+  </ul>
+</section>
+
+<!-- Слайд 19 -->
+<section data-background-color="#2c3e50">
+  <h2>6. Деплой Django</h2>
+  <h3>Особенности Django</h3>
+  <ul>
+    <li>Монолит</li>
+    <li>ORM + миграции</li>
+    <li>Админка</li>
+    <li>Статика</li>
+  </ul>
+  <h3>Отличия от FastAPI</h3>
+  <ul>
+    <li><strong>collectstatic</strong> — сборка статики</li>
+    <li><strong>migrate</strong> — миграции БД</li>
+    <li><strong>WSGI</strong> — Gunicorn без Uvicorn</li>
+    <li>ALLOWED_HOSTS, SECRET_KEY в настройках</li>
+  </ul>
+</section>
+
+<!-- Слайд 20 -->
+<section data-background-color="#16213e">
+  <h2>Django: типовой порядок деплоя</h2>
+  <p>Минимальный стек: Django, Gunicorn, Nginx</p>
+  <pre><code>python manage.py migrate
+python manage.py collectstatic --noinput
+gunicorn project.wsgi:application \
+  --bind 0.0.0.0:8000 \
+  --workers 4</code></pre>
+</section>
+
+<!-- Слайд 21 -->
+<section data-background-color="#2c3e50">
+  <h2>Django: критичные настройки production</h2>
+  <pre><code>DEBUG = False
+ALLOWED_HOSTS = ['example.com', 'www.example.com']
+SECRET_KEY = os.environ.get('SECRET_KEY')
+DATABASES = { ... }  # из переменных окружения
+STATIC_ROOT = '/var/www/static/'</code></pre>
+</section>
+
+<!-- Слайд 22 -->
+<section data-background-color="#16213e">
+  <h2>7. PaaS — Platform as a Service</h2>
+  <h3>Что это?</h3>
+  <p>Платформа, где <strong>инфраструктура скрыта</strong> от разработчика.</p>
+  <ul>
+    <li>Railway, Render, Fly.io, Heroku</li>
+    <li><code>git push</code> → build → run</li>
+    <li>Минимум настройки</li>
+  </ul>
+</section>
+
+<!-- Слайд 23 -->
+<section data-background-color="#2c3e50">
+  <h2>PaaS: плюсы и минусы</h2>
+  <p><strong>Плюсы:</strong> Быстрый старт • Встроенный CI/CD • Нет DevOps-экспертизы</p>
+  <p><strong>Минусы:</strong> Меньше контроля • Ограничения и лимиты • Цена растёт с нагрузкой</p>
+  <p><strong>Когда:</strong> MVP, обучение, демо</p>
+</section>
+
+<!-- Слайд 24 -->
+<section data-background-color="#16213e">
+  <h2>8. cPanel-хостинг</h2>
+  <h3>Что это?</h3>
+  <p>Классический shared-хостинг с GUI.</p>
+  <ul>
+    <li>Ограниченный доступ</li>
+    <li>Часто Passenger для Python</li>
+    <li>Python — не основной сценарий</li>
+  </ul>
+</section>
+
+<!-- Слайд 25 -->
+<section data-background-color="#2c3e50">
+  <h2>cPanel: когда использовать</h2>
+  <p><strong>Плюсы:</strong> дёшево, GUI, без DevOps</p>
+  <p><strong>Минусы:</strong> плохо масштабируется, устаревший подход</p>
+  <h3>Подходит для:</h3>
+  <ul>
+    <li>Простых Django-сайтов</li>
+    <li>Legacy-проектов</li>
+    <li>Низкого трафика</li>
+  </ul>
+</section>
+
+<!-- Слайд 26 -->
+<section data-background-color="#16213e">
+  <h2>9. VPS — Virtual Private Server</h2>
+  <p>Полный контроль • SSH-доступ</p>
+  <h3>Что это?</h3>
+  <p>Полный контроль над Linux-сервером.</p>
+  <ul>
+    <li>DigitalOcean, Hetzner, EC2</li>
+    <li>Свой Nginx, Gunicorn, PostgreSQL, Redis</li>
+    <li>systemd для автозапуска</li>
+  </ul>
+</section>
+
+<!-- Слайд 27 -->
+<section data-background-color="#2c3e50">
+  <h2>VPS: типовая архитектура</h2>
+  <pre><code>Nginx (порт 80/443)
+   ↓
+Gunicorn / Uvicorn (порт 8000)
+   ↓
+Django / FastAPI
+   ↓
+PostgreSQL, Redis</code></pre>
+  <p>systemd-юниты для автозапуска при перезагрузке.</p>
+</section>
+
+<!-- Слайд 28 -->
+<section data-background-color="#16213e">
+  <h2>VPS: плюсы и минусы</h2>
+  <h3>Плюсы:</h3>
+  <ul>
+    <li>Гибкость</li>
+    <li>Дешевле PaaS при росте</li>
+    <li>Продакшен-подход</li>
+  </ul>
+  <h3>Минусы:</h3>
+  <ul>
+    <li>Ручная настройка</li>
+    <li>Ответственность за безопасность и обновления</li>
+  </ul>
+</section>
+
+<!-- Слайд 29 -->
+<section data-background-color="#2c3e50">
+  <h2>10. VPS + Docker</h2>
+  <h3>Зачем Docker?</h3>
+  <ul>
+    <li><strong>Одинаковое окружение</strong> — dev = prod</li>
+    <li><strong>Быстрый деплой</strong> — образ готов</li>
+    <li><strong>Изоляция</strong> — сервисы в контейнерах</li>
+  </ul>
+</section>
+
+<!-- Слайд 30 -->
+<section data-background-color="#16213e">
+  <h2>Docker: архитектура типового стека</h2>
+  <pre><code>Docker Compose
+ ├─ web (Django / FastAPI)
+ ├─ db (PostgreSQL)
+ ├─ redis
+ └─ nginx</code></pre>
+  <p>volumes для данных, ports для доступа.</p>
+</section>
+
+<!-- Слайд 31 -->
+<section data-background-color="#2c3e50">
+  <h2>Docker: ключевые файлы</h2>
+  <ul>
+    <li><strong>Dockerfile</strong> — сборка образа приложения</li>
+    <li><strong>docker-compose.yml</strong> — оркестрация сервисов</li>
+    <li><strong>.env</strong> — переменные окружения</li>
+    <li><strong>volumes</strong> — персистентность БД</li>
+  </ul>
+</section>
+
+<!-- Слайд 32 -->
+<section data-background-color="#16213e">
+  <h2>Docker: плюсы и минусы</h2>
+  <p><strong>Плюсы:</strong> Стандарт индустрии • Удобно масштабировать • Идеально для CI/CD</p>
+  <p><strong>Минусы:</strong> Дополнительный порог входа</p>
+  <p class="slide-card"><em>Docker — не магия, а упаковка процессов.</em></p>
+</section>
+
+<!-- Слайд 33 -->
+<section data-background-color="#2c3e50">
+  <h2>11. CI/CD</h2>
+  <h3>Что такое CI/CD?</h3>
+  <ul>
+    <li><strong>CI</strong> (Continuous Integration) — автоматические тесты при каждом коммите</li>
+    <li><strong>CD</strong> (Continuous Deployment) — автоматический деплой после успешных проверок</li>
+  </ul>
+</section>
+
+<!-- Слайд 34 -->
+<section data-background-color="#16213e">
+  <h2>CI/CD: типовой pipeline</h2>
+  <pre><code>git push
+  → tests (pytest, lint)
+  → build (Docker image)
+  → push to registry
+  → deploy (VPS, K8s, ...)</code></pre>
+</section>
+
+<!-- Слайд 35 -->
+<section data-background-color="#2c3e50">
+  <h2>CI/CD: инструменты</h2>
+  <ul>
+    <li><strong>GitHub Actions</strong></li>
+    <li><strong>GitLab CI</strong></li>
+    <li><strong>Jenkins</strong></li>
+    <li><strong>Bitbucket Pipelines</strong></li>
+  </ul>
+</section>
+
+<!-- Слайд 36 -->
+<section data-background-color="#16213e">
+  <h2>CI/CD: пример сценария</h2>
+  <ol style="list-style:decimal;padding-left:1.5em">
+    <li>Push в <code>main</code></li>
+    <li>Запуск тестов</li>
+    <li>Сборка Docker-образа</li>
+    <li>Публикация в registry</li>
+    <li>Деплой на VPS / Kubernetes</li>
+    <li>Health-check</li>
+  </ol>
+</section>
+
+<!-- Слайд 37 -->
+<section data-background-color="#2c3e50">
+  <h2>12. Django и Docker Compose</h2>
+  <h3>Структура</h3>
+  <pre><code>├── Dockerfile
+├── docker-compose.yml
+├── django_project/
+│   ├── manage.py
+│   └── ...
+├── nginx/
+│   └── default.conf
+└── .env</code></pre>
+</section>
+
+<!-- Слайд 38 -->
+<section data-background-color="#16213e">
+  <h2>Django + Docker Compose: docker-compose.yml (фрагмент)</h2>
+  <pre><code>services:
+  web:
+    build: .
+    command: gunicorn project.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - static_volume:/app/static
+    depends_on:
+      - db
+
+  db:
+    image: postgres:17
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: mydb</code></pre>
+</section>
+
+<!-- Слайд 39 -->
+<section data-background-color="#2c3e50">
+  <h2>Django + Docker: типовые команды</h2>
+  <pre><code>docker-compose up -d --build
+docker-compose exec web python manage.py migrate
+docker-compose exec web python manage.py collectstatic --noinput</code></pre>
+</section>
+
+<!-- Слайд 40 -->
+<section data-background-color="#16213e">
+  <h2>13. FastAPI и Kubernetes</h2>
+  <h3>Зачем Kubernetes?</h3>
+  <ul>
+    <li>Оркестрация множества контейнеров</li>
+    <li>Автомасштабирование</li>
+    <li>Self-healing</li>
+    <li>Rolling updates без даунтайма</li>
+  </ul>
+  <p>Stateless API • Horizontal scaling • Cloud-native подход</p>
+</section>
+
+<!-- Слайд 41 -->
+<section data-background-color="#2c3e50">
+  <h2>Kubernetes: основные объекты</h2>
+  <ul>
+    <li><strong>Pod</strong> — один или несколько контейнеров</li>
+    <li><strong>Deployment</strong> — управление репликами</li>
+    <li><strong>Service</strong> — доступ к подам</li>
+    <li><strong>Ingress</strong> — маршрутизация HTTP-трафика</li>
+  </ul>
+</section>
+
+<!-- Слайд 42 -->
+<section data-background-color="#16213e">
+  <h2>FastAPI в Kubernetes: Deployment (фрагмент)</h2>
+  <pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: fastapi
+  template:
+    spec:
+      containers:
+      - name: fastapi
+        image: myregistry/fastapi-app:latest
+        ports:
+        - containerPort: 8000</code></pre>
+  <p><strong>Когда нужен K8s:</strong> High-load, микросервисы, большие команды</p>
+  <p><strong>Когда НЕ нужен:</strong> MVP, маленькие проекты, один сервер</p>
+</section>
+
+<!-- Слайд 43 -->
+<section data-background-color="#2c3e50">
+  <h2>Сравнительная таблица подходов</h2>
+  <table>
+    <tr><th>Подход</th><th>Контроль</th><th>Сложность</th><th>Продакшен</th></tr>
+    <tr><td>PaaS</td><td>низкий</td><td>⭐</td><td>⚠</td></tr>
+    <tr><td>cPanel</td><td>низкий</td><td>⭐⭐</td><td>❌</td></tr>
+    <tr><td>VPS</td><td>высокий</td><td>⭐⭐⭐</td><td>✅</td></tr>
+    <tr><td>VPS + Docker</td><td>высокий</td><td>⭐⭐⭐⭐</td><td>✅</td></tr>
+    <tr><td>VPS + Docker + CI/CD</td><td>высокий</td><td>⭐⭐⭐⭐⭐</td><td>🚀</td></tr>
+    <tr><td>Kubernetes</td><td>максимальный</td><td>⭐⭐⭐⭐⭐</td><td>🚀</td></tr>
+  </table>
+</section>
+
+<!-- Слайд 44 -->
+<section data-background-color="#16213e">
+  <h2>Итоги: что выбрать?</h2>
+  <ul>
+    <li><strong>MVP / учёба</strong> → PaaS (Railway, Render)</li>
+    <li><strong>Небольшой проект</strong> → VPS + Docker Compose</li>
+    <li><strong>Средний/крупный</strong> → VPS + Docker + CI/CD</li>
+    <li><strong>Масштаб, микросервисы</strong> → Kubernetes</li>
+  </ul>
+</section>
+
+<!-- Слайд 45 -->
+<section data-background-color="#2c3e50">
+  <h2>Ключевые тезисы</h2>
+  <ol style="list-style:decimal;padding-left:1.5em">
+    <li><strong>Нет "лучшего" деплоя</strong> — есть подходящий под задачу</li>
+    <li>Начинай с простого → иди к автоматизации</li>
+    <li>Docker + CI/CD = современный стандарт</li>
+    <li>DevOps — часть профессии backend-разработчика</li>
+  </ol>
+</section>
+
+<!-- Слайд 46 -->
+<section data-background-color="#16213e">
+  <h2>Краткое сравнение</h2>
+  <ul>
+    <li>Django → сайты, админки, монолиты</li>
+    <li>FastAPI → API, микросервисы</li>
+    <li>VPS + Docker → золотой стандарт</li>
+    <li>Kubernetes → enterprise</li>
+  </ul>
+  <h3>Что изучать дальше</h3>
+  <ul>
+    <li>Linux basics</li>
+    <li>Networking</li>
+    <li>Security</li>
+    <li>Monitoring (Prometheus, Grafana)</li>
+  </ul>
+</section>
+
+<!-- Слайд 47 -->
+<section data-background-color="#2c3e50">
+  <h2>Дополнительные темы для изучения</h2>
+  <ul>
+    <li>Мониторинг (Prometheus, Grafana)</li>
+    <li>Логирование (Loki, ELK)</li>
+    <li>Бэкапы БД</li>
+    <li>SSL (Let's Encrypt)</li>
+    <li>Secrets management</li>
+  </ul>
+</section>
+
+<!-- Слайд 48 -->
+<section data-background-color="#16213e">
+  <h2>Полезные ресурсы</h2>
+  <ul>
+    <li>Документация: Django Deployment, FastAPI Deployment</li>
+    <li>Gunicorn, Uvicorn, Nginx — официальные docs</li>
+    <li>Docker & Kubernetes — документация и tutorials</li>
+    <li>GitHub Actions / GitLab CI — примеры пайплайнов</li>
+  </ul>
+</section>
+
+<!-- Слайд 49 -->
+<section data-background-color="#2c3e50">
+  <h2>Чек-лист перед деплоем</h2>
+  <ul>
+    <li>DEBUG = False</li>
+    <li>SECRET_KEY из переменных окружения</li>
+    <li>Миграции применены</li>
+    <li>Статика собрана (Django)</li>
+    <li>HTTPS настроен</li>
+    <li>Логирование работает</li>
+  </ul>
+</section>
+
+<!-- Слайд 50 -->
+<section data-background-color="#1a1a2e">
+  <div style="background:rgba(22,33,62,0.9);padding:50px;border:8px solid #0f3460;text-align:center;max-width:90%;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+    <h1 style="color:#FFD700">Спасибо за внимание!</h1>
+    <h2 style="color:#90EE90">Вопросы?</h2>
+    <p style="color:#FFF;font-size:.9em">Введение в деплой • Python • Uvicorn • Gunicorn • Nginx • FastAPI • Django • PaaS • cPanel • VPS • Docker • CI/CD • Kubernetes</p>
+  </div>
+</section>
+
+</div></div>
+<script src="../../../SEMESTR-1/15-16/js/reveal.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/notes.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/markdown.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/highlight.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    transition: 'slide',
+    controls: true,
+    progress: true,
+    slideNumber: true,
+    center: false,
+    margin: 0.02,
+    plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+  });
+</script>
+</body>
+</html>
