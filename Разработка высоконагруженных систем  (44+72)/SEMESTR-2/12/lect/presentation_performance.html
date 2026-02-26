@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Настройка производительности FastAPI и Django. Деплой и тестирование на PaaS.</title>
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/reveal.min.css">
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/black.min.css">
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/monokai.min.css">
+  <style>
+    .reveal .slides { width:80%!important; height:90%!important; transform:scale(1.2)!important; position:absolute!important; left:50%!important; top:0!important; transform:translateX(calc(-50% + 5%)) scale(1.2)!important; transform-origin:top center!important }
+    .reveal .slides section { display:flex!important; flex-direction:column!important; justify-content:center!important; align-items:center!important; padding:24px 32px!important; font-size:.95em!important; max-width:100%!important; width:100%!important; overflow-x:hidden!important; box-sizing:border-box!important; line-height:1.5!important; text-align:center!important }
+    .reveal h1 { font-size:1.7em!important; margin-top:0!important; margin-bottom:.5em!important; color:#FFD700!important; text-align:center!important }
+    .reveal h2 { font-size:1em!important; margin-top:0!important; margin-bottom:.5em!important; text-transform:none!important; text-align:center!important; padding-bottom:.4em!important; border-bottom:2px solid rgba(255,215,0,0.5)!important; color:#FFD700!important; width:100%!important }
+    .reveal h3 { font-size:1.05em!important; margin-top:.6em!important; margin-bottom:.3em!important; text-transform:none!important; color:#90EE90!important; text-align:center!important }
+    .reveal .slides section p, .reveal .slides section div { max-width:100%!important; min-width:0!important; overflow-wrap:break-word!important; word-wrap:break-word!important; word-break:break-word!important; box-sizing:border-box!important }
+    .reveal .slides section ul, .reveal .slides section ol { text-align:left!important; margin:0 auto!important }
+    .reveal .slides section li { overflow-wrap:break-word!important; word-wrap:break-word!important; word-break:break-word!important; margin-bottom:.4em!important; list-style:none!important; position:relative!important; padding-left:.5em!important }
+    .reveal .slides section ul li::before { content:"\25B8"!important; position:absolute!important; left:-1em!important; color:#FFD700!important; font-size:.85em!important }
+    .reveal p, .reveal ul, .reveal ol { font-size:.92em!important }
+    .reveal .slides section ul { padding-left:1.5em!important }
+    pre { max-height:320px!important; overflow:auto!important; margin:12px auto!important; max-width:95%!important; border-radius:10px!important; border:1px solid rgba(255,215,0,0.4)!important; box-shadow:0 6px 20px rgba(0,0,0,.4)!important; padding:2px!important; text-align:left!important }
+    pre code { font-size:.72em!important; padding:14px 18px!important; line-height:1.4!important }
+    table { font-size:.78em!important; max-width:100%!important; border-collapse:collapse!important; margin:12px auto!important }
+    .reveal table th, .reveal table td { border:1px solid rgba(255,255,255,0.35)!important; padding:8px 12px!important }
+    .reveal table th { background:rgba(0,0,0,0.3)!important; color:#FFD700!important }
+    .slide-card { background:rgba(0,0,0,0.35)!important; border-radius:12px!important; padding:18px 24px!important; border-left:5px solid #FFD700!important; margin-top:12px!important; max-width:95%!important; text-align:left!important; box-shadow:0 4px 16px rgba(0,0,0,.3)!important }
+    .reveal .slides section > div[style*="background"] ul { display:inline-block!important; text-align:left!important }
+  </style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- Title slide -->
+<section data-background-color="#16213e">
+  <div style="background:rgba(22,33,62,0.9);padding:40px;border:8px solid #0f3460;text-align:center;max-width:90%;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+    <h1 style="color:#FFD700">Настройка производительности FastAPI и Django. Деплой и тестирование на PaaS.</h1>
+  </div>
+</section>
+
+<!-- Slide 1: Архитектурные метрики -->
+<section data-background-color="#2c3e50">
+  <h2>Архитектурные метрики</h2>
+  <ul>
+    <li><strong>RPS / QPS</strong> — запросы в секунду</li>
+    <li><strong>Peak RPS</strong> — пиковая нагрузка</li>
+    <li><strong>Read/Write ratio</strong> — соотношение чтения и записи</li>
+    <li><strong>Payload size (avg / p95)</strong> — размер полезной нагрузки (средний / 95‑й перцентиль)</li>
+  </ul>
+</section>
+
+<!-- Slide 2: Масштабируемость -->
+<section data-background-color="#16213e">
+  <h2>Масштабируемость</h2>
+  <ul>
+    <li><strong>Horizontal scalability</strong> (можно ли масштабироваться без боли)</li>
+    <li><strong>Statefulness</strong> (stateless vs stateful) — состояние (без состояния vs с хранением состояния)</li>
+    <li><strong>Fan-out</strong> — сколько RPC вызывает один запрос</li>
+  </ul>
+</section>
+
+<!-- Slide 3: Сравнение производительности -->
+<section data-background-color="#2c3e50">
+  <h2>Сравнение производительности популярных Python-фреймворков API</h2>
+  <p style="font-size:.85em">VPS ~2 ядра / 4 ГБ RAM</p>
+  <table>
+    <tr><th>Фреймворк</th><th>Архитектура</th><th>Sync / Async</th><th>Пропускная способность</th></tr>
+    <tr><td><strong>FastAPI</strong></td><td>ASGI (Starlette)</td><td>Async по умолчанию</td><td>~20 000–40 000+ RPS</td></tr>
+    <tr><td><strong>Django (без API)</strong></td><td>ASGI / WSGI</td><td>Синхронный</td><td>~1 000–5 000 RPS</td></tr>
+    <tr><td><strong>Django + DRF</strong></td><td>WSGI</td><td>Синхронный</td><td>~2 000–12 000 RPS</td></tr>
+    <tr><td><strong>Django + Ninja</strong></td><td>ASGI / WSGI</td><td>Частично async</td><td>~почти FastAPI-уровни</td></tr>
+  </table>
+  <p style="font-size:.8em;margin-top:12px">👉 RPS = Requests per second</p>
+</section>
+
+<!-- Slide 4: Детали по FastAPI -->
+<section data-background-color="#16213e">
+  <h2>Детали по ⭐ FastAPI</h2>
+  <ul>
+    <li>Очень высокие показатели throughput и низкая задержка — часто <strong>в 3–5× быстрее, чем Django/DRF</strong></li>
+    <li>Асинхронность встроена по умолчанию → эффективное использование событийного цикла</li>
+    <li>Отлично подходит для <strong>микросервисов, real-time API, WebSockets, высоких нагрузок</strong></li>
+  </ul>
+  <p style="font-size:.85em">На VPS 2 ядра, 4 ГБ FastAPI обычно устойчиво обрабатывает десятки тысяч запросов в секунду при простых API.</p>
+</section>
+
+<!-- Slide 5: Детали по Django + DRF -->
+<section data-background-color="#2c3e50">
+  <h2>Детали по 🐍 Django + DRF</h2>
+  <ul>
+    <li>Built-in Django ORM, но <strong>DRF значительно увеличивает overhead</strong> из-за сериализации и middleware</li>
+    <li>Производительность ощутимо ниже FastAPI: типично <strong>в 2–5× медленнее</strong></li>
+    <li>DRF чаще всего синхронен — асинхронные преимущества Django 6 на него почти не распространяются</li>
+  </ul>
+  <p>💡 Подходит для проектов, где важны экосистема Django, встроенные инструменты (auth, admin).</p>
+</section>
+
+<!-- Slide 6: Детали по Django + Ninja -->
+<section data-background-color="#16213e">
+  <h2>Детали по ⚡ Django + Ninja</h2>
+  <ul>
+    <li><strong>Django Ninja быстрее DRF</strong> и близок к производительности FastAPI</li>
+    <li>Pydantic-сериализация и лёгкая структура DSL-маршрутов — меньший overhead</li>
+  </ul>
+  <p>📌 Хороший компромисс: сохраняешь ORM и многое из Django, но с высокой скоростью API.</p>
+</section>
+
+<!-- Slide 7: Детали по Django (чистый) -->
+<section data-background-color="#2c3e50">
+  <h2>Детали по 🏁 Django (чистый, без DRF/Ninja)</h2>
+  <ul>
+    <li>При обычных веб-эндпоинтах и шаблонах — вполне достаточен для страниц, admin-панелей</li>
+    <li>В API-контексте синхронный характер и нагрузка middleware дают более низкие RPS по сравнению с FastAPI</li>
+  </ul>
+</section>
+
+<!-- Slide 8: Примерные ориентиры -->
+<section data-background-color="#16213e">
+  <h2>📊 Примерные ориентиры (грубо)</h2>
+  <table>
+    <tr><th>Фреймворк</th><th>RPS</th><th>Среднее время ответа</th></tr>
+    <tr><td>FastAPI</td><td><strong>~20 000–40 000+</strong></td><td>~10–30 ms</td></tr>
+    <tr><td>Django + Ninja</td><td>~15 000–30 000</td><td>~15–40 ms</td></tr>
+    <tr><td>Django + DRF</td><td>~7 000–15 000</td><td>~50–120 ms</td></tr>
+    <tr><td>Django (без API)</td><td>~2 000–10 000</td><td>~80–150 ms</td></tr>
+  </table>
+  <p style="font-size:.8em">Простые GET/POST JSON API без тяжёлой логики</p>
+</section>
+
+<!-- Slide 9: Практические соображения -->
+<section data-background-color="#2c3e50">
+  <h2>🧠 Практические соображения</h2>
+  <h3>Если важна максимальная пропускная способность</h3>
+  <p>👉 <strong>FastAPI</strong> (или Django + Ninja)</p>
+  <h3>Если важны функциональность и экосистема</h3>
+  <p>👉 <strong>Django + DRF</strong> / Django 6</p>
+  <h3>Если нужен баланс скорости и удобства</h3>
+  <p>👉 <strong>Django + Ninja</strong></p>
+</section>
+
+<!-- Slide 10: Django 6 -->
+<section data-background-color="#16213e">
+  <h2>📌 Почему Django 6 упоминается отдельно</h2>
+  <p>Django 6 расширяет поддержку async, но <strong>большинство API-слоёв (особенно DRF) по-прежнему работают синхронно</strong>, поэтому чистый прирост скорости ограничен по сравнению с фреймворками, изначально построенными на ASGI.</p>
+</section>
+
+<!-- Slide 11: Цель по железу -->
+<section data-background-color="#2c3e50">
+  <h2>🎯 Цель по железу (2 ядра / 4 GB)</h2>
+  <p>Реалистичные ориентиры для <strong>Django API</strong>:</p>
+  <ul>
+    <li><strong>Django + Ninja</strong>: 15–30k RPS (без тяжёлой БД)</li>
+    <li><strong>Django + DRF</strong>: 7–15k RPS</li>
+    <li><strong>Средний p95 latency</strong>: 30–120 ms</li>
+    <li><strong>CPU ≈ 70–85%</strong> под нагрузкой, RAM ≈ 1.5–2.5 GB</li>
+  </ul>
+</section>
+
+<!-- Slide 12: Архитектура -->
+<section data-background-color="#16213e">
+  <h2>🧱 Архитектура (обязательный минимум)</h2>
+  <pre><code>Client
+  ↓
+Nginx
+  ↓
+Gunicorn (workers)
+  ↓
+Django (ASGI)
+  ↓
+PostgreSQL / Redis</code></pre>
+</section>
+
+<!-- Slide 13: ОС и оптимизация VPS -->
+<section data-background-color="#2c3e50">
+  <h2>ОС и базовая оптимизация VPS для Django</h2>
+  <h3>Ubuntu 22.04 / 24.04</h3>
+  <pre><code>sudo apt update && sudo apt upgrade -y
+sudo apt install -y python3-pip python3-venv nginx redis-server \
+  postgresql postgresql-contrib build-essential</code></pre>
+  <h3>🔧 sysctl (очень важно)</h3>
+  <pre><code>net.core.somaxconn = 65535
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.ip_local_port_range = 1024 65000
+fs.file-max = 100000</code></pre>
+  <p><code>sudo sysctl -p</code></p>
+</section>
+
+<!-- Slide 14: Django настройки -->
+<section data-background-color="#16213e">
+  <h2>Django: ключевые настройки</h2>
+  <h3>settings.py</h3>
+  <pre><code>DEBUG = False
+ALLOWED_HOSTS = ["your-domain.com"]
+USE_TZ = False  # быстрее для API
+DATABASES["default"]["CONN_MAX_AGE"] = 60  # ВАЖНО</code></pre>
+  <h3>Middleware — убери всё лишнее</h3>
+  <ul>
+    <li>❌ Sessions, CSRF (для чистого API), Messages, Locale — убрать если не нужно</li>
+  </ul>
+</section>
+
+<!-- Slide 15: ASGI + Gunicorn -->
+<section data-background-color="#2c3e50">
+  <h2>ASGI + Gunicorn (критично)</h2>
+  <h3>Почему не WSGI?</h3>
+  <ul>
+    <li><strong>WSGI</strong> — блокирующая модель → хуже масштабируется</li>
+    <li><strong>ASGI</strong> — событийная модель → лучше загрузка CPU</li>
+  </ul>
+  <pre><code>pip install gunicorn uvicorn</code></pre>
+  <pre><code>bind = "127.0.0.1:8000"
+workers = 4
+worker_class = "uvicorn.workers.UvicornWorker"
+threads = 1
+timeout = 30
+max_requests = 10000
+max_requests_jitter = 1000</code></pre>
+  <p>Для IO-bound: <code>workers = CPU × 2</code></p>
+</section>
+
+<!-- Slide 16: Запуск -->
+<section data-background-color="#16213e">
+  <h2>Запуск</h2>
+  <pre><code>gunicorn config.asgi:application \
+  --config gunicorn.conf.py</code></pre>
+</section>
+
+<!-- Slide 17: Nginx -->
+<section data-background-color="#2c3e50">
+  <h2>Nginx (огромный буст)</h2>
+  <pre><code>worker_processes auto;
+worker_connections 8192;
+multi_accept on;</code></pre>
+  <pre><code>upstream django {
+    server 127.0.0.1:8000;
+    keepalive 64;
+}
+
+location / {
+    proxy_pass http://django;
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+}</code></pre>
+  <p>📈 Nginx + keepalive даёт +20–30% RPS</p>
+</section>
+
+<!-- Slide 18: PostgreSQL -->
+<section data-background-color="#16213e">
+  <h2>PostgreSQL (узкое место №1)</h2>
+  <pre><code>shared_buffers = 1GB
+effective_cache_size = 3GB
+work_mem = 16MB
+maintenance_work_mem = 256MB
+max_connections = 100</code></pre>
+  <pre><code>CREATE INDEX CONCURRENTLY idx_user_email ON users(email);</code></pre>
+  <p>❗ 80% «медленного Django» — плохие SQL-запросы</p>
+</section>
+
+<!-- Slide 19: Redis -->
+<section data-background-color="#2c3e50">
+  <h2>Redis (обязательно для скорости)</h2>
+  <p>Используй для: кэша, rate-limit, session storage</p>
+  <pre><code>CACHES = {
+  "default": {
+    "BACKEND": "django_redis.cache.RedisCache",
+    "LOCATION": "redis://127.0.0.1:6379/1",
+  }
+}</code></pre>
+</section>
+
+<!-- Slide 20: Django Ninja / DRF -->
+<section data-background-color="#16213e">
+  <h2>Django Ninja / DRF — разница</h2>
+  <h3>Django + Ninja (рекомендуется)</h3>
+  <pre><code>@api.get("/users")
+def users(request):
+    return list(User.objects.values("id", "email"))</code></pre>
+  <ul>
+    <li>✔ Pydantic, минимальный overhead, Async-friendly</li>
+  </ul>
+  <h3>DRF — если нужен</h3>
+  <ul>
+    <li><code>SerializerMethodField</code> → ❌</li>
+    <li><code>select_related</code> / <code>prefetch_related</code> → ✅</li>
+  </ul>
+</section>
+
+<!-- Slide 21: Нагрузочное тестирование -->
+<section data-background-color="#2c3e50">
+  <h2>Нагрузочное тестирование</h2>
+  <pre><code>wrk -t4 -c200 -d30s http://your-domain.com/api/users</code></pre>
+  <p>Ожидаемо на 2 vCPU / 4 GB RAM:</p>
+  <table>
+    <tr><th>Стек</th><th>RPS</th></tr>
+    <tr><td>Django + Ninja</td><td>20–30k</td></tr>
+    <tr><td>Django + DRF</td><td>8–15k</td></tr>
+    <tr><td>Django (views)</td><td>5–10k</td></tr>
+  </table>
+</section>
+
+<!-- Slide 22: Частые ошибки -->
+<section data-background-color="#16213e">
+  <h2>Частые ошибки (убивают производительность)</h2>
+  <ul>
+    <li>❌ DEBUG=True</li>
+    <li>❌ WSGI вместо ASGI</li>
+    <li>❌ 1 worker</li>
+    <li>❌ ORM в цикле</li>
+    <li>❌ Отсутствие индексов</li>
+    <li>❌ Нет Redis</li>
+    <li>❌ Gunicorn без max_requests</li>
+  </ul>
+</section>
+
+<!-- Slide 23: Краткий рецепт -->
+<section data-background-color="#2c3e50">
+  <h2>Краткий рецепт «максимум из Django»</h2>
+  <ul>
+    <li>ASGI + Gunicorn + UvicornWorker</li>
+    <li>4 workers</li>
+    <li>Nginx keepalive</li>
+    <li>PostgreSQL с индексами</li>
+    <li>Redis</li>
+    <li>Django Ninja вместо DRF</li>
+    <li>Минимум middleware</li>
+  </ul>
+</section>
+
+<!-- Slide 24: Что именно ты запускаешь -->
+<section data-background-color="#16213e">
+  <h2>Что именно ты запускаешь</h2>
+  <pre><code>gunicorn config.wsgi:application \
+  --bind 127.0.0.1:8000 \
+  --workers 3 \
+  --threads ?</code></pre>
+  <ul>
+    <li>✅ <strong>WSGI</strong> (строго синхронная модель)</li>
+    <li>✅ <strong>3 процесса (workers)</strong></li>
+    <li>3 workers × 1 thread = <strong>3 одновременных запроса</strong></li>
+  </ul>
+</section>
+
+<!-- Slide 25: Ожидаемая производительность (3w 1t) -->
+<section data-background-color="#2c3e50">
+  <h2>Ожидаемая производительность (2 CPU / 4 GB)</h2>
+  <h3>Если threads не указан (= 1): 3 одновременных запроса</h3>
+  <table>
+    <tr><th>Тип эндпоинта</th><th>RPS</th><th>p95 latency</th></tr>
+    <tr><td>Простой JSON (без БД)</td><td>2–4k RPS</td><td>80–150 ms</td></tr>
+    <tr><td>ORM SELECT</td><td>1–2k RPS</td><td>150–300 ms</td></tr>
+    <tr><td>DRF сериализация</td><td>500–1.2k RPS</td><td>250–500 ms</td></tr>
+  </table>
+  <p>CPU недогружен: WSGI блокируется на I/O, 3 workers мало</p>
+</section>
+
+<!-- Slide 26: Ожидаемая производительность (3w 2t) -->
+<section data-background-color="#16213e">
+  <h2>Ожидаемая производительность (2 CPU / 4 GB)</h2>
+  <h3>Если --threads 2: 6 одновременных запросов</h3>
+  <table>
+    <tr><th>Тип</th><th>RPS</th></tr>
+    <tr><td>Простой API</td><td>4–7k RPS</td></tr>
+    <tr><td>Django + ORM</td><td>2–3k RPS</td></tr>
+    <tr><td>Django + DRF</td><td>1.5–2.5k RPS</td></tr>
+  </table>
+  <p>⚠️ GIL ограничивает параллельность, рост latency</p>
+</section>
+
+<!-- Slide 27: Ожидаемая производительность (3w 4t) -->
+<section data-background-color="#2c3e50">
+  <h2>Ожидаемая производительность (2 CPU / 4 GB)</h2>
+  <h3>Если --threads 4: 12 потоков</h3>
+  <p>❌ Обычно <strong>хуже</strong>, чем threads=2:</p>
+  <ul>
+    <li>context switch, GIL contention</li>
+    <li>p95/p99 latency растёт</li>
+    <li>CPU «пилит», но RPS почти не растёт</li>
+  </ul>
+  <h3>Почему схема ограничена</h3>
+  <ul>
+    <li>WSGI = блокирующая модель</li>
+    <li>Для 2 CPU минимум <strong>5 workers</strong>: <code>workers = CPU × 2 + 1</code></li>
+  </ul>
+</section>
+
+<!-- Slide 28: Что получишь в проде -->
+<section data-background-color="#16213e">
+  <h2>Ожидаемая производительность (2 CPU / 4 GB)</h2>
+  <h3>Что получишь в проде (workers 3, threads 1)</h3>
+  <p>➡️ <strong>2–4k RPS потолок</strong>, дальше:</p>
+  <ul>
+    <li>рост latency</li>
+    <li>502 от Nginx</li>
+    <li>очередь запросов</li>
+  </ul>
+</section>
+
+<!-- Slide 29: Как выжать максимум из WSGI -->
+<section data-background-color="#2c3e50">
+  <h2>Как выжать максимум из WSGI</h2>
+  <pre><code>gunicorn config.wsgi:application \
+  --workers 5 --threads 2 \
+  --timeout 30 \
+  --max-requests 10000 --max-requests-jitter 1000</code></pre>
+  <table>
+    <tr><th>Стек</th><th>RPS</th></tr>
+    <tr><td>Django (views)</td><td>6–9k</td></tr>
+    <tr><td>Django + DRF</td><td>3–5k</td></tr>
+  </table>
+  <p>Но это <strong>предел WSGI</strong></p>
+</section>
+
+<!-- Slide 30: Сравнение WSGI и ASGI -->
+<section data-background-color="#16213e">
+  <h2>Сравнение WSGI и ASGI</h2>
+  <table>
+    <tr><th>Конфигурация</th><th>RPS</th></tr>
+    <tr><td>WSGI (3w, 1t)</td><td>2–4k</td></tr>
+    <tr><td>WSGI (5w, 2t)</td><td>6–9k</td></tr>
+    <tr><td><strong>ASGI (4 workers)</strong></td><td><strong>15–30k</strong></td></tr>
+  </table>
+</section>
+
+<!-- Короткий вывод (между 30 и 31) -->
+<section data-background-color="#2c3e50">
+  <h2>Короткий вывод</h2>
+  <div class="slide-card">
+    <p>🔴 <strong>gunicorn + wsgi + 3 workers</strong></p>
+    <ul>
+      <li>= нормально для админки и low-traffic</li>
+      <li>= плохо для high-load API</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Slide 31: Системный дизайн -->
+<section data-background-color="#16213e">
+  <h2>Системный дизайн при проектировании бэкенда</h2>
+  <h3>Ключевые вопросы на старте</h3>
+  <ul>
+    <li><strong>Load estimation</strong> — сколько RPS? Read/Write ratio?</li>
+    <li><strong>Latency SLA</strong> — p95, p99</li>
+    <li><strong>Data volume</strong> — объём, рост, retention</li>
+    <li><strong>Consistency</strong> — строгая или eventual?</li>
+  </ul>
+  <table>
+    <tr><th>Компонент</th><th>Роль</th></tr>
+    <tr><td>API Gateway</td><td>Маршрутизация, rate limit</td></tr>
+    <tr><td>App server</td><td>Бизнес-логика, сериализация</td></tr>
+    <tr><td>Database</td><td>Источник истины</td></tr>
+    <tr><td>Cache</td><td>Снижение нагрузки на БД</td></tr>
+    <tr><td>Queue</td><td>Асинхронные задачи</td></tr>
+  </table>
+</section>
+
+<!-- Slide 32: Django-Ninja в дизайне -->
+<section data-background-color="#2c3e50">
+  <h2>Django-Ninja в дизайне системы</h2>
+  <ul>
+    <li><strong>Monolith API</strong> — один сервис, ORM, admin</li>
+    <li><strong>API-first</strong> — быстрый JSON API, Pydantic-схемы</li>
+    <li><strong>Hybrid</strong> — Django views + Ninja API</li>
+  </ul>
+  <table>
+    <tr><th>Сценарий</th><th>Выбор</th></tr>
+    <tr><td>ORM + admin + быстрый API</td><td>Django + Ninja</td></tr>
+    <tr><td>Максимум RPS</td><td>FastAPI</td></tr>
+    <tr><td>Сложные сериализаторы, Browsable API</td><td>Django + DRF</td></tr>
+  </table>
+</section>
+
+<!-- Slide 33: Проектирование Django Ninja — обзор -->
+<section data-background-color="#16213e">
+  <h2>Проектирование бэкенда на Django Ninja — обзор</h2>
+  <ol style="list-style:decimal;padding-left:1.5em">
+    <li>Установка и первый API</li>
+    <li>Структура проекта</li>
+    <li>Роутеры и эндпоинты</li>
+    <li>Схемы (Pydantic)</li>
+    <li>CRUD и ORM</li>
+    <li>Аутентификация</li>
+    <li>Валидация и обработка ошибок</li>
+    <li>Async vs Sync</li>
+    <li>Тестирование</li>
+    <li>Чеклист деплоя</li>
+  </ol>
+</section>
+
+<!-- Slide 34: Установка и первый API -->
+<section data-background-color="#2c3e50">
+  <h2>Установка и первый API</h2>
+  <pre><code>pip install django-ninja</code></pre>
+  <pre><code>from ninja import NinjaAPI
+api = NinjaAPI()
+
+@api.get("/hello")
+def hello(request):
+    return {"message": "Hello, Django Ninja!"}</code></pre>
+  <pre><code>urlpatterns = [
+    path("api/", api.urls),
+]</code></pre>
+  <p>Запуск: <code>GET /api/hello</code></p>
+</section>
+
+<!-- Slide 35: Структура проекта -->
+<section data-background-color="#16213e">
+  <h2>Структура проекта</h2>
+  <pre><code>myproject/
+├── config/
+├── api/
+│   ├── __init__.py
+│   ├── v1/
+│   │   ├── users.py
+│   │   └── products.py
+│   └── deps.py
+├── apps/
+│   ├── users/
+│   └── catalog/
+└── manage.py</code></pre>
+  <pre><code>api = NinjaAPI(version="1.0")
+api.add_router("/v1", v1_router)</code></pre>
+</section>
+
+<!-- Slide 36: Роутеры и эндпоинты -->
+<section data-background-color="#2c3e50">
+  <h2>Роутеры и эндпоинты</h2>
+  <pre><code>@router.get("/users")
+def list_users(request):
+    return User.objects.all()
+
+@router.get("/users/{user_id}")
+def get_user(request, user_id: int):
+    return User.objects.get(id=user_id)
+
+@router.post("/users")
+def create_user(request, payload: UserCreateSchema):
+    return User.objects.create(**payload.dict())</code></pre>
+  <p><code>@router.get</code>, <code>@router.post</code>, <code>@router.put</code>, <code>@router.patch</code>, <code>@router.delete</code></p>
+</section>
+
+<!-- Slide 37: Схемы (Pydantic) -->
+<section data-background-color="#16213e">
+  <h2>Схемы (Pydantic)</h2>
+  <pre><code>class UserCreate(Schema):
+    email: str
+    name: str
+    password: str
+
+class UserOut(Schema):
+    id: int
+    email: str
+    name: str</code></pre>
+  <p><strong>In</strong> — валидация входящих данных</p>
+  <p><strong>Out</strong> — контроль, что уходит клиенту (без пароля)</p>
+</section>
+
+<!-- Slide 38: CRUD и ORM -->
+<section data-background-color="#2c3e50">
+  <h2>CRUD и ORM</h2>
+  <pre><code>@router.get("/users", response=List[UserOut])
+def list_users(request, limit: int = 20, offset: int = 0):
+    return list(User.objects.all()[offset:offset+limit])
+
+@router.post("/users", response=UserOut)
+def create_user(request, payload: UserCreate):
+    return User.objects.create(**payload.dict())</code></pre>
+  <p>Оптимизация: <code>select_related("profile").prefetch_related("orders")</code></p>
+</section>
+
+<!-- Slide 39: Аутентификация -->
+<section data-background-color="#16213e">
+  <h2>Аутентификация</h2>
+  <h3>API Key</h3>
+  <pre><code>class ApiKey(APIKeyHeader):
+    param_name = "X-API-Key"
+api = NinjaAPI(auth=ApiKey())</code></pre>
+  <h3>JWT</h3>
+  <pre><code>class AuthBearer(HttpBearer):
+    def authenticate(self, request, token):
+        if validate_jwt(token): return token
+        return None</code></pre>
+  <p>Per-route: <code>@router.get("/me", auth=AuthBearer())</code></p>
+</section>
+
+<!-- Slide 40: Валидация и ошибки -->
+<section data-background-color="#2c3e50">
+  <h2>Валидация и обработка ошибок</h2>
+  <ul>
+    <li>Pydantic проверяет типы → при ошибке <code>422 Unprocessable Entity</code></li>
+  </ul>
+  <pre><code>@router.get("/users/{user_id}")
+def get_user(request, user_id: int):
+    try:
+        return User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({"detail": "Not found"}, status=404)</code></pre>
+  <pre><code>api.add_exception_handler(ValueError, custom_exception_handler)</code></pre>
+</section>
+
+<!-- Slide 41: Async vs Sync -->
+<section data-background-color="#16213e">
+  <h2>Async vs Sync</h2>
+  <pre><code>@router.get("/users/async")
+async def list_users_async(request):
+    return [u async for u in User.objects.all()]</code></pre>
+  <p>Async даёт выигрыш при IO-bound (БД, внешние API)</p>
+  <p>Django 4.1+ поддерживает <code>sync_to_async</code> для ORM</p>
+  <p>⚠️ ASGI-сервер (Uvicorn) нужен для async</p>
+</section>
+
+<!-- Slide 42: Тестирование -->
+<section data-background-color="#2c3e50">
+  <h2>Тестирование Django Ninja</h2>
+  <pre><code>from ninja.testing import TestClient
+client = TestClient(api)
+
+def test_hello():
+    response = client.get("/hello")
+    assert response.status_code == 200
+    assert response.json()["message"] == "Hello, Django Ninja!"
+
+def test_create_user():
+    response = client.post("/v1/users", json={
+        "email": "test@example.com",
+        "name": "Test",
+        "password": "secret"
+    })
+    assert response.status_code == 201</code></pre>
+</section>
+
+<!-- Slide 43: Чеклист деплоя -->
+<section data-background-color="#16213e">
+  <h2>Чеклист деплоя Django Ninja</h2>
+  <ul>
+    <li>DEBUG = False, ALLOWED_HOSTS настроены</li>
+    <li>ASGI: Gunicorn + UvicornWorker</li>
+    <li>Nginx перед приложением</li>
+    <li>PostgreSQL + индексы</li>
+    <li>Redis для кэша/сессий</li>
+    <li>Минимум middleware</li>
+    <li>select_related / prefetch_related</li>
+    <li>Rate limiting</li>
+    <li>Логирование и мониторинг</li>
+  </ul>
+</section>
+
+<!-- Final: Спасибо за внимание! -->
+<section data-background-color="#2c3e50">
+  <div style="background:rgba(22,33,62,0.9);padding:50px;border:8px solid #0f3460;text-align:center;max-width:90%;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+    <h1 style="color:#FFD700">Спасибо за внимание!</h1>
+    <h2 style="color:#90EE90">Вопросы?</h2>
+    <p style="color:#FFF;font-size:.9em">Настройка производительности FastAPI и Django • Деплой • PaaS • WSGI • ASGI • Django Ninja</p>
+  </div>
+</section>
+
+</div></div>
+<script src="../../../SEMESTR-1/15-16/js/reveal.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/notes.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/markdown.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/highlight.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    transition: 'slide',
+    controls: true,
+    progress: true,
+    slideNumber: true,
+    center: false,
+    margin: 0.02,
+    plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+  });
+</script>
+</body>
+</html>

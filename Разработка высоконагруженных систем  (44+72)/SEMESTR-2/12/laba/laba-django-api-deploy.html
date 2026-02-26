@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Лабораторная работа: Django + Ninja + CI/CD</title>
+<style media="print">body{font-family:Arial,sans-serif;font-size:12px}.container{box-shadow:none;background:white}.header{background:white!important;color:black!important}.save-btn{display:none!important}.section{page-break-inside:avoid}</style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;line-height:1.6;color:#333;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh}.container{max-width:1200px;margin:20px auto;padding:20px;background:white;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}.header{text-align:center;padding:30px;background:linear-gradient(135deg,#005EB8,#003D82);color:white;border-radius:10px;margin-bottom:30px}.header h1{font-size:2.5em;margin-bottom:10px}.student-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:30px;padding:20px;background:#f8f9fa;border-radius:10px}.form-group{margin-bottom:20px}.form-group label{display:block;margin-bottom:5px;font-weight:bold;color:#003D82}.form-group input,.form-group textarea{width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px;font-size:16px}.section{margin-bottom:40px;padding:25px;background:#fff;border-left:5px solid #005EB8;border-radius:0 10px 10px 0;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.section h2{color:#003D82;margin-bottom:20px;font-size:1.8em}.section h3{color:#005EB8;margin:20px 0 10px;font-size:1.3em}.code-block{background:#282c34;color:#e2e8f0;padding:20px;border-radius:8px;margin:15px 0;font-family:'Courier New',monospace;overflow-x:auto;white-space:pre-wrap;font-size:14px}ul{list-style:none;padding-left:0}ul li{padding:8px 0 8px 30px;position:relative}ul li::before{content:'▸';position:absolute;left:0;color:#005EB8;font-size:18px}table{width:100%;border-collapse:collapse;margin:15px 0}table th,table td{border:1px solid #ddd;padding:12px;text-align:left}table th{background:#005EB8;color:white}table tr:nth-child(even){background:#f8f9fa}.checkbox-item{margin:15px 0;padding:15px 20px;background:linear-gradient(135deg,#005EB8,#003D82);border-radius:10px;display:flex;align-items:center}.checkbox-item input[type="checkbox"]{appearance:none;width:24px;height:24px;border:3px solid white;border-radius:6px;margin-right:15px;cursor:pointer;background:transparent}.checkbox-item input[type="checkbox"]:checked{background:white}.checkbox-item label{color:white;font-weight:500;cursor:pointer}.code-input-wrap{margin:15px 0}.code-input-wrap label{display:block;margin-bottom:8px;font-weight:bold;color:#003D82}.code-input{width:100%;min-height:200px;padding:20px;border:2px solid #005EB8;border-radius:8px;background:#282c34;color:#e2e8f0;font-family:'Courier New',monospace;font-size:14px;resize:vertical;white-space:pre}.save-btn{background:linear-gradient(135deg,#005EB8,#003D82);color:white;border:none;padding:15px 30px;font-size:18px;border-radius:10px;cursor:pointer;display:block;margin:30px auto}code{background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:0.9em}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>🐍 Лабораторная работа</h1>
+<h2>Создание и настройка Django-приложения с REST API на основе Django Ninja с использованием CI/CD</h2>
+<p>E-Shop • Python 3.13+ • Django 5+ • Ninja • SQLite • Railway</p>
+</div>
+<div class="student-info">
+<div class="form-group"><label>ФИО:</label><input type="text" id="student-name"></div>
+<div class="form-group"><label>Группа:</label><input type="text" id="group"></div>
+<div class="form-group"><label>Дата:</label><input type="date" id="date"></div>
+</div>
+
+<div class="section">
+<h2>🎯 Цели</h2>
+<ul>
+<li>Создать Django-приложение e-shop с REST API (Django Ninja)</li>
+<li>Настроить деплой и CI/CD на Railway</li>
+<li>Провести нагрузочное тестирование (ab, wrk)</li>
+<li>Исследовать влияние параметров Gunicorn (workers, threads, ASGI) на метрики</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>1. Исходные данные (e-shop)</h2>
+<h3>Таблица video_cards</h3>
+<div class="code-block"><code class="language-sql">CREATE TABLE IF NOT EXISTS video_cards (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT NOT NULL,
+    price       REAL NOT NULL,
+    description TEXT,
+    created_at  TEXT DEFAULT (datetime('now'))
+);</code></div>
+<h3>Таблицы cart, orders, order_items</h3>
+<div class="code-block"><code class="language-sql">CREATE TABLE IF NOT EXISTS cart (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id  INTEGER NOT NULL REFERENCES video_cards(id),
+    qty         INTEGER NOT NULL DEFAULT 1,
+    created_at  TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS orders (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    total       REAL NOT NULL,
+    created_at  TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS order_items (
+    order_id    INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_name TEXT NOT NULL,
+    qty         INTEGER NOT NULL,
+    price       REAL NOT NULL
+);
+
+-- Минимальные данные для тестов
+DELETE FROM video_cards;
+INSERT INTO video_cards (name, price, description, created_at) VALUES
+  ('NVIDIA GeForce RTX 5090', 230000.00, 'Флагманская видеокарта 2026 года.', '2026-01-15 10:00:00'),
+  ('NVIDIA GeForce RTX 4090', 165000.00, 'Мощная видеокарта для рейтрейсинга.', '2026-01-15 10:00:00'),
+  ('NVIDIA GeForce RTX 5080', 130000.00, 'Высокая производительность для 4K.', '2026-01-15 10:00:00'),
+  ('AMD Radeon RX 9070 XT', 95000.00, 'Лучшее соотношение цена/производительность.', '2026-01-15 10:00:00'),
+  ('NVIDIA GeForce RTX 4080 Super', 115000.00, 'Мощная видеокарта для 4K с DLSS.', '2026-01-15 10:00:00');</code></div>
+<div class="checkbox-item"><input type="checkbox" id="t1"><label for="t1">Схема БД изучена / создана</label></div>
+</div>
+
+<div class="section">
+<h2>2. Развёртывание стенда (Python 3.13+, Django 5+, Ninja, SQLite)</h2>
+<h3>2.1 Создание проекта</h3>
+<div class="code-block"><code class="language-bash">python -m venv .venv
+.venv\Scripts\activate   # Windows
+# source .venv/bin/activate   # Linux/macOS
+
+pip install django django-ninja gunicorn uvicorn psycopg[binary]
+django-admin startproject config .
+python manage.py startapp shop</code></div>
+<h3>2.2 requirements.txt</h3>
+<div class="code-block"><code>Django>=5.0
+django-ninja>=1.0
+gunicorn>=21.0
+uvicorn>=0.28.0
+psycopg[binary]>=3.1</code></div>
+<h3>2.3 Подключение приложения (config/settings.py)</h3>
+<div class="code-block"><code class="language-python">INSTALLED_APPS = [
+    # ...
+    "shop",
+]
+# SQLite для локального запуска (по умолчанию)</code></div>
+<h3>2.4 Запуск локально</h3>
+<div class="code-block"><code class="language-bash">python manage.py makemigrations shop
+python manage.py migrate
+python manage.py runserver 8000</code></div>
+<h3>2.5 Railway (railway.json или Procfile)</h3>
+<div class="code-block"><code class="language-json">{
+  "build": { "builder": "NIXPACKS" },
+  "deploy": {
+    "startCommand": "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 1",
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  }
+}</code></div>
+<p>Переменные: <code>SECRET_KEY</code>, <code>DEBUG=False</code>, <code>ALLOWED_HOSTS</code>. Для PostgreSQL: <code>DB_HOST</code>, <code>DB_PORT</code>, <code>DB_USER</code>, <code>DB_PASSWORD</code>, <code>DB_NAME</code>.</p>
+<div class="checkbox-item"><input type="checkbox" id="t2"><label for="t2">Стенд развёрнут / деплой на Railway настроен</label></div>
+</div>
+
+<div class="section">
+<h2>3. Проектирование API для e-shop</h2>
+<h3>3.1 Модели (shop/models.py)</h3>
+<div class="code-block"><code class="language-python">from django.db import models
+
+class VideoCard(models.Model):
+    name = models.CharField(max_length=200)
+    price = models.DecimalField(max_digits=12, decimal_places=2)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        db_table = "video_cards"
+
+class Cart(models.Model):
+    product = models.ForeignKey(VideoCard, on_delete=models.CASCADE)
+    qty = models.IntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class Order(models.Model):
+    total = models.DecimalField(max_digits=12, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    product_name = models.TextField()
+    qty = models.IntegerField()
+    price = models.DecimalField(max_digits=12, decimal_places=2)</code></div>
+<h3>3.2 API Ninja (shop/api.py)</h3>
+<div class="code-block"><code class="language-python">from ninja import NinjaAPI, Schema
+from .models import VideoCard
+
+api = NinjaAPI(urls_namespace="api")
+
+class ProductOut(Schema):
+    id: int
+    name: str
+    price: float
+    description: str
+
+@api.get("/products", response=list[ProductOut])
+def list_products(request):
+    return list(VideoCard.objects.values("id", "name", "price", "description"))
+
+@api.get("/products/{product_id}", response=ProductOut)
+def get_product(request, product_id: int):
+    p = VideoCard.objects.get(id=product_id)
+    return {"id": p.id, "name": p.name, "price": float(p.price), "description": p.description or ""}
+
+@api.get("/health")
+def health(request):
+    return {"status": "ok"}</code></div>
+<h3>3.3 Django view для сравнения (shop/views.py)</h3>
+<div class="code-block"><code class="language-python">from django.http import JsonResponse
+from .models import VideoCard
+
+def products_django(request):
+    data = list(VideoCard.objects.values("id", "name", "price", "description"))
+    return JsonResponse({"products": data})</code></div>
+<h3>3.4 URL-маршруты (config/urls.py)</h3>
+<div class="code-block"><code class="language-python">from django.urls import path
+from shop.api import api
+from shop.views import products_django
+
+urlpatterns = [
+    path("api/", api.urls),
+    path("products-django/", products_django),
+]</code></div>
+<div class="checkbox-item"><input type="checkbox" id="t3"><label for="t3">API реализовано</label></div>
+</div>
+
+<div class="section">
+<h2>4. Тестирование метрик с ab и wrk</h2>
+<h3>4.1 Тестовые URL</h3>
+<table>
+<tr><th>№</th><th>URL</th><th>Описание</th></tr>
+<tr><td>1</td><td>http://127.0.0.1:8000/api/products</td><td>API Ninja (JSON)</td></tr>
+<tr><td>2</td><td>http://127.0.0.1:8000/products-django/</td><td>Обычный Django view (JSON)</td></tr>
+<tr><td>3</td><td>http://127.0.0.1:8000/api/health</td><td>Минимальная нагрузка</td></tr>
+</table>
+<h3>4.2 Команды ab</h3>
+<div class="code-block"><code class="language-bash">ab -n 10000 -c 100 http://127.0.0.1:8000/api/products
+ab -n 10000 -c 100 http://127.0.0.1:8000/products-django/
+ab -n 10000 -c 100 http://127.0.0.1:8000/api/health</code></div>
+<h3>4.3 Команды wrk</h3>
+<div class="code-block"><code class="language-bash">wrk -t4 -c200 -d30s http://127.0.0.1:8000/api/products
+wrk -t4 -c200 -d30s http://127.0.0.1:8000/products-django/
+wrk -t4 -c200 -d30s http://127.0.0.1:8000/api/health</code></div>
+<h3>4.4 Таблица результатов</h3>
+<table>
+<tr><th>Инструмент</th><th>URL</th><th>RPS</th><th>Latency avg</th><th>Latency p95</th></tr>
+<tr><td>ab</td><td>/api/products</td><td></td><td></td><td></td></tr>
+<tr><td>ab</td><td>/products-django/</td><td></td><td></td><td></td></tr>
+<tr><td>ab</td><td>/api/health</td><td></td><td></td><td></td></tr>
+<tr><td>wrk</td><td>/api/products</td><td></td><td></td><td></td></tr>
+<tr><td>wrk</td><td>/products-django/</td><td></td><td></td><td></td></tr>
+<tr><td>wrk</td><td>/api/health</td><td></td><td></td><td></td></tr>
+</table>
+<div class="checkbox-item"><input type="checkbox" id="t4"><label for="t4">Нагрузочное тестирование выполнено</label></div>
+</div>
+
+<div class="section">
+<h2>5. Экспериментальная часть: Gunicorn (WSGI и ASGI)</h2>
+<h3>5.1 WSGI: разбор параметров</h3>
+<div class="code-block"><code class="language-bash">gunicorn config.wsgi:application \
+  --bind 127.0.0.1:8000 \
+  --workers 3 \
+  --threads ?</code></div>
+<table>
+<tr><th>Параметр</th><th>Описание</th></tr>
+<tr><td>--bind</td><td>Адрес и порт</td></tr>
+<tr><td>--workers</td><td>Число процессов. Итого: workers × threads запросов</td></tr>
+<tr><td>--threads</td><td>Потоков на worker (по умолчанию 1)</td></tr>
+</table>
+<p><strong>Итого при workers=3, threads=1:</strong> 3 одновременных запроса.</p>
+<h3>5.2 ASGI (Gunicorn + UvicornWorker)</h3>
+<div class="code-block"><code class="language-bash">gunicorn config.asgi:application \
+  --bind 127.0.0.1:8000 \
+  --workers 4 \
+  -k uvicorn.workers.UvicornWorker</code></div>
+<ul>
+<li><code>config.asgi:application</code> — точка входа ASGI (async)</li>
+<li><code>-k uvicorn.workers.UvicornWorker</code> — worker-класс Uvicorn</li>
+<li>ASGI даёт существенно больший RPS при той же нагрузке</li>
+</ul>
+<h3>5.3 Конфигурации для эксперимента</h3>
+<p><strong>WSGI:</strong></p>
+<table>
+<tr><th>№</th><th>Конфигурация</th></tr>
+<tr><td>1</td><td>workers 2</td></tr>
+<tr><td>2</td><td>workers 2, threads 3</td></tr>
+<tr><td>3</td><td>workers 5, threads 10</td></tr>
+<tr><td>4</td><td>workers 5, threads 2, max-requests 10000</td></tr>
+</table>
+<p><strong>ASGI:</strong></p>
+<table>
+<tr><th>№</th><th>Конфигурация</th></tr>
+<tr><td>5</td><td>ASGI, 2 workers</td></tr>
+<tr><td>6</td><td>ASGI, 4 workers</td></tr>
+<tr><td>7</td><td>ASGI, 4 workers, max-requests</td></tr>
+</table>
+<h3>5.4 Оптимизированная WSGI</h3>
+<div class="code-block"><code class="language-bash">gunicorn config.wsgi:application \
+  --workers 5 --threads 2 --timeout 30 \
+  --max-requests 10000 --max-requests-jitter 1000</code></div>
+<h3>5.5 Оптимизированная ASGI</h3>
+<div class="code-block"><code class="language-bash">gunicorn config.asgi:application \
+  -k uvicorn.workers.UvicornWorker \
+  --bind 127.0.0.1:8000 --workers 4 \
+  --timeout 30 --max-requests 10000 --max-requests-jitter 1000</code></div>
+<h3>5.6 Сводная таблица метрик</h3>
+<table>
+<tr><th>Конфигурация</th><th>RPS /api/products</th><th>RPS /products-django</th><th>Latency p95</th></tr>
+<tr><td>WSGI workers 2</td><td></td><td></td><td></td></tr>
+<tr><td>WSGI workers 2, threads 3</td><td></td><td></td><td></td></tr>
+<tr><td>WSGI workers 5, threads 10</td><td></td><td></td><td></td></tr>
+<tr><td>WSGI workers 5, threads 2, max-requests</td><td></td><td></td><td></td></tr>
+<tr><td>ASGI workers 2</td><td></td><td></td><td></td></tr>
+<tr><td>ASGI workers 4</td><td></td><td></td><td></td></tr>
+<tr><td>ASGI workers 4, max-requests</td><td></td><td></td><td></td></tr>
+</table>
+<div class="checkbox-item"><input type="checkbox" id="t5"><label for="t5">Эксперименты с Gunicorn выполнены</label></div>
+</div>
+
+<div class="section">
+<h2>📊 Выводы</h2>
+<ul>
+<li><strong>Django Ninja vs обычный Django view</strong> — Ninja даёт меньший overhead и обычно более высокий RPS.</li>
+<li><strong>Workers и threads</strong> — для WSGI: workers = CPU × 2 + 1. Рост threads до 2–4 полезен, дальше — GIL ухудшает latency.</li>
+<li><strong>Оптимальная конфигурация</strong> — для 2 vCPU: 5 workers, 2 threads, max-requests для стабильности.</li>
+<li><strong>ASGI (Gunicorn + UvicornWorker)</strong> — существенно выше RPS, рекомендуется для API на Django Ninja.</li>
+</ul>
+<div class="form-group"><label>Что изучили:</label><textarea rows="3" id="ta0" style="width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px"></textarea></div>
+<div class="form-group"><label>Сложности:</label><textarea rows="3" id="ta1" style="width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px"></textarea></div>
+</div>
+
+<button class="save-btn" onclick="window.print()">💾 Сохранить в PDF</button>
+</div>
+
+<script>
+document.querySelectorAll('.code-block code').forEach(function(el){try{hljs.highlightElement(el)}catch(e){}});
+['student-name','group','date'].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.value=localStorage.getItem(id)||'';el.addEventListener('input',()=>localStorage.setItem(id,el.value))});
+var dateEl=document.getElementById('date');if(dateEl)dateEl.value=dateEl.value||new Date().toISOString().split('T')[0];
+document.querySelectorAll('input[type="checkbox"]').forEach(cb=>{if(localStorage.getItem(cb.id)==='true')cb.checked=true;cb.addEventListener('change',()=>localStorage.setItem(cb.id,cb.checked))});
+['ta0','ta1'].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.value=localStorage.getItem(id)||'';el.addEventListener('input',()=>localStorage.setItem(id,el.value))});
+</script>
+</body>
+</html>
