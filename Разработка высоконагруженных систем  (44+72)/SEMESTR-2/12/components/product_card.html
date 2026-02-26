@@ -1,0 +1,5 @@
+<article class="product">
+  <div class="name">{{ product.name }}</div>
+  <div class="price">{{ product.price|floatformat:0 }} ₽</div>
+  {% if product.description %}<p>{{ product.description }}</p>{% endif %}
+</article>

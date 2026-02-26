@@ -105,6 +105,30 @@ python manage.py migrate
 python manage.py runserver 8000
 ```
 
+### 2.4a Накатка тестовых данных (`data.sql`)
+
+Файл `data.sql` содержит INSERT для таблицы `video_cards`.
+
+**SQLite:**
+
+```bash
+sqlite3 db.sqlite3 < data.sql
+```
+
+либо через Django:
+
+```bash
+python manage.py dbshell < data.sql
+```
+
+**PostgreSQL (если используется):**
+
+```bash
+psql -h 127.0.0.1 -U app -d eshop -f data.sql
+```
+
+*Примечание: таблица `video_cards` должна уже существовать (после `migrate`).*
+
 ### 2.5 Запуск с CI/CD на Railway
 
 1. Создай проект на [railway.app](https://railway.app), подключи GitHub-репозиторий.
@@ -122,6 +146,13 @@ python manage.py runserver 8000
   }
 }
 ```
+
+| Параметр | Описание |
+|----------|----------|
+| `build.builder` | **NIXPACKS** — система сборки Railway: определяет стек (Python, Node и т.д.) по файлам проекта (requirements.txt, package.json), без Dockerfile |
+| `deploy.startCommand` | Команда запуска приложения. `0.0.0.0:$PORT` — слушать на любом интерфейсе, порт задаётся Railway. `--workers 1` — один процесс Gunicorn (для бесплатного плана обычно достаточно) |
+| `deploy.restartPolicyType` | **ON_FAILURE** — перезапускать приложение только при падении (не при каждом деплое) |
+| `deploy.restartPolicyMaxRetries` | Максимум 3 попытки перезапуска подряд при сбое; после этого сервис переходит в failed |
 
 ---
 
@@ -233,9 +264,11 @@ SELECT id, name, price, description FROM video_cards ORDER BY id;
 
 ```bash
 # Apache Bench: 10000 запросов, 100 одновременных соединений
-ab -n 10000 -c 100 http://127.0.0.1:8000/api/products
-ab -n 10000 -c 100 http://127.0.0.1:8000/products-django/
-ab -n 10000 -c 100 http://127.0.0.1:8000/api/health
+# Railway (пример — замени на свой URL)
+ab -n 100 -c 10 https://cd-cd-django-ninja-production.up.railway.app/api/products
+ab -n 1000 -c 100 https://cd-cd-django-ninja-production.up.railway.app/api/products
+ab -n 2000 -c 150 https://cd-cd-django-ninja-production.up.railway.app/api/products
+ab -n 10000 -c 1000 https://cd-cd-django-ninja-production.up.railway.app/api/products
 ```
 
 ### 4.4 Тестирование с wrk
@@ -369,8 +402,4 @@ gunicorn config.asgi:application \
 
 ## Выводы
 
-1. **Django Ninja vs обычный Django view** — Ninja даёт меньший overhead и обычно более высокий RPS.
-2. **Workers и threads** — для WSGI: `workers = CPU × 2 + 1`. Рост `threads` до 2–4 полезен, дальше — GIL ухудшает latency.
-3. **Оптимальная конфигурация** — для 2 vCPU: 5 workers, 2 threads, `max-requests` для стабильности.
-4. **ASGI (Gunicorn + UvicornWorker)** — существенно выше RPS, рекомендуется для API на Django Ninja.
 
