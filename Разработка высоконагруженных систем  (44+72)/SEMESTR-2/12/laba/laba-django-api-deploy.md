@@ -76,7 +76,7 @@ python manage.py startapp shop
 ### 2.2 Зависимости (`requirements.txt`)
 
 ```text
-Django>=5.0
+Django>=4.0
 django-ninja>=1.0
 gunicorn>=21.0
 uvicorn>=0.28.0
@@ -275,9 +275,9 @@ ab -n 10000 -c 1000 https://cd-cd-django-ninja-production.up.railway.app/api/pro
 
 ```bash
 # wrk: 4 потока, 200 соединений, 30 секунд
-wrk -t4 -c200 -d30s http://127.0.0.1:8000/api/products
-wrk -t4 -c200 -d30s http://127.0.0.1:8000/products-django/
-wrk -t4 -c200 -d30s http://127.0.0.1:8000/api/health
+wrk -t4 -c200 -d30s https://cd-cd-django-ninja-production.up.railway.app/api/products
+wrk -t4 -c200 -d30s https://cd-cd-django-ninja-production.up.railway.app/products-django/
+wrk -t4 -c200 -d30s https://cd-cd-django-ninja-production.up.railway.app/api/health
 ```
 
 ### 4.5 Таблица результатов
@@ -386,7 +386,26 @@ gunicorn config.asgi:application \
 
 Измени в CI/CD (`railway.json`, Procfile) команду запуска: WSGI (workers 2, workers 2 threads 3, workers 5 threads 10, оптимизированная), затем ASGI (workers 2, workers 4, оптимизированная). После каждого изменения исследуй метрики.
 
-### 5.4 Сводная таблица метрик
+**Теперь будем работать с Django>=5.0** — обновите requirements.txt и переустановите зависимости:
+
+```bash
+pip install Django>=5.0
+pip freeze > requirements.txt
+```
+
+### 5.4 Сводная таблица метрик для Django>=4.0
+
+| Конфигурация | RPS (/api/products) | RPS (/products-django/) | Latency p95 |
+|--------------|---------------------|-------------------------|-------------|
+| WSGI workers 2 | | | |
+| WSGI workers 2, threads 3 | | | |
+| WSGI workers 5, threads 10 | | | |
+| WSGI workers 5, threads 2, max-requests | | | |
+| **ASGI workers 2** | | | |
+| **ASGI workers 4** | | | |
+| **ASGI workers 4, max-requests** | | | |
+
+### 5.5 Сводная таблица метрик для Django>=5.0
 
 | Конфигурация | RPS (/api/products) | RPS (/products-django/) | Latency p95 |
 |--------------|---------------------|-------------------------|-------------|

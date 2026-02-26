@@ -90,7 +90,7 @@ pip install django django-ninja gunicorn uvicorn psycopg[binary]
 django-admin startproject config .
 python manage.py startapp shop</code></div>
 <h3>2.2 requirements.txt</h3>
-<div class="code-block"><code>Django>=5.0
+<div class="code-block"><code>Django>=4.0
 django-ninja>=1.0
 gunicorn>=21.0
 uvicorn>=0.28.0
@@ -219,18 +219,18 @@ ab -n 1000 -c 100 https://cd-cd-django-ninja-production.up.railway.app/api/produ
 ab -n 2000 -c 150 https://cd-cd-django-ninja-production.up.railway.app/api/products
 ab -n 10000 -c 1000 https://cd-cd-django-ninja-production.up.railway.app/api/products</code></div>
 <h3>4.3 Команды wrk</h3>
-<div class="code-block"><code class="language-bash">wrk -t4 -c200 -d30s http://127.0.0.1:8000/api/products
-wrk -t4 -c200 -d30s http://127.0.0.1:8000/products-django/
-wrk -t4 -c200 -d30s http://127.0.0.1:8000/api/health</code></div>
+<div class="code-block"><code class="language-bash">wrk -t4 -c200 -d30s https://cd-cd-django-ninja-production.up.railway.app/api/products
+wrk -t4 -c200 -d30s https://cd-cd-django-ninja-production.up.railway.app/products-django/
+wrk -t4 -c200 -d30s https://cd-cd-django-ninja-production.up.railway.app/api/health</code></div>
 <h3>4.4 Таблица результатов</h3>
 <table id="table-results">
 <tr><th>Инструмент</th><th>URL</th><th>RPS</th><th>Latency avg</th><th>Latency p95</th></tr>
-<tr><td>ab</td><td>/api/products</td><td contenteditable="true" class="editable-cell" data-key="t44-0-2"></td><td contenteditable="true" class="editable-cell" data-key="t44-0-3"></td><td contenteditable="true" class="editable-cell" data-key="t44-0-4"></td></tr>
-<tr><td>ab</td><td>/products-django/</td><td contenteditable="true" class="editable-cell" data-key="t44-1-2"></td><td contenteditable="true" class="editable-cell" data-key="t44-1-3"></td><td contenteditable="true" class="editable-cell" data-key="t44-1-4"></td></tr>
-<tr><td>ab</td><td>/api/health</td><td contenteditable="true" class="editable-cell" data-key="t44-2-2"></td><td contenteditable="true" class="editable-cell" data-key="t44-2-3"></td><td contenteditable="true" class="editable-cell" data-key="t44-2-4"></td></tr>
-<tr><td>wrk</td><td>/api/products</td><td contenteditable="true" class="editable-cell" data-key="t44-3-2"></td><td contenteditable="true" class="editable-cell" data-key="t44-3-3"></td><td contenteditable="true" class="editable-cell" data-key="t44-3-4"></td></tr>
-<tr><td>wrk</td><td>/products-django/</td><td contenteditable="true" class="editable-cell" data-key="t44-4-2"></td><td contenteditable="true" class="editable-cell" data-key="t44-4-3"></td><td contenteditable="true" class="editable-cell" data-key="t44-4-4"></td></tr>
-<tr><td>wrk</td><td>/api/health</td><td contenteditable="true" class="editable-cell" data-key="t44-5-2"></td><td contenteditable="true" class="editable-cell" data-key="t44-5-3"></td><td contenteditable="true" class="editable-cell" data-key="t44-5-4"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t44-0-0">ab</td><td>/api/products</td><td contenteditable="true" class="editable-cell" data-key="t44-0-2"></td><td contenteditable="true" class="editable-cell" data-key="t44-0-3"></td><td contenteditable="true" class="editable-cell" data-key="t44-0-4"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t44-1-0">ab</td><td>/products-django/</td><td contenteditable="true" class="editable-cell" data-key="t44-1-2"></td><td contenteditable="true" class="editable-cell" data-key="t44-1-3"></td><td contenteditable="true" class="editable-cell" data-key="t44-1-4"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t44-2-0">ab</td><td>/api/health</td><td contenteditable="true" class="editable-cell" data-key="t44-2-2"></td><td contenteditable="true" class="editable-cell" data-key="t44-2-3"></td><td contenteditable="true" class="editable-cell" data-key="t44-2-4"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t44-3-0">wrk</td><td>/api/products</td><td contenteditable="true" class="editable-cell" data-key="t44-3-2"></td><td contenteditable="true" class="editable-cell" data-key="t44-3-3"></td><td contenteditable="true" class="editable-cell" data-key="t44-3-4"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t44-4-0">wrk</td><td>/products-django/</td><td contenteditable="true" class="editable-cell" data-key="t44-4-2"></td><td contenteditable="true" class="editable-cell" data-key="t44-4-3"></td><td contenteditable="true" class="editable-cell" data-key="t44-4-4"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t44-5-0">wrk</td><td>/api/health</td><td contenteditable="true" class="editable-cell" data-key="t44-5-2"></td><td contenteditable="true" class="editable-cell" data-key="t44-5-3"></td><td contenteditable="true" class="editable-cell" data-key="t44-5-4"></td></tr>
 </table>
 <div class="checkbox-item"><input type="checkbox" id="t4"><label for="t4">Нагрузочное тестирование выполнено</label></div>
 </div>
@@ -284,16 +284,30 @@ wrk -t4 -c200 -d30s http://127.0.0.1:8000/api/health</code></div>
   -k uvicorn.workers.UvicornWorker \
   --bind 127.0.0.1:8000 --workers 4 \
   --timeout 30 --max-requests 10000 --max-requests-jitter 1000</code></div>
-<h3>5.6 Сводная таблица метрик</h3>
+<p><strong>Теперь будем работать с Django>=5.0</strong> — обновите requirements.txt и переустановите зависимости:</p>
+<div class="code-block"><code class="language-bash">pip install Django>=5.0
+pip freeze > requirements.txt</code></div>
+<h3>5.6 Сводная таблица метрик для Django>=4.0</h3>
 <table id="table-metrics">
 <tr><th>Конфигурация</th><th>RPS /api/products</th><th>RPS /products-django</th><th>Latency p95</th></tr>
-<tr><td>WSGI workers 2</td><td contenteditable="true" class="editable-cell" data-key="t56-0-1"></td><td contenteditable="true" class="editable-cell" data-key="t56-0-2"></td><td contenteditable="true" class="editable-cell" data-key="t56-0-3"></td></tr>
-<tr><td>WSGI workers 2, threads 3</td><td contenteditable="true" class="editable-cell" data-key="t56-1-1"></td><td contenteditable="true" class="editable-cell" data-key="t56-1-2"></td><td contenteditable="true" class="editable-cell" data-key="t56-1-3"></td></tr>
-<tr><td>WSGI workers 5, threads 10</td><td contenteditable="true" class="editable-cell" data-key="t56-2-1"></td><td contenteditable="true" class="editable-cell" data-key="t56-2-2"></td><td contenteditable="true" class="editable-cell" data-key="t56-2-3"></td></tr>
-<tr><td>WSGI workers 5, threads 2, max-requests</td><td contenteditable="true" class="editable-cell" data-key="t56-3-1"></td><td contenteditable="true" class="editable-cell" data-key="t56-3-2"></td><td contenteditable="true" class="editable-cell" data-key="t56-3-3"></td></tr>
-<tr><td>ASGI workers 2</td><td contenteditable="true" class="editable-cell" data-key="t56-4-1"></td><td contenteditable="true" class="editable-cell" data-key="t56-4-2"></td><td contenteditable="true" class="editable-cell" data-key="t56-4-3"></td></tr>
-<tr><td>ASGI workers 4</td><td contenteditable="true" class="editable-cell" data-key="t56-5-1"></td><td contenteditable="true" class="editable-cell" data-key="t56-5-2"></td><td contenteditable="true" class="editable-cell" data-key="t56-5-3"></td></tr>
-<tr><td>ASGI workers 4, max-requests</td><td contenteditable="true" class="editable-cell" data-key="t56-6-1"></td><td contenteditable="true" class="editable-cell" data-key="t56-6-2"></td><td contenteditable="true" class="editable-cell" data-key="t56-6-3"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t56-0-0">WSGI workers 2</td><td contenteditable="true" class="editable-cell" data-key="t56-0-1"></td><td contenteditable="true" class="editable-cell" data-key="t56-0-2"></td><td contenteditable="true" class="editable-cell" data-key="t56-0-3"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t56-1-0">WSGI workers 2, threads 3</td><td contenteditable="true" class="editable-cell" data-key="t56-1-1"></td><td contenteditable="true" class="editable-cell" data-key="t56-1-2"></td><td contenteditable="true" class="editable-cell" data-key="t56-1-3"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t56-2-0">WSGI workers 5, threads 10</td><td contenteditable="true" class="editable-cell" data-key="t56-2-1"></td><td contenteditable="true" class="editable-cell" data-key="t56-2-2"></td><td contenteditable="true" class="editable-cell" data-key="t56-2-3"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t56-3-0">WSGI workers 5, threads 2, max-requests</td><td contenteditable="true" class="editable-cell" data-key="t56-3-1"></td><td contenteditable="true" class="editable-cell" data-key="t56-3-2"></td><td contenteditable="true" class="editable-cell" data-key="t56-3-3"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t56-4-0">ASGI workers 2</td><td contenteditable="true" class="editable-cell" data-key="t56-4-1"></td><td contenteditable="true" class="editable-cell" data-key="t56-4-2"></td><td contenteditable="true" class="editable-cell" data-key="t56-4-3"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t56-5-0">ASGI workers 4</td><td contenteditable="true" class="editable-cell" data-key="t56-5-1"></td><td contenteditable="true" class="editable-cell" data-key="t56-5-2"></td><td contenteditable="true" class="editable-cell" data-key="t56-5-3"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t56-6-0">ASGI workers 4, max-requests</td><td contenteditable="true" class="editable-cell" data-key="t56-6-1"></td><td contenteditable="true" class="editable-cell" data-key="t56-6-2"></td><td contenteditable="true" class="editable-cell" data-key="t56-6-3"></td></tr>
+</table>
+<h3>5.7 Сводная таблица метрик для Django>=5.0</h3>
+<table id="table-metrics-5">
+<tr><th>Конфигурация</th><th>RPS /api/products</th><th>RPS /products-django</th><th>Latency p95</th></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t57-0-0">WSGI workers 2</td><td contenteditable="true" class="editable-cell" data-key="t57-0-1"></td><td contenteditable="true" class="editable-cell" data-key="t57-0-2"></td><td contenteditable="true" class="editable-cell" data-key="t57-0-3"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t57-1-0">WSGI workers 2, threads 3</td><td contenteditable="true" class="editable-cell" data-key="t57-1-1"></td><td contenteditable="true" class="editable-cell" data-key="t57-1-2"></td><td contenteditable="true" class="editable-cell" data-key="t57-1-3"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t57-2-0">WSGI workers 5, threads 10</td><td contenteditable="true" class="editable-cell" data-key="t57-2-1"></td><td contenteditable="true" class="editable-cell" data-key="t57-2-2"></td><td contenteditable="true" class="editable-cell" data-key="t57-2-3"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t57-3-0">WSGI workers 5, threads 2, max-requests</td><td contenteditable="true" class="editable-cell" data-key="t57-3-1"></td><td contenteditable="true" class="editable-cell" data-key="t57-3-2"></td><td contenteditable="true" class="editable-cell" data-key="t57-3-3"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t57-4-0">ASGI workers 2</td><td contenteditable="true" class="editable-cell" data-key="t57-4-1"></td><td contenteditable="true" class="editable-cell" data-key="t57-4-2"></td><td contenteditable="true" class="editable-cell" data-key="t57-4-3"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t57-5-0">ASGI workers 4</td><td contenteditable="true" class="editable-cell" data-key="t57-5-1"></td><td contenteditable="true" class="editable-cell" data-key="t57-5-2"></td><td contenteditable="true" class="editable-cell" data-key="t57-5-3"></td></tr>
+<tr><td contenteditable="true" class="editable-cell" data-key="t57-6-0">ASGI workers 4, max-requests</td><td contenteditable="true" class="editable-cell" data-key="t57-6-1"></td><td contenteditable="true" class="editable-cell" data-key="t57-6-2"></td><td contenteditable="true" class="editable-cell" data-key="t57-6-3"></td></tr>
 </table>
 <div class="checkbox-item"><input type="checkbox" id="t5"><label for="t5">Эксперименты с Gunicorn выполнены</label></div>
 </div>
