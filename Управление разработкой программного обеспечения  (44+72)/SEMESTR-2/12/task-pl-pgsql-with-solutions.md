@@ -233,8 +233,39 @@ SELECT format(...)
 **Решение**
 
 ```sql
-SELECT format(...)
-...
+-- Использование format('%L') для экранирования значений
+SELECT format('SELECT * FROM users WHERE name = %L', 'Иван Петров');
+-- Результат: SELECT * FROM users WHERE name = 'Иван Петров'
+
+-- Защита от SQL-инъекций: опасные символы экранируются
+SELECT format('SELECT * FROM users WHERE name = %L', '''; DROP TABLE users; --');
+-- Результат: SELECT * FROM users WHERE name = '''; DROP TABLE users; --'
+
+-- Сравнение с quote_literal()
+SELECT quote_literal('safe');
+-- Результат: 'safe'
+
+SELECT quote_literal('O''Brien');
+-- Результат: 'O''Brien'
+
+-- Практический пример: функция поиска пользователя
+CREATE OR REPLACE FUNCTION search_user_by_name(search_name TEXT)
+RETURNS SETOF users
+AS $$
+DECLARE
+    sql_query TEXT;
+BEGIN
+    sql_query := format(
+        'SELECT * FROM users WHERE name = %L',
+        search_name
+    );
+    RAISE NOTICE 'Выполняется: %', sql_query;
+    RETURN QUERY EXECUTE sql_query;
+END
+$$ LANGUAGE plpgsql;
+
+-- Тест
+SELECT * FROM search_user_by_name('Иван Петров');
 ```
 
 ---

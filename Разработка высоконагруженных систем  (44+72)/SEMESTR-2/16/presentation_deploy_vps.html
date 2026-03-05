@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Деплой FastAPI на VPS</title>
+  <link rel="stylesheet" href="../../SEMESTR-1/15-16/css/reveal.min.css">
+  <link rel="stylesheet" href="../../SEMESTR-1/15-16/css/black.min.css">
+  <link rel="stylesheet" href="../../SEMESTR-1/15-16/css/monokai.min.css">
+  <style>
+    .reveal .slides { width:80%!important; height:90%!important; transform:scale(1.2)!important; position:absolute!important; left:50%!important; top:0!important; transform:translateX(calc(-50% + 5%)) scale(1.2)!important; transform-origin:top center!important }
+    .reveal .slides section { display:flex!important; flex-direction:column!important; justify-content:center!important; align-items:center!important; padding:24px 32px!important; font-size:.95em!important; max-width:100%!important; width:100%!important; overflow-x:hidden!important; box-sizing:border-box!important; line-height:1.5!important; text-align:center!important }
+    .reveal h1 { font-size:1.7em!important; margin-top:0!important; margin-bottom:.5em!important; color:#FFD700!important; text-align:center!important }
+    .reveal h2 { font-size:1em!important; margin-top:0!important; margin-bottom:.5em!important; text-transform:none!important; text-align:center!important; padding-bottom:.4em!important; border-bottom:2px solid rgba(255,215,0,0.5)!important; color:#FFD700!important; width:100%!important }
+    .reveal h3 { font-size:1.05em!important; margin-top:.6em!important; margin-bottom:.3em!important; text-transform:none!important; color:#90EE90!important; text-align:center!important }
+    .reveal .slides section p, .reveal .slides section div { max-width:100%!important; min-width:0!important; overflow-wrap:break-word!important; word-wrap:break-word!important; word-break:break-word!important; box-sizing:border-box!important }
+    .reveal .slides section ul, .reveal .slides section ol { text-align:left!important; margin:0 auto!important }
+    .reveal .slides section li { overflow-wrap:break-word!important; word-wrap:break-word!important; word-break:break-word!important; margin-bottom:.4em!important; list-style:none!important; position:relative!important; padding-left:.5em!important }
+    .reveal .slides section ul li::before { content:"\25B8"!important; position:absolute!important; left:-1em!important; color:#FFD700!important; font-size:.85em!important }
+    .reveal p, .reveal ul, .reveal ol { font-size:.92em!important }
+    .reveal .slides section ul { padding-left:1.5em!important }
+    pre { max-height:320px!important; overflow:auto!important; margin:12px auto!important; max-width:95%!important; border-radius:10px!important; border:1px solid rgba(255,215,0,0.4)!important; box-shadow:0 6px 20px rgba(0,0,0,.4)!important; padding:2px!important; text-align:left!important }
+    pre code { font-size:.72em!important; padding:14px 18px!important; line-height:1.4!important }
+    section.slide-fit { overflow:hidden!important }
+    section.slide-fit pre { max-height: none!important; overflow: hidden!important; margin: 6px auto!important; padding: 0!important }
+    section.slide-fit pre code { font-size: .58em!important; padding: 8px 12px!important; line-height: 1.25!important }
+    section.slide-fit h2 { margin-bottom: .2em!important }
+    section.slide-fit p, section.slide-fit table { margin: 4px 0!important; font-size: .82em!important }
+    table { font-size:.78em!important; max-width:100%!important; border-collapse:collapse!important; margin:12px auto!important }
+    .reveal table th, .reveal table td { border:1px solid rgba(255,255,255,0.35)!important; padding:8px 12px!important }
+    .reveal table th { background:rgba(0,0,0,0.3)!important; color:#FFD700!important }
+    .slide-card { background:rgba(0,0,0,0.35)!important; border-radius:12px!important; padding:18px 24px!important; border-left:5px solid #FFD700!important; margin-top:12px!important; max-width:95%!important; text-align:left!important; box-shadow:0 4px 16px rgba(0,0,0,.3)!important }
+    .deploy-scheme { display:flex!important; align-items:center!important; justify-content:center!important; gap:20px!important; margin:20px auto!important; flex-wrap:wrap!important }
+    .deploy-scheme .scheme-box { background:rgba(0,0,0,0.4)!important; border:1px solid rgba(255,215,0,0.5)!important; border-radius:12px!important; padding:16px 20px!important; text-align:center!important; min-width:140px!important; box-shadow:0 4px 16px rgba(0,0,0,.3)!important }
+    .deploy-scheme .scheme-box .box-title { font-weight:bold!important; color:#FFD700!important; margin-bottom:8px!important; font-size:.9em!important }
+    .deploy-scheme .scheme-box .box-desc { font-size:.8em!important; opacity:.95!important }
+    .deploy-scheme .scheme-arrow { display:flex!important; flex-direction:column!important; align-items:center!important; gap:2px!important; color:rgba(255,215,0,0.9)!important; font-size:1.1em!important }
+    .deploy-scheme .scheme-arrow span { font-size:.65em!important; opacity:.9!important }
+    .deploy-flow { display:flex!important; flex-direction:column!important; align-items:center!important; gap:2px!important; margin:16px auto!important; max-width:420px!important }
+    .deploy-step { background:rgba(0,0,0,0.4)!important; border:1px solid rgba(255,215,0,0.5)!important; border-radius:8px!important; padding:10px 16px!important; width:100%!important; box-sizing:border-box!important; font-size:.88em!important; display:flex!important; align-items:center!important; gap:12px!important }
+    .deploy-step .step-num { background:#FFD700!important; color:#1a1a2e!important; width:26px!important; height:26px!important; border-radius:50%!important; display:inline-flex!important; align-items:center!important; justify-content:center!important; font-weight:bold!important; flex-shrink:0!important }
+    .deploy-arrow { color:rgba(255,215,0,0.7)!important; font-size:1.2em!important; line-height:1!important }
+    .systemd-scheme, .nginx-scheme { display:flex!important; align-items:center!important; justify-content:center!important; gap:24px!important; margin:16px auto!important; flex-wrap:wrap!important }
+    .systemd-scheme .scheme-box, .nginx-scheme .scheme-box { background:rgba(0,0,0,0.4)!important; border:1px solid rgba(255,215,0,0.5)!important; border-radius:12px!important; padding:16px 24px!important; text-align:center!important; min-width:120px!important; box-shadow:0 4px 16px rgba(0,0,0,.3)!important }
+    .systemd-scheme .scheme-box .box-title, .nginx-scheme .scheme-box .box-title { font-weight:bold!important; color:#FFD700!important; margin-bottom:6px!important }
+    .nginx-scheme .scheme-arrow { display:flex!important; flex-direction:column!important; align-items:center!important; color:rgba(255,215,0,0.9)!important; font-size:1.1em!important }
+    .nginx-scheme .nginx-flow { display:flex!important; flex-direction:column!important; gap:10px!important; background:rgba(0,0,0,0.4)!important; border:1px solid rgba(255,215,0,0.5)!important; border-radius:12px!important; padding:20px 28px!important; box-shadow:0 4px 16px rgba(0,0,0,.3)!important }
+    .nginx-scheme .nginx-flow .nginx-entry { display:flex!important; align-items:center!important; gap:12px!important; font-size:.9em!important }
+    .putty-mockup { background:rgba(0,0,0,0.4)!important; border:1px solid rgba(255,215,0,0.5)!important; border-radius:12px!important; padding:20px 28px!important; margin:16px auto!important; max-width:320px!important; box-shadow:0 4px 16px rgba(0,0,0,.3)!important }
+    .putty-mockup .putty-title { font-weight:bold!important; color:#FFD700!important; margin-bottom:14px!important; padding-bottom:10px!important; border-bottom:1px solid rgba(255,215,0,0.4)!important }
+    .putty-mockup .putty-row { margin-bottom:8px!important; font-size:.9em!important }
+    .putty-mockup .putty-row span { color:rgba(255,255,255,0.8)!important; margin-right:8px!important }
+    .putty-mockup .putty-buttons { margin-top:16px!important; padding-top:12px!important }
+    .putty-mockup .putty-btn { background:rgba(255,215,0,0.3)!important; padding:6px 14px!important; border-radius:6px!important; margin-right:8px!important; font-size:.85em!important }
+    .reveal .slides section > div[style*="background"] ul { display:inline-block!important; text-align:left!important }
+  </style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- Титульный слайд -->
+<section data-background-color="#1a1a2e">
+  <div style="background:rgba(22,33,62,0.9);padding:40px;border:8px solid #0f3460;text-align:center;max-width:90%;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+    <h1 style="color:#FFD700">Деплой FastAPI на VPS</h1>
+    <h2 style="color:#90EE90">Презентация для студентов</h2>
+  </div>
+</section>
+
+<!-- Слайд 1 -->
+<section data-background-color="#16213e">
+  <h2>Что такое деплой?</h2>
+  <p><strong>Деплой (Deploy)</strong> — размещение приложения на сервере, чтобы оно стало доступно пользователям через интернет.</p>
+  <div class="deploy-scheme">
+    <div class="scheme-box">
+      <div class="box-title">Локальный компьютер</div>
+      <div class="box-desc">Ваш код<br>main.py</div>
+    </div>
+    <div class="scheme-arrow">→<span>SSH</span></div>
+    <div class="scheme-box">
+      <div class="box-title">Сервер (VPS)</div>
+      <div class="box-desc">Приложение<br>работает</div>
+    </div>
+    <div class="scheme-arrow">←<span>HTTP</span></div>
+    <div class="scheme-box">
+      <div class="box-title">Пользователи</div>
+      <div class="box-desc">Браузеры</div>
+    </div>
+  </div>
+  <p><strong>VPS (Virtual Private Server)</strong> — виртуальный сервер в дата-центре с публичным IP-адресом.</p>
+</section>
+
+<!-- Слайд 2 -->
+<section data-background-color="#2c3e50">
+  <h2>Общий алгоритм деплоя</h2>
+  <div class="deploy-flow">
+    <div class="deploy-step"><span class="step-num">1</span> Подключение к серверу (SSH)</div>
+    <div class="deploy-arrow">↓</div>
+    <div class="deploy-step"><span class="step-num">2</span> Установка зависимостей (Python, pip, venv)</div>
+    <div class="deploy-arrow">↓</div>
+    <div class="deploy-step"><span class="step-num">3</span> Загрузка кода (git clone или копирование)</div>
+    <div class="deploy-arrow">↓</div>
+    <div class="deploy-step"><span class="step-num">4</span> Настройка окружения (venv, pip install)</div>
+    <div class="deploy-arrow">↓</div>
+    <div class="deploy-step"><span class="step-num">5</span> Настройка автозапуска (systemd)</div>
+    <div class="deploy-arrow">↓</div>
+    <div class="deploy-step"><span class="step-num">6</span> Настройка веб-сервера (Nginx)</div>
+    <div class="deploy-arrow">↓</div>
+    <div class="deploy-step"><span class="step-num">7</span> Настройка DNS (привязка домена)</div>
+    <div class="deploy-arrow">↓</div>
+    <div class="deploy-step"><span class="step-num">8</span> Настройка HTTPS (Certbot)</div>
+  </div>
+</section>
+
+<!-- Слайд 3 -->
+<section data-background-color="#16213e">
+  <h2>SSH — подключение к серверу</h2>
+  <p><strong>SSH (Secure Shell)</strong> — защищённый протокол для удалённого управления сервером.</p>
+  <pre><code class="language-bash">ssh root@81.90.182.174</code></pre>
+  <table>
+    <tr><th>Часть команды</th><th>Значение</th></tr>
+    <tr><td><code>ssh</code></td><td>Программа для подключения</td></tr>
+    <tr><td><code>root</code></td><td>Имя пользователя</td></tr>
+    <tr><td><code>@</code></td><td>Разделитель</td></tr>
+    <tr><td><code>81.90.182.174</code></td><td>IP-адрес сервера</td></tr>
+  </table>
+  <p><strong>После подключения</strong> вы управляете сервером через командную строку (терминал).</p>
+</section>
+
+<!-- Слайд 4 -->
+<section data-background-color="#2c3e50">
+  <h2>SSH-клиенты для Windows</h2>
+  <p>На Windows нет встроенного SSH (до Windows 10). Нужен SSH-клиент:</p>
+  <table>
+    <tr><th>Клиент</th><th>Описание</th><th>Цена</th></tr>
+    <tr><td><strong>PuTTY</strong></td><td>Классика, минимализм</td><td>Бесплатно</td></tr>
+    <tr><td><strong>MobaXterm</strong></td><td>Много функций, SFTP, X11</td><td>Бесплатно / Pro</td></tr>
+    <tr><td><strong>Windows Terminal</strong></td><td>Встроенный в Windows 10/11</td><td>Бесплатно</td></tr>
+    <tr><td><strong>Termius</strong></td><td>Кроссплатформенный, облачная синхронизация</td><td>Бесплатно / Pro</td></tr>
+    <tr><td><strong>Git Bash</strong></td><td>SSH в комплекте с Git</td><td>Бесплатно</td></tr>
+  </table>
+  <p><strong>Рекомендация для студентов:</strong> MobaXterm — удобный интерфейс + встроенный файловый менеджер.</p>
+</section>
+
+<!-- Слайд 5 -->
+<section data-background-color="#16213e">
+  <h2>PuTTY — базовый SSH-клиент</h2>
+  <p><strong>Скачать:</strong> <a href="https://www.putty.org/" target="_blank">https://www.putty.org/</a></p>
+  <div class="putty-mockup">
+    <div class="putty-title">PuTTY Configuration</div>
+    <div class="putty-row"><span>Host Name:</span> 81.90.182.174</div>
+    <div class="putty-row"><span>Port:</span> 22</div>
+    <div class="putty-row"><span>Connection type:</span> ● SSH</div>
+    <div class="putty-buttons"><span class="putty-btn">Open</span> <span class="putty-btn">Cancel</span></div>
+  </div>
+  <ol style="list-style:decimal;padding-left:1.5em;text-align:left">
+    <li>Введите IP-адрес сервера в поле <strong>Host Name</strong></li>
+    <li>Порт: <strong>22</strong> (по умолчанию)</li>
+    <li>Нажмите <strong>Open</strong></li>
+    <li>Введите логин: <code>root</code></li>
+    <li>Введите пароль (символы не отображаются!)</li>
+  </ol>
+</section>
+
+<!-- Слайд 6 -->
+<section data-background-color="#2c3e50">
+  <h2>MobaXterm — продвинутый клиент</h2>
+  <p><strong>Скачать:</strong> <a href="https://mobaxterm.mobatek.net/" target="_blank">https://mobaxterm.mobatek.net/</a></p>
+  <h3>Преимущества:</h3>
+  <ul>
+    <li>Встроенный файловый менеджер (SFTP)</li>
+    <li>Несколько вкладок/сессий</li>
+    <li>Сохранение сессий</li>
+    <li>X11 forwarding (GUI приложения)</li>
+    <li>Встроенные утилиты (grep, awk, vim)</li>
+  </ul>
+  <pre><code>┌──────────────────────────────────────────────────────────┐
+│ Sessions │ Terminal │ SFTP                               │
+├──────────┼───────────────────────────────────────────────┤
+│ root     │ root@server:~# ls -la                         │
+│ server   │ drwxr-xr-x  5 root root 4096 Feb 28 12:00 .  │
+├──────────┼───────────────────────────────────────────────┤
+│ Files    │ /opt/myapi/                                   │
+│ main.py  │ main.py  requirements.txt  venv/              │
+└──────────┴───────────────────────────────────────────────┘</code></pre>
+</section>
+
+<!-- Слайд 7 -->
+<section data-background-color="#16213e">
+  <h2>Создание SSH-сессии в MobaXterm</h2>
+  <h3>Пошаговая инструкция:</h3>
+  <ol style="list-style:decimal;padding-left:1.5em;text-align:left">
+    <li>Нажмите <strong>Session</strong> → <strong>SSH</strong></li>
+    <li>Заполните поля: <strong>Remote host:</strong> <code>81.90.182.174</code>, <strong>Username:</strong> <code>root</code>, <strong>Port:</strong> <code>22</code></li>
+    <li>Нажмите <strong>OK</strong></li>
+    <li>Введите пароль при первом подключении</li>
+    <li>Нажмите <strong>Yes</strong> чтобы сохранить пароль</li>
+  </ol>
+  <h3>Сохранение сессии:</h3>
+  <ul>
+    <li>Сессия появится в левой панели</li>
+    <li>Двойной клик для быстрого подключения</li>
+  </ul>
+</section>
+
+<!-- Слайд 8 -->
+<section data-background-color="#2c3e50">
+  <h2>Передача файлов (SFTP)</h2>
+  <p><strong>SFTP</strong> — безопасная передача файлов через SSH.</p>
+  <p><strong>В MobaXterm:</strong> левая панель показывает файлы сервера, Drag &amp; Drop для загрузки.</p>
+  <p><strong>В командной строке:</strong></p>
+  <pre><code class="language-bash"># Копирование файла на сервер
+scp main.py root@81.90.182.174:/opt/myapi/
+
+# Копирование папки на сервер
+scp -r myproject/ root@81.90.182.174:/opt/
+
+# Копирование файла с сервера
+scp root@81.90.182.174:/opt/myapi/main.py ./</code></pre>
+  <p><strong>Альтернативы:</strong> WinSCP, FileZilla</p>
+</section>
+
+<!-- Слайд 9 -->
+<section data-background-color="#16213e">
+  <h2>Структура Linux-сервера</h2>
+  <pre><code>/                          # Корень файловой системы
+├── etc/                   # Конфигурационные файлы
+│   ├── nginx/             # Конфиги Nginx
+│   └── systemd/system/    # Сервисы автозапуска
+├── opt/                   # Приложения (наш код здесь!)
+│   └── alekseeva-api/     # Папка проекта
+├── var/                   
+│   ├── log/               # Логи
+│   └── www/               # Статические сайты
+├── home/                  # Домашние директории пользователей
+└── tmp/                   # Временные файлы</code></pre>
+  <p><strong>Где размещать приложение?</strong> <code>/opt/</code> — рекомендуется; <code>/home/user/</code> — альтернатива</p>
+</section>
+
+<!-- Слайд 10 -->
+<section data-background-color="#2c3e50">
+  <h2>Права доступа (chmod)</h2>
+  <p>В Linux каждый файл имеет права доступа для трёх категорий:</p>
+  <table>
+    <tr><th>Категория</th><th>Обозначение</th></tr>
+    <tr><td>Владелец (user)</td><td><code>u</code></td></tr>
+    <tr><td>Группа (group)</td><td><code>g</code></td></tr>
+    <tr><td>Остальные (others)</td><td><code>o</code></td></tr>
+  </table>
+  <table>
+    <tr><th>Право</th><th>Буква</th><th>Число</th></tr>
+    <tr><td>Чтение (read)</td><td><code>r</code></td><td>4</td></tr>
+    <tr><td>Запись (write)</td><td><code>w</code></td><td>2</td></tr>
+    <tr><td>Выполнение (execute)</td><td><code>x</code></td><td>1</td></tr>
+  </table>
+</section>
+
+<!-- Слайд 11 -->
+<section data-background-color="#16213e">
+  <h2>chmod — примеры</h2>
+  <pre><code class="language-bash"># Сделать скрипт исполняемым
+chmod +x deploy.sh
+
+# Числовой формат: rwx = 4+2+1 = 7
+chmod 755 deploy.sh    # rwxr-xr-x
+chmod 644 main.py      # rw-r--r--
+chmod 600 secrets.env  # rw------- (только владелец)</code></pre>
+  <p><strong>Расшифровка 755:</strong></p>
+  <ul>
+    <li><code>7</code> (владелец) = 4+2+1 = rwx</li>
+    <li><code>5</code> (группа) = 4+0+1 = r-x</li>
+    <li><code>5</code> (остальные) = 4+0+1 = r-x</li>
+  </ul>
+</section>
+
+<!-- Слайд 12 -->
+<section data-background-color="#2c3e50">
+  <h2>FastAPI — минимальное приложение</h2>
+  <pre><code class="language-python"># main.py
+from fastapi import FastAPI
+
+app = FastAPI(title="My API")
+
+@app.get("/")
+def home():
+    return {"message": "Привет, мир!"}
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}</code></pre>
+  <pre><code class="language-bash">uvicorn main:app --host 0.0.0.0 --port 8010</code></pre>
+  <table>
+    <tr><th>Параметр</th><th>Значение</th></tr>
+    <tr><td><code>main:app</code></td><td>Файл main.py, объект app</td></tr>
+    <tr><td><code>--host 0.0.0.0</code></td><td>Слушать все сетевые интерфейсы</td></tr>
+    <tr><td><code>--port 8010</code></td><td>Порт приложения</td></tr>
+  </table>
+</section>
+
+<!-- Слайд 13 -->
+<section data-background-color="#16213e">
+  <h2>Systemd — автозапуск сервисов</h2>
+  <p><strong>Systemd</strong> — система управления сервисами в Linux.</p>
+  <p><strong>Проблема:</strong> Если запустить uvicorn в терминале и закрыть SSH — приложение остановится.</p>
+  <p><strong>Решение:</strong> Создать systemd-сервис.</p>
+  <div class="systemd-scheme">
+    <div class="scheme-box">
+      <div class="box-title">systemd</div>
+      <div class="box-desc">init-система</div>
+    </div>
+    <div class="scheme-arrow">→<span>управляет</span></div>
+    <div class="scheme-box">
+      <div class="box-title">uvicorn</div>
+      <div class="box-desc">приложение</div>
+    </div>
+  </div>
+  <ul>
+    <li>Автозапуск при загрузке ОС</li>
+    <li>Перезапуск при падении</li>
+    <li>Логирование (journalctl)</li>
+  </ul>
+</section>
+
+<!-- Слайд 14 -->
+<section data-background-color="#2c3e50" class="slide-fit">
+  <h2>Создание systemd-сервиса</h2>
+  <pre><code># /etc/systemd/system/myapi.service
+
+[Unit]
+Description=My FastAPI App
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/opt/myapi
+ExecStart=/opt/myapi/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8010
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+  <table>
+    <tr><th>Секция</th><th>Описание</th></tr>
+    <tr><td><code>[Unit]</code></td><td>Метаданные и зависимости</td></tr>
+    <tr><td><code>[Service]</code></td><td>Как запускать</td></tr>
+    <tr><td><code>[Install]</code></td><td>Когда запускать</td></tr>
+  </table>
+</section>
+
+<!-- Слайд 15 -->
+<section data-background-color="#16213e">
+  <h2>Команды systemctl</h2>
+  <pre><code class="language-bash">systemctl daemon-reload    # Перечитать конфиги
+systemctl enable myapi     # Автозапуск при загрузке
+systemctl start myapi      # Запустить
+systemctl stop myapi       # Остановить
+systemctl restart myapi    # Перезапустить
+systemctl status myapi     # Статус</code></pre>
+  <p><strong>Просмотр логов:</strong></p>
+  <pre><code class="language-bash">journalctl -u myapi -f       # В реальном времени
+journalctl -u myapi -n 50    # Последние 50 строк</code></pre>
+</section>
+
+<!-- Слайд 16 -->
+<section data-background-color="#2c3e50">
+  <h2>Nginx — зачем нужен?</h2>
+  <div class="nginx-scheme">
+    <div class="scheme-box">
+      <div class="box-title">Пользователь</div>
+      <div class="box-desc">Интернет</div>
+    </div>
+    <div class="scheme-arrow">→</div>
+    <div class="nginx-flow">
+      <div class="box-title" style="text-align:center;margin-bottom:12px">VPS — Nginx (:80, :443)</div>
+      <div class="nginx-entry"><span>→</span> FastAPI (:8010)</div>
+      <div class="nginx-entry"><span>→</span> Django (:8000)</div>
+      <div class="nginx-entry"><span>→</span> Статика (/var/www/)</div>
+    </div>
+  </div>
+  <p><strong>Nginx выполняет:</strong> Reverse proxy, SSL/TLS терминация, балансировка нагрузки, раздача статики, кеширование</p>
+</section>
+
+<!-- Слайд 17 -->
+<section data-background-color="#16213e" class="slide-fit">
+  <h2>Конфигурация Nginx</h2>
+  <pre><code class="language-nginx"># /etc/nginx/sites-available/mysite
+
+server {
+    listen 80;
+    server_name mysite.ru;
+    
+    location / {
+        proxy_pass http://127.0.0.1:8010;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}</code></pre>
+  <p><code>server { }</code> — блок виртуального хоста; <code>location / { }</code> — правила; <code>proxy_pass</code> — адрес бэкенда</p>
+</section>
+
+<!-- Слайд 18 -->
+<section data-background-color="#2c3e50">
+  <h2>Nginx — включение сайта</h2>
+  <pre><code class="language-bash"># Создать символическую ссылку
+ln -sf /etc/nginx/sites-available/mysite /etc/nginx/sites-enabled/
+
+# Проверить синтаксис
+nginx -t
+
+# Перезагрузить Nginx
+systemctl reload nginx</code></pre>
+  <p><strong>Важно:</strong> Всегда проверяйте <code>nginx -t</code> перед перезагрузкой!</p>
+</section>
+
+<!-- Слайд 19 -->
+<section data-background-color="#16213e">
+  <h2>DNS — привязка домена</h2>
+  <p><strong>DNS (Domain Name System)</strong> — преобразует домен в IP-адрес.</p>
+  <p><code>mysite.ru → DNS-сервер → 81.90.182.174</code></p>
+  <table>
+    <tr><th>Тип</th><th>Имя</th><th>Значение</th><th>TTL</th></tr>
+    <tr><td>A</td><td>@</td><td>81.90.182.174</td><td>300</td></tr>
+    <tr><td>A</td><td>www</td><td>81.90.182.174</td><td>300</td></tr>
+  </table>
+  <p><code>@</code> — корневой домен; <code>www</code> — поддомен; TTL — время жизни записи</p>
+</section>
+
+<!-- Слайд 20 -->
+<section data-background-color="#2c3e50">
+  <h2>HTTPS с Certbot</h2>
+  <p><strong>Certbot</strong> — автоматическое получение SSL-сертификатов от Let's Encrypt.</p>
+  <pre><code class="language-bash">apt install -y certbot python3-certbot-nginx
+certbot --nginx -d mysite.ru -d www.mysite.ru</code></pre>
+  <p><strong>Что делает Certbot:</strong> проверяет владение доменом → получает сертификат → настраивает Nginx → редирект HTTP→HTTPS → автообновление</p>
+</section>
+
+<!-- Слайд 21 -->
+<section data-background-color="#16213e">
+  <h2>Скрипт деплоя</h2>
+  <pre><code class="language-bash">#!/bin/bash
+# deploy.sh
+set -e
+echo "=== Pulling latest code ==="
+cd /opt/myapi
+git pull origin main
+echo "=== Installing dependencies ==="
+source venv/bin/activate
+pip install -r requirements.txt
+echo "=== Restarting service ==="
+systemctl restart myapi
+echo "=== Deploy completed! ==="</code></pre>
+  <pre><code class="language-bash">chmod +x deploy.sh
+./deploy.sh</code></pre>
+</section>
+
+<!-- Слайд 22 -->
+<section data-background-color="#2c3e50">
+  <h2>Полная схема деплоя</h2>
+  <p style="font-size:.85em;margin-bottom:12px;color:#90EE90">VPS сервер</p>
+  <div class="deploy-scheme">
+    <div class="scheme-box">
+      <div class="box-title">Nginx</div>
+      <div class="box-desc">:80 / :443<br><small>/etc/nginx/sites-available/</small></div>
+    </div>
+    <div class="scheme-arrow">→</div>
+    <div class="scheme-box">
+      <div class="box-title">Uvicorn</div>
+      <div class="box-desc">:8010<br><small>systemd myapi.service</small></div>
+    </div>
+    <div class="scheme-arrow">→</div>
+    <div class="scheme-box">
+      <div class="box-title">FastAPI App</div>
+      <div class="box-desc">main.py<br><small>/opt/myapi/ venv/</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- Слайд 23 -->
+<section data-background-color="#16213e">
+  <h2>Чеклист деплоя</h2>
+  <table>
+    <tr><th>#</th><th>Шаг</th><th>Команда проверки</th></tr>
+    <tr><td>1</td><td>SSH</td><td><code>ssh root@IP</code></td></tr>
+    <tr><td>2</td><td>Код</td><td><code>ls /opt/myapi/</code></td></tr>
+    <tr><td>3</td><td>venv</td><td><code>ls /opt/myapi/venv/</code></td></tr>
+    <tr><td>6</td><td>Сервис</td><td><code>systemctl status myapi</code></td></tr>
+    <tr><td>8</td><td>Nginx</td><td><code>nginx -t</code></td></tr>
+    <tr><td>10</td><td>Сайт</td><td><code>curl http://localhost:8010/</code></td></tr>
+  </table>
+</section>
+
+<!-- Слайд 24 -->
+<section data-background-color="#2c3e50">
+  <h2>Полезные команды</h2>
+  <table>
+    <tr><th>Задача</th><th>Команда</th></tr>
+    <tr><td>Логи приложения</td><td><code>journalctl -u myapi -f</code></td></tr>
+    <tr><td>Логи Nginx</td><td><code>tail -f /var/log/nginx/error.log</code></td></tr>
+    <tr><td>Открытые порты</td><td><code>ss -tlnp</code></td></tr>
+    <tr><td>Диск</td><td><code>df -h</code></td></tr>
+    <tr><td>RAM</td><td><code>free -h</code></td></tr>
+    <tr><td>Проверка</td><td><code>curl -I https://mysite.ru/</code></td></tr>
+  </table>
+</section>
+
+<!-- Слайд 25 -->
+<section data-background-color="#16213e">
+  <h2>Модальные редакторы</h2>
+  <p><strong>Модальный редактор</strong> — разные режимы работы.</p>
+  <table>
+    <tr><th>Режим</th><th>Назначение</th><th>Клавиша</th></tr>
+    <tr><td><strong>Normal</strong></td><td>Навигация и команды</td><td>Esc</td></tr>
+    <tr><td><strong>Insert</strong></td><td>Ввод текста</td><td>i, a, o</td></tr>
+    <tr><td><strong>Visual</strong></td><td>Выделение</td><td>v, V</td></tr>
+    <tr><td><strong>Command</strong></td><td>Команды</td><td>:</td></tr>
+  </table>
+  <p><strong>Vim, Neovim, Helix</strong> — Vim установлен на любом Linux-сервере</p>
+</section>
+
+<!-- Слайд 26 -->
+<section data-background-color="#2c3e50">
+  <h2>Neovim — быстрый старт</h2>
+  <pre><code class="language-bash">apt install neovim
+nvim filename.txt</code></pre>
+  <table>
+    <tr><th>Действие</th><th>Команда</th></tr>
+    <tr><td>Выйти без сохранения</td><td><code>:q!</code></td></tr>
+    <tr><td>Сохранить и выйти</td><td><code>:wq</code></td></tr>
+    <tr><td>Войти в режим ввода</td><td><code>i</code></td></tr>
+    <tr><td>Выйти из ввода</td><td>Esc</td></tr>
+    <tr><td>Сохранить</td><td><code>:w</code></td></tr>
+  </table>
+</section>
+
+<!-- Слайд 27 -->
+<section data-background-color="#16213e">
+  <h2>Навигация в Neovim</h2>
+  <pre><code>        k
+        ↑
+    h ← · → l
+        ↓
+        j</code></pre>
+  <table>
+    <tr><td><code>h,j,k,l</code></td><td>Влево, вниз, вверх, вправо</td></tr>
+    <tr><td><code>w, b</code></td><td>Следующее/предыдущее слово</td></tr>
+    <tr><td><code>0, $</code></td><td>Начало/конец строки</td></tr>
+    <tr><td><code>gg, G</code></td><td>Начало/конец файла</td></tr>
+  </table>
+</section>
+
+<!-- Слайд 28 -->
+<section data-background-color="#2c3e50">
+  <h2>Редактирование в Neovim</h2>
+  <p><strong>Insert mode:</strong> i, a, o, O, A</p>
+  <p><strong>Удаление:</strong> x (символ), dd (строка), dw (слово), d$ (до конца)</p>
+  <p><strong>Отмена/Повтор:</strong> u, Ctrl+r</p>
+</section>
+
+<!-- Слайд 29 -->
+<section data-background-color="#16213e">
+  <h2>Практика Neovim за 15 минут</h2>
+  <ol style="list-style:decimal;padding-left:1.5em;text-align:left">
+    <li><code>nvim</code> → <code>:Tutor</code></li>
+    <li>Редактируйте конфиг: <code>nvim /etc/nginx/sites-available/mysite</code></li>
+    <li><a href="https://vim-adventures.com/" target="_blank">Vim Adventures</a>, <a href="https://openvim.com/" target="_blank">OpenVim</a></li>
+  </ol>
+  <p><strong>Минимум для деплоя:</strong> nvim → i → Esc → :wq</p>
+</section>
+
+<!-- Финальный слайд -->
+<section data-background-color="#1a1a2e">
+  <div style="background:rgba(22,33,62,0.9);padding:50px;border:8px solid #0f3460;text-align:center;max-width:90%;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+    <h1 style="color:#FFD700">Спасибо за внимание!</h1>
+    <h2 style="color:#90EE90">Вопросы?</h2>
+    <p style="color:#FFF;font-size:.9em">SSH • MobaXterm • FastAPI • systemd • Nginx • Certbot • Neovim</p>
+  </div>
+</section>
+
+</div></div>
+<script src="../../SEMESTR-1/15-16/js/reveal.min.js"></script>
+<script src="../../SEMESTR-1/15-16/js/notes.min.js"></script>
+<script src="../../SEMESTR-1/15-16/js/markdown.min.js"></script>
+<script src="../../SEMESTR-1/15-16/js/highlight.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    transition: 'slide',
+    controls: true,
+    progress: true,
+    slideNumber: true,
+    center: false,
+    margin: 0.02,
+    plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+  });
+</script>
+</body>
+</html>

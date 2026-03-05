@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Лабораторная работа: Деплой FastAPI на VPS</title>
+<style media="print">body{font-family:Arial,sans-serif;font-size:12px}.container{box-shadow:none;background:white}.header{background:white!important;color:black!important}.save-btn{display:none!important}.section{page-break-inside:avoid}</style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;line-height:1.6;color:#333;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh}.container{max-width:1200px;margin:20px auto;padding:20px;background:white;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}.header{text-align:center;padding:30px;background:linear-gradient(135deg,#005EB8,#003D82);color:white;border-radius:10px;margin-bottom:30px}.header h1{font-size:2.5em;margin-bottom:10px}.student-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:30px;padding:20px;background:#f8f9fa;border-radius:10px}.form-group{margin-bottom:20px}.form-group label{display:block;margin-bottom:5px;font-weight:bold;color:#003D82}.form-group input,.form-group textarea{width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px;font-size:16px}.section{margin-bottom:40px;padding:25px;background:#fff;border-left:5px solid #005EB8;border-radius:0 10px 10px 0;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.section h2{color:#003D82;margin-bottom:20px;font-size:1.8em}.section h3{color:#005EB8;margin:20px 0 10px;font-size:1.3em}.code-block{background:#282c34;color:#e2e8f0;padding:20px;border-radius:8px;margin:15px 0;font-family:'Courier New',monospace;overflow-x:auto;white-space:pre-wrap;font-size:14px}ul{list-style:none;padding-left:0}ul li{padding:8px 0 8px 30px;position:relative}ul li::before{content:'▸';position:absolute;left:0;color:#005EB8;font-size:18px}table{width:100%;border-collapse:collapse;margin:15px 0}table th,table td{border:1px solid #ddd;padding:12px;text-align:left}table th{background:#005EB8;color:white}table tr:nth-child(even){background:#f8f9fa}.checkbox-item{margin:15px 0;padding:15px 20px;background:linear-gradient(135deg,#005EB8,#003D82);border-radius:10px;display:flex;align-items:center}.checkbox-item input[type="checkbox"]{appearance:none;width:26px;height:26px;border:3px solid white;border-radius:6px;margin-right:15px;cursor:pointer;background:transparent;flex-shrink:0}.checkbox-item input[type="checkbox"]:checked{background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23005EB8"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>') center/18px no-repeat;border-color:#fff}.checkbox-item label{color:white;font-weight:500;cursor:pointer}.save-btn{background:linear-gradient(135deg,#005EB8,#003D82);color:white;border:none;padding:15px 30px;font-size:18px;border-radius:10px;cursor:pointer;display:block;margin:30px auto}code{background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:0.9em}.note{background:#e3f2fd;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #2196f3}.toc{margin:20px 0;padding:20px;background:#f5f5f5;border-radius:8px}.toc a{color:#005EB8;text-decoration:none}.toc a:hover{text-decoration:underline}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>🚀 Лабораторная работа</h1>
+<h2>От «Привет, мир» до FastAPI с GitHub</h2>
+<p>VPS • FastAPI • Nginx • systemd • GitHub Actions • CI/CD</p>
+<p><strong>Домен:</strong> alekseeva.h1n.ru &nbsp; <strong>Сервер:</strong> 81.90.182.174</p>
+</div>
+<div class="student-info">
+<div class="form-group"><label>ФИО:</label><input type="text" id="student-name"></div>
+<div class="form-group"><label>Группа:</label><input type="text" id="group"></div>
+<div class="form-group"><label>Дата:</label><input type="date" id="date"></div>
+</div>
+
+<div class="section">
+<h2>📑 Содержание</h2>
+<div class="toc">
+<ol>
+<li><a href="#part1">Часть 1: Простой сайт «Привет, мир»</a></li>
+<li><a href="#part1a">Часть 1a: Практика работы с Neovim</a></li>
+<li><a href="#part2">Часть 2: FastAPI приложение</a></li>
+<li><a href="#part3">Часть 3: Подключение GitHub репозитория</a></li>
+<li><a href="#part4">Часть 4: Автоматический деплой (CI/CD)</a></li>
+</ol>
+</div>
+</div>
+
+<div class="section" style="border-left-color:#e65100;background:#fff8e1">
+<h2>⚠️ Внимание</h2>
+<h3>Домены созданы:</h3>
+<div class="code-block"><code>alekseeva.h1n.ru
+zavyalova.h1n.ru
+patrusheva.h1n.ru
+pilyutik.h1n.ru</code></div>
+<p>Если студенту нужен домен второго уровня для выполнения работы — напишите в Telegram.</p>
+</div>
+
+<div class="section" id="part1">
+<h2>Часть 1: Простой сайт «Привет, мир»</h2>
+<div class="note"><strong>Вариант «студент всё делает сам»:</strong> Замените <code>alekseeva</code> на ваш логин во всех командах. Команды для <code>/etc</code>, <code>/var/www</code>, <code>/opt</code> и <code>systemctl</code> выполняйте через <code>sudo</code>.</div>
+<div class="note"><strong>Примечание:</strong> Эта часть — учебный этап. В Части 2 мы заменим статический сайт на FastAPI приложение.</div>
+<h3>1.1. Подключение к серверу по SSH</h3>
+<p>Откройте терминал (PowerShell на Windows или Terminal на Mac/Linux):</p>
+<div class="code-block"><code class="language-bash"># Если выдано отдельного пользователя:
+ssh alekseeva@81.90.182.174
+
+# Или по root:
+ssh root@81.90.182.174</code></div>
+<p>Введите пароль. Логин и пароль уточните у преподавателя.</p>
+<h3>1.2. Создание папки для вашего сайта</h3>
+<div class="code-block"><code class="language-bash"># Создаём папку (sudo — права на /var/www)
+sudo mkdir -p /var/www/alekseeva
+sudo chown $USER:$USER /var/www/alekseeva
+cd /var/www/alekseeva</code></div>
+<h3>1.3. Создание HTML-страницы</h3>
+<div class="code-block"><code class="language-bash">cat > index.html << 'EOF'
+&lt;!DOCTYPE html&gt;
+&lt;html lang="ru"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;title&gt;Сайт Алексеевой&lt;/title&gt;
+    &lt;style&gt;body{font-family:Arial;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:linear-gradient(135deg,#667eea,#764ba2);color:white}.container{text-align:center;padding:40px;background:rgba(255,255,255,0.1);border-radius:20px}&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;&lt;div class="container"&gt;&lt;h1&gt;Привет, мир!&lt;/h1&gt;&lt;p&gt;Это мой первый сайт на сервере&lt;/p&gt;&lt;p&gt;Автор: Алексеева Анастасия&lt;/p&gt;&lt;/div&gt;&lt;/body&gt;
+&lt;/html&gt;
+EOF</code></div>
+<h3>1.4. Настройка Nginx для вашего домена</h3>
+<p>Nginx использует схему <strong>sites-available</strong> / <strong>sites-enabled</strong>:</p>
+<ul>
+<li><code>sites-available</code> — все заготовки конфигов (могут быть выключены),</li>
+<li><code>sites-enabled</code> — только те, что активны (симлинки на файлы из sites-available).</li>
+</ul>
+<p>В конфиге задаётся:</p>
+<ul>
+<li><strong>listen 80</strong> — слушать порт 80 (HTTP),</li>
+<li><strong>server_name</strong> — по какому домену Nginx будет отвечать,</li>
+<li><strong>root</strong> — каталог с файлами сайта,</li>
+<li><strong>index</strong> — файл по умолчанию при заходе в каталог,</li>
+<li><strong>try_files</strong> — искать файл по URI, при отсутствии — 404.</li>
+</ul>
+<p>Команда <strong>ln -sf</strong> создаёт символическую ссылку: «включить» конфиг, не удаляя оригинал. Перед перезагрузкой обязательно проверяем конфиг командой <strong>nginx -t</strong>, чтобы не сломать работающий Nginx.</p>
+<p><strong>Про <code>tee</code>:</strong> <code>cat | sudo tee файл > /dev/null</code> — heredoc передаётся в tee, он пишет в файл с правами root. Так обходим проблему: <code>sudo cat > файл</code> не работает, потому что редирект выполняет shell без sudo. <code>> /dev/null</code> отключает лишний вывод в терминал.</p>
+<div class="code-block"><code class="language-bash"># Создаём конфиг Nginx (sudo)
+cat << 'EOF' | sudo tee /etc/nginx/sites-available/alekseeva > /dev/null
+server {
+    listen 80;
+    server_name alekseeva.h1n.ru;
+    root /var/www/alekseeva;
+    index index.html;
+    location / { try_files $uri $uri/ =404; }
+}
+EOF
+
+sudo ln -sf /etc/nginx/sites-available/alekseeva /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx</code></div>
+<p><strong>systemctl reload nginx</strong> применяет новый конфиг без полной остановки сервиса — текущие соединения не обрываются, а новые запросы идут по новым правилам.</p>
+<h3>1.5. Проверка</h3>
+<p>Откройте в браузере: <strong>http://alekseeva.h1n.ru</strong> — вы должны увидеть страницу «Привет, мир!».</p>
+<div class="checkbox-item"><input type="checkbox" id="t1"><label for="t1">Часть 1 выполнена</label></div>
+</div>
+
+<div class="section" id="part1a">
+<h2>Часть 1a: Практика работы с Neovim</h2>
+<div class="note"><strong>Цель:</strong> установить Neovim на VPS и освоить базовые приёмы для редактирования конфигов и логов.</div>
+<h3>1a.1. Установка Neovim</h3>
+<div class="code-block"><code class="language-bash"># Обновляем список пакетов
+sudo apt update
+sudo apt install -y neovim
+
+# Проверяем установку
+nvim --version</code></div>
+<h3>1a.2. Встроенный туториал</h3>
+<div class="code-block"><code class="language-bash">nvim</code></div>
+<p>В окне Neovim наберите <code>:Tutor</code> и Enter. Туториал на английском — это нормально.</p>
+<p><strong>Что делать по шагам:</strong></p>
+<ol>
+<li>Читайте инструкции и выполняйте то, что просят (двигайте курсор, нажимайте указанные клавиши).</li>
+<li>Навигация: <code>j</code> (вниз), <code>k</code> (вверх), <code>h</code> (влево), <code>l</code> (вправо).</li>
+<li>Выход без сохранения: наберите <code>:q!</code> и Enter (quit without saving).</li>
+<li>Удаление: <code>x</code> (удалить символ под курсором).</li>
+<li>Режим ввода: <code>i</code> (insert), введите текст, Esc — выход из ввода.</li>
+<li>Сохранение и выход: <code>:wq</code> и Enter (write and quit).</li>
+</ol>
+<p>Достаточно пройти уроки 1–5. Для выхода в любой момент: Esc, затем <code>:q!</code> Enter.</p>
+<p><strong>Русский туториал:</strong> <code>sudo apt install -y vim-runtime</code>, затем <code>nvim /usr/share/vim/vim*/tutor/tutor.ru</code> или <code>vimtutor ru</code></p>
+<h3>1a.3. Редактирование файла</h3>
+<div class="code-block"><code class="language-bash"># Создаём файл
+touch /tmp/neovim-test.txt
+
+# Открываем в Neovim
+nvim /tmp/neovim-test.txt</code></div>
+<p><strong>Выполните:</strong></p>
+<table>
+<tr><th>Действие</th><th>Команда / клавиша</th></tr>
+<tr><td>Войти в режим ввода</td><td><code>i</code></td></tr>
+<tr><td>Написать: «Привет из Neovim!»</td><td>ввести текст</td></tr>
+<tr><td>Выйти из ввода</td><td><code>Esc</code></td></tr>
+<tr><td>Сохранить и выйти</td><td><code>:wq</code> Enter</td></tr>
+</table>
+<p>Проверьте содержимое:</p>
+<div class="code-block"><code class="language-bash">cat /tmp/neovim-test.txt</code></div>
+<h3>1a.4. Редактирование конфига Nginx</h3>
+<p>Откройте конфиг вашего сайта в Neovim:</p>
+<div class="code-block"><code class="language-bash">nvim /etc/nginx/sites-available/alekseeva</code></div>
+<p><strong>Задание:</strong></p>
+<ol>
+<li>С помощью <code>hjkl</code> или стрелок перейдите к строке <code>server_name</code>.</li>
+<li>Нажмите <code>i</code> и добавьте пробел после <code>alekseeva.h1n.ru</code> (не меняя логику).</li>
+<li>Или добавьте комментарий: нажмите <code>o</code> (новая строка снизу), введите <code># Тестовый комментарий</code>.</li>
+<li><strong>Не сохраняйте</strong> изменения — наберите <code>:q!</code> Enter, чтобы выйти без сохранения (иначе можно сломать конфиг).</li>
+<li>Проверьте, что сайт по-прежнему работает: <a href="http://alekseeva.h1n.ru">http://alekseeva.h1n.ru</a></li>
+</ol>
+<h3>1a.5. Просмотр логов</h3>
+<p>Откройте лог Nginx:</p>
+<div class="code-block"><code class="language-bash">nvim /var/log/nginx/access.log</code></div>
+<p>Потренируйтесь в навигации:</p>
+<table>
+<tr><th>Клавиша</th><th>Действие</th></tr>
+<tr><td><code>j</code> / <code>k</code></td><td>вниз / вверх по строкам</td></tr>
+<tr><td><code>G</code></td><td>в конец файла</td></tr>
+<tr><td><code>gg</code></td><td>в начало файла</td></tr>
+<tr><td><code>:q!</code></td><td>выйти без сохранения</td></tr>
+</table>
+<h3>1a.6. Шпаргалка для деплоя</h3>
+<p>Минимальный набор для работы с конфигами на сервере:</p>
+<table>
+<tr><th>Задача</th><th>Действие</th></tr>
+<tr><td>Открыть файл</td><td><code>nvim путь/к/файлу</code></td></tr>
+<tr><td>Войти в редактирование</td><td><code>i</code></td></tr>
+<tr><td>Выйти из редактирования</td><td><code>Esc</code></td></tr>
+<tr><td>Сохранить и выйти</td><td><code>:wq</code> Enter</td></tr>
+<tr><td>Выйти без сохранения</td><td><code>:q!</code> Enter</td></tr>
+</table>
+<p>После выполнения Части 1a вы сможете править конфиги и логи на VPS без графического редактора.</p>
+<div class="checkbox-item"><input type="checkbox" id="t1a"><label for="t1a">Часть 1a выполнена</label></div>
+</div>
+
+<div class="section" id="part2">
+<h2>Часть 2: FastAPI приложение</h2>
+<h3>2.1. Создание проекта</h3>
+<div class="code-block"><code class="language-bash"># Создаём папку (sudo — права на /opt)
+sudo mkdir -p /opt/alekseeva-api
+sudo chown $USER:$USER /opt/alekseeva-api
+cd /opt/alekseeva-api
+
+# Виртуальное окружение и зависимости
+python3 -m venv venv
+source venv/bin/activate
+pip install fastapi uvicorn</code></div>
+<h3>2.2. Файл main.py</h3>
+<div class="code-block"><code class="language-bash"># Создаём main.py
+cat > main.py << 'EOF'
+from fastapi import FastAPI
+
+app = FastAPI(title="API Алексеевой", description="Мой первый API на FastAPI", version="1.0.0")
+
+@app.get("/")
+def home():
+    return {"message": "Привет, мир!", "author": "Алексеева А.А."}
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+@app.get("/about")
+def about():
+    return {"name": "Алексеева А.А.", "project": "Учебный проект FastAPI", "university": "..."}
+EOF</code></div>
+<h3>2.3. Проверка (вручную)</h3>
+<div class="code-block"><code class="language-bash">uvicorn main:app --host 0.0.0.0 --port 8010</code></div>
+<p>Откройте <strong>http://81.90.182.174:8010/docs</strong> — Swagger UI. Остановите: Ctrl+C</p>
+<h3>2.4. Systemd-сервис</h3>
+<p><strong>Systemd</strong> — менеджер служб в Linux. С ним приложение:</p>
+<ul>
+<li>запускается при старте сервера (автозапуск),</li>
+<li>перезапускается при падении,</li>
+<li>управляется командами <code>systemctl</code>.</li>
+</ul>
+<p><strong>Секции unit-файла:</strong></p>
+<ul>
+<li><strong>[Unit]</strong> — метаданные: описание и зависимости (например, <code>After=network.target</code> — ждать поднятия сети).</li>
+<li><strong>[Service]</strong> — как запускать процесс: от какого пользователя, из какой папки, какая команда (<code>ExecStart</code>), политика перезапуска (<code>Restart=always</code>, <code>RestartSec=5</code>).</li>
+<li><strong>[Install]</strong> — когда включать сервис: <code>WantedBy=multi-user.target</code> — вместе с обычным multi-user режимом (после загрузки).</li>
+</ul>
+<p>Слушаем <code>127.0.0.1</code>, а не <code>0.0.0.0</code>: приложение доступно только локально, снаружи — только через Nginx (порт 80).</p>
+<p><strong>Команды:</strong> <code>daemon-reload</code> — подхватить новый unit; <code>enable</code> — включить автозапуск; <code>start</code> — запустить сейчас.</p>
+<div class="code-block"><code class="language-bash"># Создаём unit-файл (sudo)
+cat << 'EOF' | sudo tee /etc/systemd/system/alekseeva-api.service > /dev/null
+[Unit]
+Description=Alekseeva FastAPI App
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/opt/alekseeva-api
+ExecStart=/opt/alekseeva-api/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8010
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable alekseeva-api
+sudo systemctl start alekseeva-api
+sudo systemctl status alekseeva-api</code></div>
+<p>Убедитесь, что в выводе <code>sudo systemctl status alekseeva-api</code> указано <strong>active (running)</strong>.</p>
+<h3>2.5. Nginx для FastAPI</h3>
+<p>Nginx выступает как <strong>reverse proxy</strong>: принимает запросы на порт 80 и передаёт их FastAPI (порт 8010). Клиент общается только с Nginx.</p>
+<p><strong>Директивы в конфиге:</strong></p>
+<ul>
+<li><strong>listen 80</strong> — слушать HTTP на 80-м порту.</li>
+<li><strong>server_name</strong> — для какого домена отвечать.</li>
+<li><strong>location /</strong> — правило для всех путей: всё перенаправляем на бэкенд.</li>
+<li><strong>proxy_pass</strong> — куда отдавать запрос: FastAPI на <code>127.0.0.1:8010</code>.</li>
+<li><strong>proxy_set_header</strong> — передать бэкенду заголовки клиента: <code>Host</code> (домен), <code>X-Real-IP</code> (IP клиента), <code>X-Forwarded-For</code>, <code>X-Forwarded-Proto</code> (HTTP/HTTPS). FastAPI видит исходного клиента, а не Nginx.</li>
+</ul>
+<p><strong>Команды:</strong> <code>nginx -t</code> — проверка синтаксиса; <code>systemctl reload nginx</code> — применить конфиг без остановки сервиса.</p>
+<div class="code-block"><code class="language-bash"># Обновляем конфиг (sudo)
+cat << 'EOF' | sudo tee /etc/nginx/sites-available/alekseeva > /dev/null
+server {
+    listen 80;
+    server_name alekseeva.h1n.ru;
+    location / {
+        proxy_pass http://127.0.0.1:8010;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+EOF
+
+sudo nginx -t && sudo systemctl reload nginx</code></div>
+<h3>2.6. Проверка</h3>
+<ul>
+<li><strong>Главная:</strong> <a href="http://alekseeva.h1n.ru/">http://alekseeva.h1n.ru/</a></li>
+<li><strong>Health:</strong> http://alekseeva.h1n.ru/health</li>
+<li><strong>Swagger:</strong> http://alekseeva.h1n.ru/docs</li>
+</ul>
+<div class="checkbox-item"><input type="checkbox" id="t2"><label for="t2">Часть 2 выполнена</label></div>
+</div>
+
+<div class="section" id="part3">
+<h2>Часть 3: Подключение GitHub репозитория</h2>
+<h3>3.1. Создание репозитория</h3>
+<p>GitHub → New repository → название <code>alekseeva-api</code> → Create.</p>
+<h3>3.2. Файлы проекта локально</h3>
+<p>Структура: <code>alekseeva-api/main.py</code>, <code>requirements.txt</code>, <code>README.md</code></p>
+<div class="code-block"><code class="language-python"># main.py
+from fastapi import FastAPI
+app = FastAPI(title="API Алексеевой", version="1.0.0")
+
+@app.get("/")
+def home():
+    return {"message": "Привет, мир!", "author": "Алексеева"}
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+@app.get("/about")
+def about():
+    return {"name": "Алексеева", "project": "Учебный проект FastAPI"}</code></div>
+<div class="code-block"><code># requirements.txt
+fastapi
+uvicorn</code></div>
+<h3>3.3. Загрузка на GitHub</h3>
+<div class="code-block"><code class="language-bash"># На локальной машине
+cd alekseeva-api
+
+git init
+git add .
+git commit -m "Initial commit: FastAPI app"
+git branch -M main
+
+# HTTPS или SSH (см. 3.4):
+git remote add origin https://github.com/ВАШ_ЛОГИН/alekseeva-api.git
+# git remote add origin git@github.com:ВАШ_ЛОГИН/alekseeva-api.git
+
+git push -u origin main</code></div>
+<h3>3.4. Клонирование на сервер</h3>
+<p><strong>SSH по ключу</strong> (подключение к VPS без пароля):</p>
+<ol>
+<li>Генерация ключа: <code>ssh-keygen -t ed25519 -C "email@example.com" -f ~/.ssh/id_ed25519 -N ""</code></li>
+<li>Linux/macOS: <code>ssh-copy-id root@81.90.182.174</code>. Windows: скопируйте <code>~/.ssh/id_ed25519.pub</code>, на сервере <code>echo "КЛЮЧ" >> ~/.ssh/authorized_keys</code></li>
+<li>Проверка: <code>ssh root@81.90.182.174</code> или <code>ssh alekseeva@81.90.182.174</code> — вход без пароля</li>
+</ol>
+<p><strong>GitHub по SSH</strong> (git clone/pull без пароля):</p>
+<ol>
+<li>GitHub → Settings → SSH and GPG keys → New SSH key, вставьте <code>~/.ssh/id_ed25519.pub</code></li>
+<li>Локально: <code>git remote add origin git@github.com:ВАШ_ЛОГИН/alekseeva-api.git</code></li>
+<li>На VPS: <code>ssh-keygen -t ed25519 -f ~/.ssh/github_deploy -N ""</code> → GitHub → репозиторий → Settings → Deploy keys, вставьте <code>cat ~/.ssh/github_deploy.pub</code></li>
+</ol>
+<p><strong>Клонирование и запуск:</strong></p>
+<div class="code-block"><code class="language-bash"># На сервере
+cd /opt
+rm -rf alekseeva-api
+
+# HTTPS или SSH (если настроен Deploy key):
+git clone https://github.com/ВАШ_ЛОГИН/alekseeva-api.git
+# git clone git@github.com:ВАШ_ЛОГИН/alekseeva-api.git
+
+cd alekseeva-api
+
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+sudo systemctl restart alekseeva-api</code></div>
+<div class="checkbox-item"><input type="checkbox" id="t3"><label for="t3">Часть 3 выполнена</label></div>
+</div>
+
+<div class="section" id="part4">
+<h2>Часть 4: Автоматический деплой (CI/CD)</h2>
+<h3>4.1. Скрипт деплоя</h3>
+<div class="code-block"><code class="language-bash"># Создаём скрипт выкатки
+cat > /opt/alekseeva-api/deploy.sh << 'EOF'
+#!/bin/bash
+cd /opt/alekseeva-api
+git pull origin main
+source venv/bin/activate
+pip install -r requirements.txt
+sudo systemctl restart alekseeva-api
+echo "Deploy completed!"
+EOF
+
+# Делаем скрипт исполняемым
+chmod +x /opt/alekseeva-api/deploy.sh</code></div>
+<h3>4.2. GitHub Actions</h3>
+<p>Создайте файл <code>.github/workflows/deploy.yml</code>:</p>
+<div class="code-block"><code class="language-yaml">name: Deploy to Server
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: 81.90.182.174
+          username: root  # или логин студента
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            cd /opt/alekseeva-api
+            git pull origin main
+            source venv/bin/activate
+            pip install -r requirements.txt
+            systemctl restart alekseeva-api</code></div>
+<h3>4.3. Секреты в GitHub</h3>
+<p>Settings → Secrets and variables → Actions → New secret → Name: <code>SSH_PASSWORD</code>, Value: пароль от сервера (root или логин студента).</p>
+<h3>4.4. Проверка</h3>
+<p>Измените <code>main.py</code> → commit → push. Откройте Actions в GitHub — деплой запустится автоматически.</p>
+<div class="checkbox-item"><input type="checkbox" id="t4"><label for="t4">Часть 4 выполнена</label></div>
+</div>
+
+<div class="section">
+<h2>Полезные команды</h2>
+<table>
+<tr><th>Действие</th><th>Команда</th></tr>
+<tr><td>Логи приложения</td><td><code>sudo journalctl -u alekseeva-api -f</code></td></tr>
+<tr><td>Перезапуск</td><td><code>sudo systemctl restart alekseeva-api</code></td></tr>
+<tr><td>Статус</td><td><code>sudo systemctl status alekseeva-api</code></td></tr>
+<tr><td>Обновить код</td><td><code>cd /opt/alekseeva-api && git pull</code></td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>Итог</h2>
+<ul>
+<li>FastAPI приложение на http://alekseeva.h1n.ru/</li>
+<li>Health check на /health</li>
+<li>Swagger на /docs</li>
+<li>Код в GitHub</li>
+<li>Автоматический деплой при push</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>📊 Выводы</h2>
+<div class="form-group"><label>Что изучили:</label><textarea rows="3" id="ta0" style="width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px"></textarea></div>
+<div class="form-group"><label>Сложности:</label><textarea rows="3" id="ta1" style="width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px"></textarea></div>
+</div>
+
+<button class="save-btn" onclick="window.print()">💾 Сохранить в PDF</button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.code-block code').forEach(function(el){try{hljs.highlightElement(el)}catch(e){}});
+  ['student-name','group','date'].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.value=localStorage.getItem(id)||'';el.addEventListener('input',()=>localStorage.setItem(id,el.value))});
+  var dateEl=document.getElementById('date');if(dateEl)dateEl.value=dateEl.value||new Date().toISOString().split('T')[0];
+  document.querySelectorAll('input[type="checkbox"]').forEach(cb=>{if(localStorage.getItem(cb.id)==='true')cb.checked=true;cb.addEventListener('change',()=>localStorage.setItem(cb.id,cb.checked))});
+  ['ta0','ta1'].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.value=localStorage.getItem(id)||'';el.addEventListener('input',()=>localStorage.setItem(id,el.value))});
+});
+</script>
+</body>
+</html>
