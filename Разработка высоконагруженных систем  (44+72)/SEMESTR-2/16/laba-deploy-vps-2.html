@@ -19,7 +19,7 @@
 <h1>🚀 Лабораторная работа</h1>
 <h2>От «Привет, мир» до FastAPI с GitHub</h2>
 <p>VPS • FastAPI • Nginx • systemd • GitHub Actions • CI/CD</p>
-<p><strong>Домен:</strong> alekseeva.h1n.ru &nbsp; <strong>Сервер:</strong> 81.90.182.174</p>
+<p><strong>Домен:</strong> zaharova-nadezhda.h1n.ru &nbsp; <strong>Сервер:</strong> 81.90.182.174</p>
 </div>
 <div class="student-info">
 <div class="form-group"><label>ФИО:</label><input type="text" id="student-name"></div>
@@ -36,7 +36,6 @@
 <li><a href="#part2">Часть 2: FastAPI приложение</a></li>
 <li><a href="#part3">Часть 3: Подключение GitHub репозитория</a></li>
 <li><a href="#part4">Часть 4: Автоматический деплой (CI/CD)</a></li>
-<li><a href="#part5">Часть 5: Расширенные задачи</a></li>
 </ol>
 </div>
 </div>
@@ -44,7 +43,7 @@
 <div class="section" style="border-left-color:#e65100;background:#fff8e1">
 <h2>⚠️ Внимание</h2>
 <h3>Домены созданы:</h3>
-<div class="code-block"><code>alekseeva.h1n.ru
+<div class="code-block"><code>zaharova-nadezhda.h1n.ru
 zavyalova.h1n.ru
 patrusheva.h1n.ru
 pilyutik.h1n.ru</code></div>
@@ -53,33 +52,33 @@ pilyutik.h1n.ru</code></div>
 
 <div class="section" id="part1">
 <h2>Часть 1: Простой сайт «Привет, мир»</h2>
-<div class="note"><strong>Вариант «студент всё делает сам»:</strong> Замените <code>alekseeva</code> на ваш логин во всех командах. Команды для <code>/etc</code>, <code>/var/www</code>, <code>/opt</code> и <code>systemctl</code> выполняйте через <code>sudo</code>.</div>
+<div class="note"><strong>Вариант «студент всё делает сам»:</strong> Замените <code>zaharova</code> на ваш логин во всех командах. Команды для <code>/etc</code>, <code>/var/www</code>, <code>/opt</code> и <code>systemctl</code> выполняйте через <code>sudo</code>.</div>
 <div class="note"><strong>Примечание:</strong> Эта часть — учебный этап. В Части 2 мы заменим статический сайт на FastAPI приложение.</div>
 <h3>1.1. Подключение к серверу по SSH</h3>
 <p>Откройте терминал (PowerShell на Windows или Terminal на Mac/Linux):</p>
 <div class="code-block"><code class="language-bash"># Если выдано отдельного пользователя:
-ssh alekseeva@81.90.182.174
+ssh zaharova@81.90.182.174
 
 # Или по root:
 ssh root@81.90.182.174</code></div>
 <p>Введите пароль. Логин и пароль уточните у преподавателя.</p>
 <h3>1.2. Создание папки для вашего сайта</h3>
 <div class="code-block"><code class="language-bash"># Создаём папку (sudo — права на /var/www)
-sudo mkdir -p /var/www/alekseeva
-# Владелец — ваш логин (подставьте свой вместо alekseeva), иначе не получится создать index.html
-sudo chown alekseeva:alekseeva /var/www/alekseeva
-cd /var/www/alekseeva</code></div>
-<p>Если при создании <code>index.html</code> появляется «Permission denied» — выполните <code>sudo chown ВАШ_ЛОГИН:ВАШ_ЛОГИН /var/www/alekseeva</code>.</p>
+sudo mkdir -p /var/www/zaharova
+# Владелец — ваш логин (подставьте свой вместо zaharova), иначе не получится создать index.html
+sudo chown zaharova:zaharova /var/www/zaharova
+cd /var/www/zaharova</code></div>
+<p>Если при создании <code>index.html</code> появляется «Permission denied» — выполните <code>sudo chown ВАШ_ЛОГИН:ВАШ_ЛОГИН /var/www/zaharova</code>.</p>
 <h3>1.3. Создание HTML-страницы</h3>
 <div class="code-block"><code class="language-bash">cat > index.html << 'EOF'
 &lt;!DOCTYPE html&gt;
 &lt;html lang="ru"&gt;
 &lt;head&gt;
     &lt;meta charset="UTF-8"&gt;
-    &lt;title&gt;Сайт Алексеевой&lt;/title&gt;
+    &lt;title&gt;Сайт Захаровой&lt;/title&gt;
     &lt;style&gt;body{font-family:Arial;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:linear-gradient(135deg,#667eea,#764ba2);color:white}.container{text-align:center;padding:40px;background:rgba(255,255,255,0.1);border-radius:20px}&lt;/style&gt;
 &lt;/head&gt;
-&lt;body&gt;&lt;div class="container"&gt;&lt;h1&gt;Привет, мир!&lt;/h1&gt;&lt;p&gt;Это мой первый сайт на сервере&lt;/p&gt;&lt;p&gt;Автор: Алексеева Анастасия&lt;/p&gt;&lt;/div&gt;&lt;/body&gt;
+&lt;body&gt;&lt;div class="container"&gt;&lt;h1&gt;Привет, мир!&lt;/h1&gt;&lt;p&gt;Это мой первый сайт на сервере&lt;/p&gt;&lt;p&gt;Автор: Захарова&lt;/p&gt;&lt;/div&gt;&lt;/body&gt;
 &lt;/html&gt;
 EOF</code></div>
 <h3>1.4. Настройка Nginx для вашего домена</h3>
@@ -99,21 +98,21 @@ EOF</code></div>
 <p>Команда <strong>ln -sf</strong> создаёт символическую ссылку: «включить» конфиг, не удаляя оригинал. Перед перезагрузкой обязательно проверяем конфиг командой <strong>nginx -t</strong>, чтобы не сломать работающий Nginx.</p>
 <p><strong>Про <code>tee</code>:</strong> <code>cat | sudo tee файл > /dev/null</code> — heredoc передаётся в tee, он пишет в файл с правами root. Так обходим проблему: <code>sudo cat > файл</code> не работает, потому что редирект выполняет shell без sudo. <code>> /dev/null</code> отключает лишний вывод в терминал.</p>
 <div class="code-block"><code class="language-bash"># Создаём конфиг Nginx (sudo)
-cat << 'EOF' | sudo tee /etc/nginx/sites-available/alekseeva > /dev/null
+cat << 'EOF' | sudo tee /etc/nginx/sites-available/zaharova > /dev/null
 server {
     listen 80;
-    server_name alekseeva.h1n.ru;
-    root /var/www/alekseeva;
+    server_name zaharova-nadezhda.h1n.ru;
+    root /var/www/zaharova;
     index index.html;
     location / { try_files $uri $uri/ =404; }
 }
 EOF
 
-sudo ln -sf /etc/nginx/sites-available/alekseeva /etc/nginx/sites-enabled/
+sudo ln -sf /etc/nginx/sites-available/zaharova /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx</code></div>
 <p><strong>systemctl reload nginx</strong> применяет новый конфиг без полной остановки сервиса — текущие соединения не обрываются, а новые запросы идут по новым правилам.</p>
 <h3>1.5. Проверка</h3>
-<p>Откройте в браузере: <strong>http://alekseeva.h1n.ru</strong> — вы должны увидеть страницу «Привет, мир!».</p>
+<p>Откройте в браузере: <strong>http://zaharova-nadezhda.h1n.ru</strong> — вы должны увидеть страницу «Привет, мир!».</p>
 <div class="checkbox-item"><input type="checkbox" id="t1"><label for="t1">Часть 1 выполнена</label></div>
 </div>
 
@@ -159,14 +158,14 @@ nvim /tmp/neovim-test.txt</code></div>
 <div class="code-block"><code class="language-bash">cat /tmp/neovim-test.txt</code></div>
 <h3>1a.4. Редактирование конфига Nginx</h3>
 <p>Откройте конфиг вашего сайта в Neovim:</p>
-<div class="code-block"><code class="language-bash">nvim /etc/nginx/sites-available/alekseeva</code></div>
+<div class="code-block"><code class="language-bash">nvim /etc/nginx/sites-available/zaharova</code></div>
 <p><strong>Задание:</strong></p>
 <ol>
 <li>С помощью <code>hjkl</code> или стрелок перейдите к строке <code>server_name</code>.</li>
-<li>Нажмите <code>i</code> и добавьте пробел после <code>alekseeva.h1n.ru</code> (не меняя логику).</li>
+<li>Нажмите <code>i</code> и добавьте пробел после <code>zaharova-nadezhda.h1n.ru</code> (не меняя логику).</li>
 <li>Или добавьте комментарий: нажмите <code>o</code> (новая строка снизу), введите <code># Тестовый комментарий</code>.</li>
 <li><strong>Не сохраняйте</strong> изменения — наберите <code>:q!</code> Enter, чтобы выйти без сохранения (иначе можно сломать конфиг).</li>
-<li>Проверьте, что сайт по-прежнему работает: <a href="http://alekseeva.h1n.ru">http://alekseeva.h1n.ru</a></li>
+<li>Проверьте, что сайт по-прежнему работает: <a href="http://zaharova-nadezhda.h1n.ru">http://zaharova-nadezhda.h1n.ru</a></li>
 </ol>
 <h3>1a.5. Просмотр логов</h3>
 <p>Откройте лог Nginx:</p>
@@ -197,10 +196,10 @@ nvim /tmp/neovim-test.txt</code></div>
 <h2>Часть 2: FastAPI приложение</h2>
 <h3>2.1. Создание проекта</h3>
 <div class="code-block"><code class="language-bash"># Создаём папку (sudo — права на /opt)
-sudo mkdir -p /opt/alekseeva-api
-# Владелец — ваш логин (подставьте свой вместо alekseeva)
-sudo chown alekseeva:alekseeva /opt/alekseeva-api
-cd /opt/alekseeva-api
+sudo mkdir -p /opt/zaharova-api
+# Владелец — ваш логин (подставьте свой вместо zaharova)
+sudo chown zaharova:zaharova /opt/zaharova-api
+cd /opt/zaharova-api
 
 # Виртуальное окружение и зависимости
 python3 -m venv venv
@@ -211,11 +210,11 @@ pip install fastapi uvicorn</code></div>
 cat > main.py << 'EOF'
 from fastapi import FastAPI
 
-app = FastAPI(title="API Алексеевой", description="Мой первый API на FastAPI", version="1.0.0")
+app = FastAPI(title="API Захаровой", description="Мой первый API на FastAPI", version="1.0.0")
 
 @app.get("/")
 def home():
-    return {"message": "Привет, мир!", "author": "Алексеева А.А."}
+    return {"message": "Привет, мир!", "author": "Захарова"}
 
 @app.get("/health")
 def health():
@@ -223,7 +222,7 @@ def health():
 
 @app.get("/about")
 def about():
-    return {"name": "Алексеева А.А.", "project": "Учебный проект FastAPI", "university": "..."}
+    return {"name": "Захарова", "project": "Учебный проект FastAPI", "university": "..."}
 EOF</code></div>
 <h3>2.3. Проверка (вручную)</h3>
 <div class="code-block"><code class="language-bash">uvicorn main:app --host 0.0.0.0 --port 8010</code></div>
@@ -244,15 +243,15 @@ EOF</code></div>
 <p>Слушаем <code>127.0.0.1</code>, а не <code>0.0.0.0</code>: приложение доступно только локально, снаружи — только через Nginx (порт 80).</p>
 <p><strong>Команды:</strong> <code>daemon-reload</code> — подхватить новый unit; <code>enable</code> — включить автозапуск; <code>start</code> — запустить сейчас.</p>
 <div class="code-block"><code class="language-bash"># Создаём unit-файл (sudo)
-cat << 'EOF' | sudo tee /etc/systemd/system/alekseeva-api.service > /dev/null
+cat << 'EOF' | sudo tee /etc/systemd/system/zaharova-api.service > /dev/null
 [Unit]
-Description=Alekseeva FastAPI App
+Description=Zaharova FastAPI App
 After=network.target
 
 [Service]
 User=root
-WorkingDirectory=/opt/alekseeva-api
-ExecStart=/opt/alekseeva-api/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8010
+WorkingDirectory=/opt/zaharova-api
+ExecStart=/opt/zaharova-api/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8010
 Restart=always
 RestartSec=5
 
@@ -261,10 +260,10 @@ WantedBy=multi-user.target
 EOF
 
 sudo systemctl daemon-reload
-sudo systemctl enable alekseeva-api
-sudo systemctl start alekseeva-api
-sudo systemctl status alekseeva-api</code></div>
-<p>Убедитесь, что в выводе <code>sudo systemctl status alekseeva-api</code> указано <strong>active (running)</strong>.</p>
+sudo systemctl enable zaharova-api
+sudo systemctl start zaharova-api
+sudo systemctl status zaharova-api</code></div>
+<p>Убедитесь, что в выводе <code>sudo systemctl status zaharova-api</code> указано <strong>active (running)</strong>.</p>
 <h3>2.5. Nginx для FastAPI</h3>
 <p>Nginx выступает как <strong>reverse proxy</strong>: принимает запросы на порт 80 и передаёт их FastAPI (порт 8010). Клиент общается только с Nginx.</p>
 <p><strong>Директивы в конфиге:</strong></p>
@@ -277,10 +276,10 @@ sudo systemctl status alekseeva-api</code></div>
 </ul>
 <p><strong>Команды:</strong> <code>nginx -t</code> — проверка синтаксиса; <code>systemctl reload nginx</code> — применить конфиг без остановки сервиса.</p>
 <div class="code-block"><code class="language-bash"># Обновляем конфиг (sudo)
-cat << 'EOF' | sudo tee /etc/nginx/sites-available/alekseeva > /dev/null
+cat << 'EOF' | sudo tee /etc/nginx/sites-available/zaharova > /dev/null
 server {
     listen 80;
-    server_name alekseeva.h1n.ru;
+    server_name zaharova-nadezhda.h1n.ru;
     location / {
         proxy_pass http://127.0.0.1:8010;
         proxy_set_header Host $host;
@@ -294,9 +293,9 @@ EOF
 sudo nginx -t && sudo systemctl reload nginx</code></div>
 <h3>2.6. Проверка</h3>
 <ul>
-<li><strong>Главная:</strong> <a href="http://alekseeva.h1n.ru/">http://alekseeva.h1n.ru/</a></li>
-<li><strong>Health:</strong> http://alekseeva.h1n.ru/health</li>
-<li><strong>Swagger:</strong> http://alekseeva.h1n.ru/docs</li>
+<li><strong>Главная:</strong> <a href="http://zaharova-nadezhda.h1n.ru/">http://zaharova-nadezhda.h1n.ru/</a></li>
+<li><strong>Health:</strong> http://zaharova-nadezhda.h1n.ru/health</li>
+<li><strong>Swagger:</strong> http://zaharova-nadezhda.h1n.ru/docs</li>
 </ul>
 <div class="checkbox-item"><input type="checkbox" id="t2"><label for="t2">Часть 2 выполнена</label></div>
 </div>
@@ -304,16 +303,16 @@ sudo nginx -t && sudo systemctl reload nginx</code></div>
 <div class="section" id="part3">
 <h2>Часть 3: Подключение GitHub репозитория</h2>
 <h3>3.1. Создание репозитория</h3>
-<p>GitHub → New repository → название <code>alekseeva-api</code> → Create.</p>
+<p>GitHub → New repository → название <code>zaharova-api</code> → Create.</p>
 <h3>3.2. Файлы проекта локально</h3>
-<p>Структура: <code>alekseeva-api/main.py</code>, <code>requirements.txt</code>, <code>README.md</code></p>
+<p>Структура: <code>zaharova-api/main.py</code>, <code>requirements.txt</code>, <code>README.md</code></p>
 <div class="code-block"><code class="language-python"># main.py
 from fastapi import FastAPI
-app = FastAPI(title="API Алексеевой", version="1.0.0")
+app = FastAPI(title="API Захаровой", version="1.0.0")
 
 @app.get("/")
 def home():
-    return {"message": "Привет, мир!", "author": "Алексеева"}
+    return {"message": "Привет, мир!", "author": "Захарова"}
 
 @app.get("/health")
 def health():
@@ -321,13 +320,13 @@ def health():
 
 @app.get("/about")
 def about():
-    return {"name": "Алексеева", "project": "Учебный проект FastAPI"}</code></div>
+    return {"name": "Захарова", "project": "Учебный проект FastAPI"}</code></div>
 <div class="code-block"><code># requirements.txt
 fastapi
 uvicorn</code></div>
 <h3>3.3. Загрузка на GitHub</h3>
 <div class="code-block"><code class="language-bash"># На локальной машине
-cd alekseeva-api
+cd zaharova-api
 
 git init
 git add .
@@ -335,8 +334,8 @@ git commit -m "Initial commit: FastAPI app"
 git branch -M main
 
 # HTTPS или SSH (см. 3.4):
-git remote add origin https://github.com/ВАШ_ЛОГИН/alekseeva-api.git
-# git remote add origin git@github.com:ВАШ_ЛОГИН/alekseeva-api.git
+git remote add origin https://github.com/ВАШ_ЛОГИН/zaharova-api.git
+# git remote add origin git@github.com:ВАШ_ЛОГИН/zaharova-api.git
 
 git push -u origin main</code></div>
 <h3>3.4. Клонирование на сервер</h3>
@@ -344,30 +343,30 @@ git push -u origin main</code></div>
 <ol>
 <li>Генерация ключа: <code>ssh-keygen -t ed25519 -C "email@example.com" -f ~/.ssh/id_ed25519 -N ""</code></li>
 <li>Linux/macOS: <code>ssh-copy-id root@81.90.182.174</code>. Windows: скопируйте <code>~/.ssh/id_ed25519.pub</code>, на сервере <code>echo "КЛЮЧ" >> ~/.ssh/authorized_keys</code></li>
-<li>Проверка: <code>ssh root@81.90.182.174</code> или <code>ssh alekseeva@81.90.182.174</code> — вход без пароля</li>
+<li>Проверка: <code>ssh root@81.90.182.174</code> или <code>ssh zaharova@81.90.182.174</code> — вход без пароля</li>
 </ol>
 <p><strong>GitHub по SSH</strong> (git clone/pull без пароля):</p>
 <ol>
 <li>GitHub → Settings → SSH and GPG keys → New SSH key, вставьте <code>~/.ssh/id_ed25519.pub</code></li>
-<li>Локально: <code>git remote add origin git@github.com:ВАШ_ЛОГИН/alekseeva-api.git</code></li>
+<li>Локально: <code>git remote add origin git@github.com:ВАШ_ЛОГИН/zaharova-api.git</code></li>
 <li>На VPS: <code>ssh-keygen -t ed25519 -f ~/.ssh/github_deploy -N ""</code> → GitHub → репозиторий → Settings → Deploy keys, вставьте <code>cat ~/.ssh/github_deploy.pub</code></li>
 </ol>
 <p><strong>Клонирование и запуск:</strong></p>
 <div class="code-block"><code class="language-bash"># На сервере
 cd /opt
-rm -rf alekseeva-api
+rm -rf zaharova-api
 
 # HTTPS или SSH (если настроен Deploy key):
-git clone https://github.com/ВАШ_ЛОГИН/alekseeva-api.git
-# git clone git@github.com:ВАШ_ЛОГИН/alekseeva-api.git
+git clone https://github.com/ВАШ_ЛОГИН/zaharova-api.git
+# git clone git@github.com:ВАШ_ЛОГИН/zaharova-api.git
 
-cd alekseeva-api
+cd zaharova-api
 
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
-sudo systemctl restart alekseeva-api</code></div>
+sudo systemctl restart zaharova-api</code></div>
 <div class="checkbox-item"><input type="checkbox" id="t3"><label for="t3">Часть 3 выполнена</label></div>
 </div>
 
@@ -375,25 +374,25 @@ sudo systemctl restart alekseeva-api</code></div>
 <h2>Часть 4: Автоматический деплой (CI/CD)</h2>
 <h3>4.1. Скрипт деплоя</h3>
 <div class="code-block"><code class="language-bash"># Создаём скрипт выкатки
-cat > /opt/alekseeva-api/deploy.sh << 'EOF'
+cat > /opt/zaharova-api/deploy.sh << 'EOF'
 #!/bin/bash
-cd /opt/alekseeva-api
+cd /opt/zaharova-api
 git pull origin main
 source venv/bin/activate
 pip install -r requirements.txt
-sudo systemctl restart alekseeva-api
+sudo systemctl restart zaharova-api
 echo "Deploy completed!"
 EOF
 
 # Делаем скрипт исполняемым
-chmod +x /opt/alekseeva-api/deploy.sh</code></div>
+chmod +x /opt/zaharova-api/deploy.sh</code></div>
 <h3>4.2. GitHub Actions</h3>
 <p>Создайте файл <code>.github/workflows/deploy.yml</code>:</p>
 <div class="code-block"><code class="language-yaml">name: Deploy to Server
 
 on:
   push:
-    branches: [master]
+    branches: [main]
 
 jobs:
   deploy:
@@ -403,14 +402,14 @@ jobs:
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: 81.90.182.174
-          username: alekseeva
+          username: root  # или логин студента
           password: ${{ secrets.SSH_PASSWORD }}
           script: |
-            cd /opt/alekseeva-api
-            git pull origin master
+            cd /opt/zaharova-api
+            git pull origin main
             source venv/bin/activate
             pip install -r requirements.txt
-            sudo systemctl restart alekseeva-api</code></div>
+            systemctl restart zaharova-api</code></div>
 <h3>4.3. Секреты в GitHub</h3>
 <p>Settings → Secrets and variables → Actions → New secret → Name: <code>SSH_PASSWORD</code>, Value: пароль от сервера (root или логин студента).</p>
 <h3>4.4. Проверка</h3>
@@ -418,81 +417,21 @@ jobs:
 <div class="checkbox-item"><input type="checkbox" id="t4"><label for="t4">Часть 4 выполнена</label></div>
 </div>
 
-<div class="section" id="part5">
-<h2>Часть 5: Расширенные задачи (HTTPS, переменные, Gunicorn)</h2>
-<h3>5.1. HTTPS (Let's Encrypt)</h3>
-<p><strong>Зачем:</strong> HTTP передаёт данные открытым текстом. HTTPS шифрует трафик и подтверждает подлинность сервера (замок в браузере). Let's Encrypt выдаёт бесплатные SSL-сертификаты.</p>
-<p><strong>Как работает:</strong> Certbot получает сертификат, проверяя, что вы управляете доменом. Сертификаты действуют 90 дней; certbot может продлевать их автоматически по cron.</p>
-<div class="code-block"><code class="language-bash"># Установка Certbot (Ubuntu/Debian)
-sudo apt update
-sudo apt install -y certbot python3-certbot-nginx
-
-# Получение сертификата (подставьте свой домен)
-sudo certbot --nginx -d alekseeva.h1n.ru</code></div>
-<p>Certbot предложит email и подтверждение условий. Автоматически настроит Nginx (listen 443 ssl, сертификаты, редирект HTTP→HTTPS).</p>
-<p><strong>Проверка:</strong> откройте https://alekseeva.h1n.ru — в браузере должен быть замок.</p>
-<p><strong>Продление:</strong> <code>sudo certbot renew --dry-run</code></p>
-
-<h3>5.2. Переменные окружения</h3>
-<p><strong>Зачем:</strong> Пароли, ключи API, флаги режима не должны лежать в коде. Их выносят в переменные окружения.</p>
-<p>1. Создайте <code>.env</code> (не коммитить в git):</p>
-<div class="code-block"><code class="language-bash">cd /opt/alekseeva-api
-cat > .env << 'EOF'
-API_VERSION=1.0.0
-DEBUG=false
-SECRET_KEY=your-secret-key-here
-EOF</code></div>
-<p>2. Установите python-dotenv и обновите main.py:</p>
-<div class="code-block"><code class="language-bash">source venv/bin/activate
-pip install python-dotenv
-pip freeze > requirements.txt</code></div>
-<div class="code-block"><code class="language-python"># main.py
-from fastapi import FastAPI
-import os
-from dotenv import load_dotenv
-load_dotenv()
-app = FastAPI(title="API Алексеевой", version=os.getenv("API_VERSION", "1.0.0"))
-@app.get("/")
-def home():
-    return {"message": "Привет!", "version": os.getenv("API_VERSION")}
-@app.get("/health")
-def health():
-    return {"status": "ok"}</code></div>
-<p>3. Добавьте в systemd unit строку <code>EnvironmentFile=/opt/alekseeva-api/.env</code> и перезапустите:</p>
-<div class="code-block"><code class="language-bash"># В [Service] добавьте:
-# EnvironmentFile=/opt/alekseeva-api/.env
-
-sudo systemctl daemon-reload
-sudo systemctl restart alekseeva-api</code></div>
-<p>Добавьте <code>.env</code> в <code>.gitignore</code>.</p>
-
-<h3>5.3. Запуск через Gunicorn</h3>
-<p><strong>Зачем:</strong> Uvicorn — один воркер. Gunicorn запускает несколько воркеров (процессов) с Uvicorn — нагрузка распределяется.</p>
-<div class="code-block"><code class="language-bash">cd /opt/alekseeva-api
-source venv/bin/activate
-pip install gunicorn
-pip freeze > requirements.txt</code></div>
-<p>Обновите systemd unit — вместо uvicorn используйте:</p>
-<div class="code-block"><code class="language-bash">ExecStart=/opt/alekseeva-api/venv/bin/gunicorn main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 127.0.0.1:8010</code></div>
-<p><strong>Параметры:</strong> <code>-w 2</code> — 2 воркера; <code>-k uvicorn.workers.UvicornWorker</code> — ASGI; <code>--bind 127.0.0.1:8010</code>.</p>
-<p><code>sudo systemctl daemon-reload && sudo systemctl restart alekseeva-api</code></p>
-</div>
-
 <div class="section">
 <h2>Полезные команды</h2>
 <table>
 <tr><th>Действие</th><th>Команда</th></tr>
-<tr><td>Логи приложения</td><td><code>sudo journalctl -u alekseeva-api -f</code></td></tr>
-<tr><td>Перезапуск</td><td><code>sudo systemctl restart alekseeva-api</code></td></tr>
-<tr><td>Статус</td><td><code>sudo systemctl status alekseeva-api</code></td></tr>
-<tr><td>Обновить код</td><td><code>cd /opt/alekseeva-api && git pull</code></td></tr>
+<tr><td>Логи приложения</td><td><code>sudo journalctl -u zaharova-api -f</code></td></tr>
+<tr><td>Перезапуск</td><td><code>sudo systemctl restart zaharova-api</code></td></tr>
+<tr><td>Статус</td><td><code>sudo systemctl status zaharova-api</code></td></tr>
+<tr><td>Обновить код</td><td><code>cd /opt/zaharova-api && git pull</code></td></tr>
 </table>
 </div>
 
 <div class="section">
 <h2>Итог</h2>
 <ul>
-<li>FastAPI приложение на http://alekseeva.h1n.ru/</li>
+<li>FastAPI приложение на http://zaharova-nadezhda.h1n.ru/</li>
 <li>Health check на /health</li>
 <li>Swagger на /docs</li>
 <li>Код в GitHub</li>

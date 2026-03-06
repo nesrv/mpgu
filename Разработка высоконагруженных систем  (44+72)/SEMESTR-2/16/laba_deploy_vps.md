@@ -17,6 +17,7 @@
 3. [Часть 2: FastAPI приложение](#часть-2-fastapi-приложение)
 4. [Часть 3: Подключение GitHub репозитория](#часть-3-подключение-github-репозитория)
 5. [Часть 4: Автоматический деплой (CI/CD)](#часть-4-автоматический-деплой-cicd)
+6. [Часть 5: Расширенные задачи (HTTPS, переменные, Gunicorn)](#часть-5-расширенные-задачи)
 
 ---
 
@@ -47,9 +48,12 @@ ssh root@81.90.182.174
 ```bash
 # Создаём папку (sudo — права на /var/www)
 sudo mkdir -p /var/www/alekseeva
-sudo chown $USER:$USER /var/www/alekseeva
+# Владелец — тот, кто вызвал sudo ($SUDO_USER), иначе не получится создать index.html
+sudo chown $SUDO_USER:$SUDO_USER /var/www/alekseeva
 cd /var/www/alekseeva
 ```
+
+Если при `cat > index.html` появляется «Permission denied» — выполните ещё раз: `sudo chown $SUDO_USER:$SUDO_USER /var/www/alekseeva` (или явно: `sudo chown ВАШ_ЛОГИН:ВАШ_ЛОГИН /var/www/alekseeva`).
 
 ---
 
@@ -298,7 +302,8 @@ nvim /var/log/nginx/access.log
 ```bash
 # Создаём папку для FastAPI (sudo — права на /opt)
 sudo mkdir -p /opt/alekseeva-api
-sudo chown $USER:$USER /opt/alekseeva-api
+# Владелец — тот, кто вызвал sudo ($SUDO_USER)
+sudo chown $SUDO_USER:$SUDO_USER /opt/alekseeva-api
 cd /opt/alekseeva-api
 
 # Создаём виртуальное окружение Python
@@ -647,6 +652,166 @@ git push
 
 ---
 
+## Часть 5: Расширенные задачи (HTTPS, переменные, Gunicorn)
+
+
+
+### 5.1. HTTPS (Let's Encrypt)
+
+**Зачем:** HTTP передаёт данные открытым текстом. HTTPS шифрует трафик и подтверждает подлинность сервера (замок в браузере). Let's Encrypt выдаёт бесплатные SSL-сертификаты.
+
+**Как работает:** Certbot получает сертификат, проверяя, что вы управляете доменом (проверка через HTTP). Сертификаты действуют 90 дней; certbot может продлевать их автоматически по cron.
+
+**Установка и получение сертификата:**
+
+```bash
+# Установка Certbot (Ubuntu/Debian)
+sudo apt update
+sudo apt install -y certbot python3-certbot-nginx
+
+# Получение сертификата (подставьте свой домен)
+sudo certbot --nginx -d alekseeva.h1n.ru
+```
+
+Certbot предложит email для уведомлений и подтверждение условий. Затем автоматически настроит Nginx: добавит блок `listen 443 ssl`, пути к сертификатам и редирект с HTTP на HTTPS.
+
+**Проверка:** откройте https://alekseeva.h1n.ru — в браузере должен быть замок.
+
+**Продление (проверка):** `sudo certbot renew --dry-run` — симуляция продления.
+
+---
+
+### 5.2. Переменные окружения
+
+**Зачем:** Пароли, ключи API, флаги режима (debug/production) не должны лежать в коде. Их выносят в переменные окружения — приложение читает их во время запуска.
+
+**Реализация в FastAPI и systemd:**
+
+1. Создайте файл `.env` в проекте (не коммитить в git):
+
+```bash
+cd /opt/alekseeva-api
+
+# Создаём .env (подставьте свои значения)
+cat > .env << 'EOF'
+API_VERSION=1.0.0
+DEBUG=false
+SECRET_KEY=your-secret-key-here
+EOF
+```
+
+2. Установите `python-dotenv` и обновите `main.py`:
+
+```bash
+source venv/bin/activate
+pip install python-dotenv
+pip freeze > requirements.txt
+```
+
+```python
+# main.py
+from fastapi import FastAPI
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+app = FastAPI(
+    title="API Алексеевой",
+    version=os.getenv("API_VERSION", "1.0.0")
+)
+
+@app.get("/")
+def home():
+    return {"message": "Привет!", "version": os.getenv("API_VERSION")}
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+```
+
+3. Добавьте загрузку `.env` в systemd unit — переменные передаются через `EnvironmentFile`:
+
+```bash
+# Обновляем unit-файл
+cat << 'EOF' | sudo tee /etc/systemd/system/alekseeva-api.service > /dev/null
+[Unit]
+Description=Alekseeva FastAPI App
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/opt/alekseeva-api
+EnvironmentFile=/opt/alekseeva-api/.env
+ExecStart=/opt/alekseeva-api/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8010
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl restart alekseeva-api
+```
+
+**Проверка:** `curl http://alekseeva.h1n.ru/` — в ответе должно быть `"version": "1.0.0"` (или значение из `.env`). Добавьте `.env` в `.gitignore`, чтобы не закоммитить секреты.
+
+---
+
+### 5.3. Запуск через Gunicorn
+
+**Зачем:** Uvicorn — один воркер; при нескольких одновременных запросах они обрабатываются по очереди. Gunicorn запускает несколько воркеров (процессов), каждый со своим Uvicorn — нагрузка распределяется, приложение лучше держит пики.
+
+**Реализация:**
+
+1. Установите Gunicorn:
+
+```bash
+cd /opt/alekseeva-api
+source venv/bin/activate
+pip install gunicorn
+pip freeze > requirements.txt
+```
+
+2. Обновите systemd unit — запускаем Gunicorn с Uvicorn-воркерами:
+
+```bash
+cat << 'EOF' | sudo tee /etc/systemd/system/alekseeva-api.service > /dev/null
+[Unit]
+Description=Alekseeva FastAPI App
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/opt/alekseeva-api
+ExecStart=/opt/alekseeva-api/venv/bin/gunicorn main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 127.0.0.1:8010
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+```
+
+**Параметры:**
+- `-w 2` — 2 воркера (для VPS с 1–2 CPU достаточно);
+- `-k uvicorn.workers.UvicornWorker` — Uvicorn внутри Gunicorn (ASGI);
+- `--bind 127.0.0.1:8010` — слушать на 8010.
+
+3. Перезапустите и проверьте:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart alekseeva-api
+sudo systemctl status alekseeva-api
+curl http://alekseeva.h1n.ru/
+```
+
+Обновите `deploy.sh` и GitHub Actions: `pip install -r requirements.txt` подтянет gunicorn.
+
+---
+
 ## Полезные команды
 
 | Действие | Команда |
@@ -699,7 +864,7 @@ usermod -aG sudo alekseeva
 ### 3. Массовое создание
 
 ```bash
-for user in alekseeva zavyalova patrusheva pilyutik; do
+for user in zaharova; do
   adduser --disabled-password --gecos "" $user
   echo "$user:$user" | chpasswd
   usermod -aG sudo $user

@@ -1,0 +1,1 @@
+https://dnsmanager.hostiman.ru:1500/dnsmgr
