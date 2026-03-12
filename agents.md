@@ -1,3 +1,22 @@
+на основе laba_vps_django.md
+создай веб-методичку (нужно взять всю информацию из исходного md файла)
+
+референс
+laba-deploy-vps-2.html
+
+
+сделай из двух файлов одну общую методичку, контент объедини по смыслу:
+part_1_methodic.md
+part_2_for_deploy.md
+
+добавь в методичку по смыслу информацию из:
+deploy.yml
+
+Dockerfile
+docker-compose.prod
+docker-compose.prod
+
+
 добавь в html
 Перед частью 1 
 ## Внимание
@@ -19,12 +38,6 @@ pilyutik.h1n.ru
 как в референсе 
 laba-django-api-deploy.html
 
-на основе laba_deploy_vps.md
-создай веб-методичку (нужно взять всю информацию из исходного md файла)
-
-
-референс
-laba-django-api-deploy.html
 
 
 laba_deploy_vps.md

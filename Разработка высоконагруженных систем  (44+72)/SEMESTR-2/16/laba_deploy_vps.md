@@ -864,7 +864,7 @@ usermod -aG sudo alekseeva
 ### 3. Массовое создание
 
 ```bash
-for user in zaharova; do
+for user in darya-kudrina; do
   adduser --disabled-password --gecos "" $user
   echo "$user:$user" | chpasswd
   usermod -aG sudo $user
