@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Управление нагрузкой Django в production</title>
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/reveal.min.css">
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/black.min.css">
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/monokai.min.css">
+  <style>
+    .reveal .slides { width:80%!important; height:90%!important; position:absolute!important; left:50%!important; top:0!important; transform:translateX(calc(-50% + 5%)) scale(1.2)!important; transform-origin:top center!important }
+    .reveal .slides section { display:flex!important; flex-direction:column!important; justify-content:center!important; align-items:center!important; padding:24px 32px!important; font-size:.95em!important; max-width:100%!important; width:100%!important; overflow-x:hidden!important; box-sizing:border-box!important; line-height:1.5!important; text-align:center!important }
+    .reveal h1 { font-size:1.7em!important; margin-top:0!important; margin-bottom:.5em!important; color:#FFD700!important; text-align:center!important }
+    .reveal h2 { font-size:1em!important; margin-top:0!important; margin-bottom:.5em!important; text-transform:none!important; text-align:center!important; padding-bottom:.4em!important; border-bottom:2px solid rgba(255,215,0,0.5)!important; color:#FFD700!important; width:100%!important }
+    .reveal h3 { font-size:1.05em!important; margin-top:.6em!important; margin-bottom:.3em!important; text-transform:none!important; color:#90EE90!important; text-align:center!important }
+    .reveal .slides section p, .reveal .slides section div { max-width:100%!important; min-width:0!important; overflow-wrap:break-word!important; word-wrap:break-word!important; word-break:break-word!important; box-sizing:border-box!important }
+    .reveal .slides section ul, .reveal .slides section ol { text-align:left!important; margin:0 auto!important }
+    .reveal .slides section li { overflow-wrap:break-word!important; word-wrap:break-word!important; word-break:break-word!important; margin-bottom:.4em!important; list-style:none!important; position:relative!important; padding-left:.5em!important }
+    .reveal .slides section ul li::before { content:"\25B8"!important; position:absolute!important; left:-1em!important; color:#FFD700!important; font-size:.85em!important }
+    .reveal p, .reveal ul, .reveal ol { font-size:.92em!important }
+    .reveal .slides section ul { padding-left:1.5em!important }
+    pre { max-height:320px!important; overflow:auto!important; margin:12px auto!important; max-width:95%!important; border-radius:10px!important; border:1px solid rgba(255,215,0,0.4)!important; box-shadow:0 6px 20px rgba(0,0,0,.4)!important; padding:2px!important; text-align:left!important }
+    pre code { font-size:.72em!important; padding:14px 18px!important; line-height:1.4!important }
+    table { font-size:.78em!important; max-width:100%!important; border-collapse:collapse!important; margin:12px auto!important }
+    .reveal table th, .reveal table td { border:1px solid rgba(255,255,255,0.35)!important; padding:8px 12px!important }
+    .reveal table th { background:rgba(0,0,0,0.3)!important; color:#FFD700!important }
+    .slide-card { background:rgba(0,0,0,0.35)!important; border-radius:12px!important; padding:18px 24px!important; border-left:5px solid #FFD700!important; margin-top:12px!important; max-width:95%!important; text-align:left!important; box-shadow:0 4px 16px rgba(0,0,0,.3)!important }
+    .reveal .slides section > div[style*="background"] ul { display:inline-block!important; text-align:left!important }
+    .reveal code { color:#90EE90!important }
+  </style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- Слайд 1 -->
+<section data-background-color="#1a1a2e">
+  <div style="background:rgba(22,33,62,0.9);padding:40px;border:8px solid #0f3460;text-align:center;max-width:90%;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+    <h1 style="color:#FFD700">Управление нагрузкой Django в production</h1>
+    <h2 style="color:#90EE90">Django — другая реальность</h2>
+    <ul>
+      <li><code>python manage.py runserver</code> — только для разработки</li>
+      <li>Production — WSGI/ASGI-сервер, reverse proxy, CI/CD</li>
+      <li>От голого Django до оптимизированного продакшена с бенчмарками</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Слайд 2 -->
+<section data-background-color="#16213e">
+  <h2>Архитектура production Django</h2>
+  <pre><code>Браузер → Nginx (порт 80/443) → Gunicorn (порт 8000) → Django → PostgreSQL</code></pre>
+  <div class="slide-card">
+    <ul>
+      <li><strong>Nginx</strong> — принимает HTTP, раздаёт статику, терминирует SSL</li>
+      <li><strong>Gunicorn</strong> — WSGI-сервер, запускает воркеры Django</li>
+      <li><strong>Django</strong> — бизнес-логика, ORM, шаблоны</li>
+      <li><strong>PostgreSQL</strong> — база данных, а не SQLite</li>
+    </ul>
+  </div>
+  <p style="margin-top:12px">Gunicorn не умеет раздавать файлы, SSL, защищаться от slowloris. Nginx — «охранник на входе».</p>
+</section>
+
+<!-- Слайд 3 -->
+<section data-background-color="#2c3e50">
+  <h2>Dev vs Production</h2>
+  <table>
+    <tr><th>Параметр</th><th>Development</th><th>Production</th></tr>
+    <tr><td>Сервер</td><td><code>runserver</code></td><td>gunicorn / uvicorn</td></tr>
+    <tr><td>База данных</td><td>SQLite</td><td>PostgreSQL / MySQL</td></tr>
+    <tr><td>Статика</td><td>Django раздаёт</td><td>Nginx раздаёт</td></tr>
+    <tr><td>DEBUG</td><td><code>True</code></td><td><code>False</code></td></tr>
+    <tr><td>ALLOWED_HOSTS</td><td><code>*</code></td><td>конкретный домен</td></tr>
+    <tr><td>SECRET_KEY</td><td>в settings.py</td><td>в переменной окружения</td></tr>
+    <tr><td>HTTPS</td><td>нет</td><td>Let's Encrypt</td></tr>
+    <tr><td>Логи</td><td>в консоль</td><td>в файлы / journald</td></tr>
+  </table>
+  <p><code>DEBUG=True</code> на проде — ключи от квартиры в замке с надписью «добро пожаловать»</p>
+</section>
+
+<!-- Слайд 4 -->
+<section data-background-color="#16213e">
+  <h2>settings.py для production</h2>
+  <pre><code class="language-python">import os
+import dj_database_url
+
+SECRET_KEY = os.environ.get('SECRET_KEY', 'change-me')
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
+
+DATABASES = {
+    'default': dj_database_url.config(
+        default='postgresql://postgres:postgres@localhost:5432/shop',
+        conn_max_age=600,
+    )
+}
+
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')</code></pre>
+  <div class="slide-card">
+    <ul>
+      <li><code>dj_database_url</code> — парсит строку подключения в формат Django</li>
+      <li><code>conn_max_age=600</code> — не закрывать соединение к БД 10 минут</li>
+      <li><code>STATIC_ROOT</code> — папка для <code>collectstatic</code>, Nginx раздаёт напрямую</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Слайд 5 -->
+<section data-background-color="#2c3e50">
+  <h2>Порядок деплоя Django (ручной)</h2>
+  <ol>
+    <li><strong>SSH на сервер</strong> — <code>ssh root@81.90.182.174</code></li>
+    <li><strong>Установка зависимостей</strong> — Python, pip, venv, git</li>
+    <li><strong>Клонирование репозитория</strong> — <code>git clone</code> в <code>/opt/project</code></li>
+    <li><strong>Виртуальное окружение</strong> — <code>python3 -m venv venv &amp;&amp; pip install -r requirements.txt</code></li>
+    <li><strong>Переменные окружения</strong> — <code>.env</code> файл или export</li>
+    <li><strong>Миграции</strong> — <code>python manage.py migrate</code></li>
+    <li><strong>Статика</strong> — <code>python manage.py collectstatic</code></li>
+    <li><strong>Запуск</strong> — через systemd или Docker</li>
+  </ol>
+  <p>Если что-то не работает — идите по чек-листу сверху вниз</p>
+</section>
+
+<!-- Слайд 6 -->
+<section data-background-color="#16213e">
+  <h2>Systemd — автозапуск без Docker</h2>
+  <pre><code class="language-ini">[Unit]
+Description=Django Shop API
+After=network.target
+
+[Service]
+User=deploy
+WorkingDirectory=/opt/shop
+ExecStart=/opt/shop/venv/bin/gunicorn config.wsgi:application \
+    --bind 127.0.0.1:8000 --workers 4
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+  <div class="slide-card">
+    <ul>
+      <li><code>Restart=always</code> — перезапуск при падении</li>
+      <li><code>bind 127.0.0.1</code> — только локально, снаружи — через Nginx</li>
+      <li>Команды: <code>systemctl start/enable shop</code>, <code>journalctl -u shop -f</code></li>
+    </ul>
+  </div>
+</section>
+
+<!-- Слайд 7 -->
+<section data-background-color="#2c3e50">
+  <h2>Порядок деплоя с CI/CD</h2>
+  <pre><code>git push → GitHub Actions → SSH на VPS → git pull → docker compose up</code></pre>
+  <div class="slide-card">
+    <p>Пушишь в <code>master</code> — через 30 секунд новая версия на сервере.</p>
+    <h3>Что нужно:</h3>
+    <ul>
+      <li><strong>GitHub Secrets</strong> — пароли от сервера в зашифрованном виде</li>
+      <li><strong>Workflow файл</strong> — <code>.github/workflows/deploy.yml</code></li>
+      <li><strong>SSH-доступ</strong> — GitHub Actions подключается к VPS</li>
+    </ul>
+  </div>
+  <p style="margin-top:10px">Сленг: «пайплайн» — цепочка CI/CD. «Воркфлоу» — файл пайплайна. «Триггер» — событие запуска.</p>
+</section>
+
+<!-- Слайд 8 -->
+<section data-background-color="#16213e">
+  <h2>GitHub Actions — deploy.yml</h2>
+  <pre><code class="language-yaml">name: Deploy to VPS
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            cd /opt/shop
+            git pull origin master
+            docker compose -f docker-compose.prod.yml up --build -d</code></pre>
+  <p><code>appleboy/ssh-action</code> — готовый action для SSH. Секреты из GitHub Settings → Secrets.</p>
+</section>
+
+<!-- Слайд 9 -->
+<section data-background-color="#2c3e50">
+  <h2>GitHub Secrets — безопасность CI/CD</h2>
+  <p>Секреты GitHub шифруются и не показываются в логах. Даже при fork — не копируются.</p>
+  <table>
+    <tr><th>Имя</th><th>Значение</th><th>Зачем</th></tr>
+    <tr><td><code>VPS_HOST</code></td><td><code>81.90.182.174</code></td><td>IP сервера</td></tr>
+    <tr><td><code>VPS_USER</code></td><td><code>deploy</code></td><td>SSH-пользователь</td></tr>
+    <tr><td><code>VPS_PASSWORD</code></td><td><code>***</code></td><td>SSH-пароль</td></tr>
+  </table>
+  <div class="slide-card">
+    <p>⚠️ <code>echo ${{ secrets.VPS_PASSWORD }}</code> — GitHub замаскирует. Но <code>echo ... | base64</code> — может и не замаскировать декодированную версию!</p>
+    <p>Продвинутый подход — SSH-ключи вместо пароля.</p>
+  </div>
+</section>
+
+<!-- Слайд 10 -->
+<section data-background-color="#16213e">
+  <h2>Docker при деплое — зачем?</h2>
+  <div class="slide-card">
+    <h3>Проблемы без Docker:</h3>
+    <ul>
+      <li>«У меня Python 3.12, а на сервере 3.9»</li>
+      <li>«libpq-dev конфликтует с другим проектом»</li>
+      <li>«На моём маке всё работало!»</li>
+    </ul>
+  </div>
+  <h3>Docker для Django:</h3>
+  <ul>
+    <li><strong>Изоляция</strong> — PostgreSQL, Django, Redis в отдельных контейнерах</li>
+    <li><strong>Воспроизводимость</strong> — <code>docker compose up</code> и всё работает</li>
+    <li><strong>Масштабирование</strong> — легко добавить воркеры, реплики</li>
+    <li><strong>Откат</strong> — вернуться к предыдущему образу за секунду</li>
+  </ul>
+</section>
+
+<!-- Слайд 11 -->
+<section data-background-color="#2c3e50">
+  <h2>Dockerfile для Django</h2>
+  <pre><code class="language-dockerfile">FROM python:3.14-slim
+
+WORKDIR /app
+
+RUN apt-get update &amp;&amp; apt-get install -y --no-install-recommends \
+    libpq-dev &amp;&amp; \
+    rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+RUN python manage.py collectstatic --noinput 2&gt;/dev/null || true
+
+EXPOSE 8000
+
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]</code></pre>
+  <ul>
+    <li><code>python:3.14-slim</code> — ~150 МБ vs ~1 ГБ для полного</li>
+    <li><code>COPY requirements.txt</code> отдельно — кэширование слоёв Docker</li>
+  </ul>
+</section>
+
+<!-- Слайд 12 -->
+<section data-background-color="#16213e">
+  <h2>docker-compose.prod.yml</h2>
+  <pre><code class="language-yaml">services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: shop
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    command: postgres -c max_connections=300
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-postgres}@db:5432/shop
+      DEBUG: "False"
+    command: &gt;
+      sh -c "python manage.py migrate &amp;&amp;
+             python load_data.py &amp;&amp;
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 8 --threads 4"
+volumes:
+  pg_data:</code></pre>
+  <p>Два сервиса, одна сеть. Docker DNS: сервис <code>db</code> доступен по имени <code>db</code>.</p>
+</section>
+
+<!-- Слайд 13 -->
+<section data-background-color="#2c3e50">
+  <h2>Разбор docker-compose по строкам</h2>
+  <table>
+    <tr><th>Параметр</th><th>Что делает</th></tr>
+    <tr><td><code>restart: unless-stopped</code></td><td>Перезапуск при падении и после ребута</td></tr>
+    <tr><td><code>${DB_PASSWORD:-postgres}</code></td><td>Переменная окружения с дефолтом</td></tr>
+    <tr><td><code>max_connections=300</code></td><td>Увеличение лимита PostgreSQL (дефолт — 100)</td></tr>
+    <tr><td><code>pg_data:/var/lib/…</code></td><td>Именованный volume — данные переживают <code>down</code></td></tr>
+    <tr><td><code>build: .</code></td><td>Собрать образ из Dockerfile</td></tr>
+    <tr><td><code>ports: "8080:8000"</code></td><td>Хост 8080 → контейнер 8000</td></tr>
+    <tr><td><code>depends_on: db</code></td><td>Запускать web после db (не ждёт готовности!)</td></tr>
+  </table>
+  <p><code>depends_on</code> гарантирует порядок старта, но НЕ готовность БД. <code>restart: unless-stopped</code> спасёт.</p>
+</section>
+
+<!-- Слайд 14 -->
+<section data-background-color="#16213e">
+  <h2>Docker volumes — где живут данные</h2>
+  <pre><code class="language-yaml">volumes:
+  - pg_data:/var/lib/postgresql/data</code></pre>
+  <div class="slide-card">
+    <h3>Три типа volumes:</h3>
+    <ul>
+      <li><strong>Именованные</strong> (<code>pg_data:</code>) — управляются Docker, переживают пересоздание</li>
+      <li><strong>Bind mount</strong> (<code>./data:/app/data</code>) — монтируют папку хоста</li>
+      <li><strong>Anonymous</strong> — привязаны к контейнеру, удаляются с ним</li>
+    </ul>
+  </div>
+  <p style="margin-top:10px"><code>docker compose down</code> — volume сохраняется. <code>down -v</code> — удаляется! ⚠️</p>
+  <p>Для баз данных — только именованные. Для кода в dev — bind mount.</p>
+</section>
+
+<!-- Слайд 15 -->
+<section data-background-color="#2c3e50">
+  <h2>Первый запуск на VPS</h2>
+  <pre><code class="language-bash"># Под root
+ssh root@81.90.182.174
+curl -fsSL https://get.docker.com | sh
+
+# Создать пользователя
+adduser --disabled-password deploy
+usermod -aG docker deploy
+
+# Директория проекта
+mkdir -p /opt/shop &amp;&amp; chown deploy:deploy /opt/shop
+
+# Под deploy
+su - deploy
+cd /opt/shop
+git clone https://github.com/user/shop.git .
+docker compose -f docker-compose.prod.yml up --build -d
+
+# Проверка
+curl http://localhost:8080/api/health
+# {"status": "ok"}</code></pre>
+</section>
+
+<!-- Слайд 16 -->
+<section data-background-color="#16213e">
+  <h2>Nginx — зачем он нужен Django</h2>
+  <div class="slide-card">
+    <p>Gunicorn обрабатывает Python-код. Но он <strong>НЕ</strong> умеет:</p>
+    <ul>
+      <li><strong>Раздавать статику</strong> — в 100× медленнее через Python</li>
+      <li><strong>Терминировать SSL</strong> — HTTPS расшифровка нагружает CPU</li>
+      <li><strong>Буферизовать запросы</strong> — медленный клиент займёт воркер</li>
+      <li><strong>Ограничивать rate</strong> — защита от DDoS</li>
+      <li><strong>Кэшировать ответы</strong> — без обращения к Django</li>
+    </ul>
+  </div>
+  <p style="margin-top:10px">Nginx — «охранник на входе» (event-driven, тысячи соединений). Gunicorn — «специалист внутри».</p>
+</section>
+
+<!-- Слайд 17 -->
+<section data-background-color="#2c3e50">
+  <h2>Конфиг Nginx для Django</h2>
+  <pre><code class="language-nginx">server {
+    listen 80;
+    server_name django.h1n.ru;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /static/ {
+        alias /opt/shop/staticfiles/;
+    }
+}</code></pre>
+  <ul>
+    <li><code>proxy_pass</code> — перенаправить запрос на Gunicorn</li>
+    <li><code>proxy_set_header Host</code> — иначе Django вернёт 400</li>
+    <li><code>location /static/</code> — Nginx отдаёт статику напрямую</li>
+  </ul>
+</section>
+
+<!-- Слайд 18 -->
+<section data-background-color="#16213e">
+  <h2>Nginx — активация и проверка</h2>
+  <pre><code class="language-bash"># Создать конфиг
+sudo nano /etc/nginx/sites-available/django.h1n.ru
+
+# Включить (симлинк)
+sudo ln -s /etc/nginx/sites-available/django.h1n.ru /etc/nginx/sites-enabled/
+
+# Проверить синтаксис (ОБЯЗАТЕЛЬНО!)
+sudo nginx -t
+
+# Применить без остановки
+sudo systemctl reload nginx</code></pre>
+  <div class="slide-card">
+    <p><strong>sites-available / sites-enabled:</strong> все конфиги в <code>sites-available</code>, активные — симлинки в <code>sites-enabled</code>.</p>
+    <p>⚠️ <code>nginx -t</code> перед каждым <code>reload</code>. Без исключений.</p>
+  </div>
+</section>
+
+<!-- Слайд 19 -->
+<section data-background-color="#2c3e50">
+  <h2>HTTPS — Let's Encrypt + Certbot</h2>
+  <pre><code class="language-bash">apt install certbot python3-certbot-nginx -y
+certbot --nginx -d django.h1n.ru</code></pre>
+  <div class="slide-card">
+    <h3>Certbot автоматически:</h3>
+    <ul>
+      <li>Получит сертификат (проверит, что домен → этот сервер)</li>
+      <li>Изменит конфиг Nginx (<code>listen 443 ssl</code>)</li>
+      <li>Настроит редирект HTTP → HTTPS</li>
+      <li>Добавит cron для автообновления (каждые 90 дней)</li>
+    </ul>
+  </div>
+  <p style="margin-top:10px">После: <code>https://django.h1n.ru</code> — зелёный замочек 🔒</p>
+</section>
+
+<!-- Слайд 20 -->
+<section data-background-color="#16213e">
+  <h2>Полная схема production Django</h2>
+  <pre><code>Браузер → django.h1n.ru
+         ↓
+   DNS → 81.90.182.174 (A-запись)
+         ↓
+   Nginx (порт 80 → 443, SSL)
+    ├── /static/ → файлы напрямую
+    └── / → proxy_pass
+         ↓
+   Docker: Gunicorn (порт 8080)
+    ├── 8 воркеров × 4 потока = 32 параллельных запроса
+    └── Django ORM
+         ↓
+   Docker: PostgreSQL (порт 5432)
+    └── max_connections=300</code></pre>
+  <p>4 слоя: DNS → Nginx → Gunicorn → PostgreSQL. Каждый масштабируется независимо.</p>
+</section>
+
+<!-- Слайд 21 -->
+<section data-background-color="#2c3e50">
+  <h2>Бенчмарки — зачем измерять</h2>
+  <p>«Premature optimization is the root of all evil» — Д. Кнут. Но оптимизация без измерений — гадание.</p>
+  <pre><code class="language-bash"># wrk: 4 потока, 200 соединений, 30 секунд
+wrk -t4 -c200 -d30s http://81.90.182.174:8080/api/products
+
+# ab: 10000 запросов, 100 параллельных
+ab -n 10000 -c 100 http://81.90.182.174:8080/api/products</code></pre>
+  <div class="slide-card">
+    <h3>Что смотреть в результатах:</h3>
+    <ul>
+      <li><strong>Requests/sec</strong> — пропускная способность (главная метрика)</li>
+      <li><strong>Latency</strong> — время ответа (что чувствует пользователь)</li>
+      <li><strong>Timeouts</strong> — сколько запросов не дождались ответа</li>
+      <li><strong>Errors</strong> — сколько получили 5xx</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Слайд 22 -->
+<section data-background-color="#16213e">
+  <h2>Baseline — Gunicorn 3 воркера</h2>
+  <p>Стартовая конфигурация: дефолтный Gunicorn, 3 синхронных воркера, PostgreSQL с дефолтами.</p>
+  <pre><code>wrk -t4 -c200 -d30s http://81.90.182.174:8080/api/products
+
+Requests/sec:     50.08
+Avg Latency:      1.06s
+Timeouts:         1531 из 1658
+Errors:           0</code></pre>
+  <div class="slide-card">
+    <p><strong>50 req/s</strong> при 200 соединениях. 92% — таймауты. Катастрофа.</p>
+    <p>3 синхронных воркера = 3 параллельных запроса. Остальные 197 в очереди. Каждый запрос к PostgreSQL — новое подключение.</p>
+  </div>
+</section>
+
+<!-- Слайд 23 -->
+<section data-background-color="#2c3e50">
+  <h2>Попытка 1 — uvicorn (async)</h2>
+  <pre><code class="language-yaml">command: uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --workers 4</code></pre>
+  <p>Результат с <code>conn_max_age=600</code>:</p>
+  <pre><code>Requests/sec:     55.34
+Timeouts:         1418
+Non-2xx responses: 1415  ← ОШИБКИ 500!</code></pre>
+  <div class="slide-card">
+    <p>Стало <strong>хуже</strong>! 1415 запросов вернули 500:</p>
+    <pre><code>FATAL: sorry, too many clients already</code></pre>
+    <p><code>conn_max_age=600</code> + async = бомба. Каждый async-поток держит соединение 10 минут. Потоков — сотни → PostgreSQL переполнен.</p>
+  </div>
+  <p><strong>Урок:</strong> не все «оптимизации» улучшают ситуацию. Измеряйте.</p>
+</section>
+
+<!-- Слайд 24 -->
+<section data-background-color="#16213e">
+  <h2>Попытка 2 — uvicorn + conn_max_age=0</h2>
+  <pre><code class="language-python"># settings.py
+DATABASES = {
+    'default': dj_database_url.config(
+        default='postgresql://postgres:postgres@localhost:5432/shop',
+        conn_max_age=0,  # закрывать сразу
+    )
+}</code></pre>
+  <pre><code>Requests/sec:     34.00
+Timeouts:         864
+Errors:           0</code></pre>
+  <div class="slide-card">
+    <p>Ошибки пропали, но <strong>34 req/s</strong> — хуже, чем Gunicorn с 50!</p>
+    <p>Uvicorn оборачивает синхронные ORM-вызовы в <code>sync_to_async</code> — overhead переключения event loop ↔ thread pool.</p>
+    <p><strong>Вывод:</strong> uvicorn быстрее только для <code>async def</code> views.</p>
+  </div>
+</section>
+
+<!-- Слайд 25 -->
+<section data-background-color="#2c3e50">
+  <h2>conn_max_age — sync vs async</h2>
+  <h3>Gunicorn (sync), conn_max_age=600:</h3>
+  <pre><code>Воркер 1 → соединение к БД (держит 10 мин, переиспользует)
+Воркер 2 → соединение к БД (держит 10 мин, переиспользует)
+Воркер 3 → соединение к БД (держит 10 мин, переиспользует)
+= 3 соединения (стабильно)</code></pre>
+  <h3>Uvicorn (async), conn_max_age=600:</h3>
+  <pre><code>async task 1   → соединение (не отпускает 10 мин)
+async task 2   → соединение (не отпускает 10 мин)
+...
+async task 200 → соединение (не отпускает 10 мин)
+= 200 соединений → PostgreSQL: "too many clients"</code></pre>
+  <p><strong>Правило:</strong> <code>conn_max_age=600</code> — только с sync Gunicorn. С async — <code>conn_max_age=0</code> или пул (pgbouncer).</p>
+</section>
+
+<!-- Слайд 26 -->
+<section data-background-color="#16213e">
+  <h2>Финальная оптимизация — Gunicorn 8w + 4t</h2>
+  <pre><code class="language-yaml">command: gunicorn config.wsgi:application \
+    --bind 0.0.0.0:8000 \
+    --workers 8 \
+    --threads 4</code></pre>
+  <pre><code class="language-python">conn_max_age=600  # безопасно с sync gunicorn</code></pre>
+  <div class="slide-card">
+    <p>8 воркеров × 4 потока = <strong>32 параллельных запроса</strong></p>
+    <p>Формула workers: <code>2 × CPU_cores + 1</code>. На 4-ядерном VPS: <code>2 × 4 + 1 = 9 ≈ 8</code></p>
+    <p>Потоки — 2-4 для I/O-bound задач (ORM-запросы к БД)</p>
+    <p>⚠️ Больше воркеров ≠ лучше. 20 воркеров на 2-ядерном VPS конкурируют за CPU.</p>
+  </div>
+</section>
+
+<!-- Слайд 27 -->
+<section data-background-color="#2c3e50">
+  <h2>Результат после оптимизации</h2>
+  <pre><code>wrk -t4 -c200 -d30s http://81.90.182.174:8080/api/products
+
+Requests/sec:    269.32
+Avg Latency:     592ms
+Timeouts:        361
+Errors:          0</code></pre>
+  <h3>Стабильный тест (меньше соединений):</h3>
+  <pre><code>ab -n 5000 -c 50
+
+Requests/sec:    233.02
+Avg Latency:     215ms
+Timeouts:        0
+Errors:          0</code></pre>
+  <div class="slide-card">
+    <p><strong>233 req/s без ошибок и таймаутов</strong> — стабильная пропускная способность.</p>
+    <p>С 50 req/s выросли до 233 — в <strong>4.7 раза</strong>. Только правильная настройка Gunicorn и PostgreSQL.</p>
+  </div>
+</section>
+
+<!-- Слайд 28 -->
+<section data-background-color="#16213e">
+  <h2>Итоговое сравнение конфигураций</h2>
+  <table>
+    <tr><th>Конфигурация</th><th>Req/sec</th><th>Avg Latency</th><th>Timeouts</th><th>Errors</th></tr>
+    <tr><td>Gunicorn 3 воркера</td><td>50</td><td>1.06s</td><td>1531</td><td>0</td></tr>
+    <tr><td>Uvicorn 4w (conn=600)</td><td>55</td><td>1.53s</td><td>1418</td><td style="color:#ff6b6b">1415</td></tr>
+    <tr><td>Uvicorn 4w (conn=0)</td><td>34</td><td>1.54s</td><td>864</td><td>0</td></tr>
+    <tr style="color:#90EE90"><td><strong>Gunicorn 8w+4t (conn=600)</strong></td><td><strong>269</strong></td><td><strong>592ms</strong></td><td><strong>361</strong></td><td><strong>0</strong></td></tr>
+    <tr style="color:#90EE90"><td><strong>Gunicorn 8w+4t (ab, c=50)</strong></td><td><strong>233</strong></td><td><strong>215ms</strong></td><td><strong>0</strong></td><td><strong>0</strong></td></tr>
+  </table>
+  <div class="slide-card">
+    <ul>
+      <li>Uvicorn хуже для синхронного Django ORM</li>
+      <li><code>conn_max_age=600</code> опасен с async</li>
+      <li>Больше воркеров + потоки — самый эффективный путь</li>
+      <li><strong>Измеряйте, не угадывайте</strong></li>
+    </ul>
+  </div>
+</section>
+
+<!-- Слайд 29 -->
+<section data-background-color="#2c3e50">
+  <h2>Сколько пользователей выдержит</h2>
+  <p>233 req/s — абстрактная цифра. Переведём в людей:</p>
+  <p>Средний пользователь: <strong>2-5 запросов</strong> при загрузке, затем <strong>1 запрос каждые 5-30 секунд</strong></p>
+  <table>
+    <tr><th>Сценарий</th><th>Одновременных пользователей</th></tr>
+    <tr><td>Активный просмотр (5 rps на пользователя)</td><td>~45</td></tr>
+    <tr><td>Обычный просмотр (1 rps)</td><td>~230</td></tr>
+    <tr><td>Чтение с паузами (0.2 rps)</td><td>~1000</td></tr>
+    <tr style="color:#FFD700"><td><strong>В минуту (пиковый трафик)</strong></td><td><strong>~3000–5000 уникальных</strong></td></tr>
+  </table>
+  <p>Следующий уровень: кэш (Redis), CDN (Cloudflare), read-реплики PostgreSQL, Celery.</p>
+</section>
+
+<!-- Слайд 30 -->
+<section data-background-color="#16213e">
+  <h2>Чек-лист production Django</h2>
+  <div style="display:flex;gap:20px;width:95%;text-align:left">
+    <div class="slide-card" style="flex:1">
+      <h3>🔒 Безопасность</h3>
+      <ul>
+        <li><code>DEBUG = False</code></li>
+        <li><code>SECRET_KEY</code> из env</li>
+        <li><code>ALLOWED_HOSTS</code> — домен</li>
+        <li>HTTPS (Certbot)</li>
+      </ul>
+    </div>
+    <div class="slide-card" style="flex:1">
+      <h3>⚡ Производительность</h3>
+      <ul>
+        <li>Gunicorn <code>2 × CPU + 1</code></li>
+        <li><code>conn_max_age=600</code> (sync)</li>
+        <li><code>collectstatic</code> + Nginx</li>
+        <li>PG <code>max_connections</code></li>
+      </ul>
+    </div>
+    <div class="slide-card" style="flex:1">
+      <h3>🛡️ Надёжность</h3>
+      <ul>
+        <li><code>restart: unless-stopped</code></li>
+        <li>CI/CD (GitHub Actions)</li>
+        <li>Мониторинг</li>
+        <li>Бэкапы БД</li>
+      </ul>
+    </div>
+  </div>
+  <p style="margin-top:15px">Production — код работает <strong>надёжно, быстро, безопасно</strong> и обновляется автоматически.</p>
+</section>
+
+<!-- Слайд 31 -->
+<section data-background-color="#2c3e50">
+  <h2>Инструменты профилирования Django</h2>
+  <p>Оптимизировали Gunicorn — это «внешняя» оптимизация. А что если тормозит сам код?</p>
+  <table>
+    <tr><th>Инструмент</th><th>Для чего</th><th>Формат</th></tr>
+    <tr><td><strong>Django Silk</strong></td><td>SQL-запросы, время, профилирование Python</td><td>JSON API, HTML</td></tr>
+    <tr><td><strong>Debug Toolbar</strong></td><td>SQL, шаблоны, кэш, сигналы</td><td>Только HTML</td></tr>
+    <tr><td><strong>django-querycount</strong></td><td>Счётчик SQL в логах (без UI)</td><td>Любой</td></tr>
+    <tr><td><strong>runprofileserver</strong></td><td>Профилирование запроса в файл</td><td>Любой</td></tr>
+    <tr><td><strong>line_profiler / cProfile</strong></td><td>Построчное / функциональное профилирование</td><td>Скрипты</td></tr>
+    <tr><td><strong>django-prometheus</strong></td><td>Метрики для Grafana</td><td>Мониторинг</td></tr>
+  </table>
+  <p><strong>Сначала профилируйте, потом оптимизируйте.</strong></p>
+</section>
+
+<!-- Слайд 32 -->
+<section data-background-color="#16213e">
+  <h2>Django Silk — профилирование API</h2>
+  <p>Silk перехватывает каждый HTTP-запрос и записывает: время, SQL, профиль Python-кода.</p>
+  <pre><code class="language-python">INSTALLED_APPS = [..., 'silk']
+
+MIDDLEWARE = [
+    'silk.middleware.SilkyMiddleware',   # первым в списке!
+    'django.middleware.security.SecurityMiddleware',
+    ...
+]
+
+SILKY_PYTHON_PROFILER = True
+SILKY_MAX_RECORDED_REQUESTS = 1000
+SILKY_META = True   # замерять overhead самого Silk</code></pre>
+  <pre><code class="language-python"># urls.py
+path("silk/", include("silk.urls", namespace="silk")),</code></pre>
+  <p>Главное: работает с <strong>JSON API</strong> (Django Ninja, DRF). Debug Toolbar не может.</p>
+</section>
+
+<!-- Слайд 33 -->
+<section data-background-color="#2c3e50">
+  <h2>Silk — что смотреть в панели</h2>
+  <h3>Requests — «Какие запросы медленные?»</h3>
+  <table>
+    <tr><th>Колонка</th><th>На что смотреть</th></tr>
+    <tr><td>Time</td><td>Общее время &gt; 100мс — повод разобраться</td></tr>
+    <tr><td>Num. Queries</td><td>Больше 5-10 — возможна N+1 проблема</td></tr>
+    <tr><td>Time on queries</td><td>Если ≈ Time — тормозит БД, не Python</td></tr>
+  </table>
+  <h3>SQL — «Какие SQL-запросы?»</h3>
+  <ul>
+    <li>Текст каждого запроса + время</li>
+    <li><strong>Дубликаты</strong> — один и тот же SELECT 50 раз</li>
+  </ul>
+  <h3>Profiling — «Какие Python-функции медленные?»</h3>
+  <ul>
+    <li>Граф вызовов — какая функция сколько CPU съела</li>
+    <li>Тормоза не связанные с БД (сериализация, валидация)</li>
+  </ul>
+</section>
+
+<!-- Слайд 34 -->
+<section data-background-color="#16213e">
+  <h2>N+1 проблема — главный враг</h2>
+  <h3>Как выглядит в Silk:</h3>
+  <pre><code>GET /api/orders — 51 queries, 120ms
+
+SELECT * FROM orders                          -- 1 запрос
+SELECT * FROM video_cards WHERE id = 1        -- N запросов
+SELECT * FROM video_cards WHERE id = 2
+SELECT * FROM video_cards WHERE id = 3
+... (ещё 47 штук)</code></pre>
+  <h3>Исправление:</h3>
+  <pre><code class="language-python"># Плохо — N+1:
+orders = Order.objects.all()
+
+# Хорошо — 2 запроса вместо 51:
+orders = Order.objects.select_related('product').all()
+
+# Для ManyToMany:
+orders = Order.objects.prefetch_related('items').all()</code></pre>
+  <p>Было 51 запрос → стало 2. Время: 120мс → 3мс. <strong>В 40 раз быстрее от одной строчки.</strong></p>
+</section>
+
+<!-- Слайд 35 -->
+<section data-background-color="#2c3e50">
+  <h2>Silk — настройки для разных окружений</h2>
+  <pre><code class="language-python"># settings.py — включать только в DEBUG
+if DEBUG:
+    INSTALLED_APPS += ['silk']
+    MIDDLEWARE.insert(0, 'silk.middleware.SilkyMiddleware')
+    SILKY_PYTHON_PROFILER = True
+    SILKY_PYTHON_PROFILER_BINARY = True
+    SILKY_MAX_RECORDED_REQUESTS = 1000</code></pre>
+  <pre><code class="language-python">SILKY_INTERCEPT_PERCENT = 100       # 100% запросов (или 10 для sampling)
+SILKY_MAX_REQUEST_BODY_SIZE = 0     # не записывать тело запроса
+SILKY_MAX_RESPONSE_BODY_SIZE = 0    # не записывать тело ответа
+SILKY_AUTHENTICATION = True         # требовать авторизацию
+SILKY_AUTHORISATION = True          # только для staff</code></pre>
+  <pre><code class="language-bash"># Очистка данных (Silk забивает БД):
+python manage.py silk_clear_request_log</code></pre>
+</section>
+
+<!-- Слайд 36 -->
+<section data-background-color="#16213e">
+  <h2>Django Debug Toolbar — HTML-страницы</h2>
+  <pre><code class="language-python"># settings.py
+if DEBUG:
+    INSTALLED_APPS += ['debug_toolbar']
+    MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+    INTERNAL_IPS = ['127.0.0.1']
+
+# urls.py
+if settings.DEBUG:
+    urlpatterns += [path("__debug__/", include("debug_toolbar.urls"))]</code></pre>
+  <table>
+    <tr><th>Раздел</th><th>Что показывает</th></tr>
+    <tr><td><strong>SQL</strong></td><td>Все запросы + EXPLAIN для каждого</td></tr>
+    <tr><td><strong>Time</strong></td><td>CPU time, total time</td></tr>
+    <tr><td><strong>Templates</strong></td><td>Какие шаблоны рендерились, контекст</td></tr>
+    <tr><td><strong>Cache</strong></td><td>Hit/miss кэша</td></tr>
+    <tr><td><strong>Signals</strong></td><td>Django-сигналы и обработчики</td></tr>
+    <tr><td><strong>Static files</strong></td><td>Загруженные CSS/JS</td></tr>
+  </table>
+  <p>⚠️ Работает <strong>только</strong> с HTML-ответами. Для JSON API — Silk.</p>
+</section>
+
+<!-- Слайд 37 -->
+<section data-background-color="#2c3e50">
+  <h2>Debug Toolbar — SQL и EXPLAIN</h2>
+  <pre><code>2 queries in 1.5ms
+
+SELECT ⋯ FROM "video_cards"               0.8ms
+SELECT ⋯ FROM "django_session" WHERE ⋯    0.3ms</code></pre>
+  <div class="slide-card">
+    <h3>Кнопка EXPLAIN для каждого запроса:</h3>
+    <pre><code>Seq Scan on video_cards  (cost=0.00..1.05 rows=5 width=...)</code></pre>
+    <ul>
+      <li><code>Seq Scan</code> на 5 строках — нормально</li>
+      <li><code>Seq Scan</code> на 100 000 строках — нужен индекс</li>
+      <li><code>Index Scan</code> — PostgreSQL использует индекс ✓</li>
+    </ul>
+  </div>
+  <p style="margin-top:10px"><strong>Similar</strong> — одинаковая структура, разные параметры (N+1). <strong>Duplicate</strong> — идентичные запросы (баг).</p>
+</section>
+
+<!-- Слайд 38 -->
+<section data-background-color="#16213e">
+  <h2>django-querycount и runprofileserver</h2>
+  <h3>django-querycount — счётчик SQL в логах:</h3>
+  <pre><code class="language-python">MIDDLEWARE += ['querycount.middleware.QueryCountMiddleware']
+# В логах: [QueryCount] 3 queries in 2.1ms</code></pre>
+  <p>Без UI, без БД — строчка в консоли на каждый запрос.</p>
+  <h3>runprofileserver — cProfile для каждого запроса:</h3>
+  <pre><code class="language-bash">pip install django-extensions
+python manage.py runprofileserver --use-cprofile --prof-path=/tmp/profiles/</code></pre>
+  <pre><code class="language-bash"># Визуализация:
+pip install snakeviz
+snakeviz /tmp/profiles/GET.api.products.prof</code></pre>
+  <p>Интерактивный flamegraph в браузере — какие функции сколько CPU заняли.</p>
+</section>
+
+<!-- Слайд 39 -->
+<section data-background-color="#2c3e50">
+  <h2>cProfile, line_profiler, django-prometheus</h2>
+  <h3>cProfile — встроенный профилировщик:</h3>
+  <pre><code class="language-python">import cProfile
+cProfile.run('my_function()', sort='cumulative')</code></pre>
+  <h3>line_profiler — построчное профилирование:</h3>
+  <pre><code class="language-python">@profile
+def list_products(request):
+    products = VideoCard.objects.all()  # 0.3ms
+    data = serialize(products)           # 12.5ms  ← bottleneck!
+    return data</code></pre>
+  <p>Декоратор <code>@profile</code> + <code>kernprof -l -v script.py</code></p>
+  <h3>django-prometheus — метрики для мониторинга:</h3>
+  <p>Эндпоинт <code>/metrics</code> → Prometheus → Grafana (графики в реальном времени)</p>
+</section>
+
+<!-- Слайд 40 -->
+<section data-background-color="#16213e">
+  <h2>Silk vs Debug Toolbar — когда что</h2>
+  <table>
+    <tr><th>Критерий</th><th>Django Silk</th><th>Debug Toolbar</th></tr>
+    <tr><td><strong>JSON API</strong></td><td style="color:#90EE90">✓ Да</td><td style="color:#ff6b6b">✗ Нет</td></tr>
+    <tr><td><strong>HTML-страницы</strong></td><td style="color:#90EE90">✓ Да</td><td style="color:#90EE90">✓ Да</td></tr>
+    <tr><td><strong>История запросов</strong></td><td style="color:#90EE90">✓ Хранит в БД</td><td style="color:#ff6b6b">✗ Только текущий</td></tr>
+    <tr><td><strong>SQL-анализ</strong></td><td>Да + дубликаты</td><td>Да + EXPLAIN</td></tr>
+    <tr><td><strong>Профилирование Python</strong></td><td style="color:#90EE90">✓ cProfile</td><td style="color:#ff6b6b">✗ Нет</td></tr>
+    <tr><td><strong>Шаблоны и контекст</strong></td><td style="color:#ff6b6b">✗ Нет</td><td style="color:#90EE90">✓ Да</td></tr>
+    <tr><td><strong>Кэш</strong></td><td style="color:#ff6b6b">✗ Нет</td><td style="color:#90EE90">✓ Да</td></tr>
+    <tr><td><strong>Overhead</strong></td><td>~5-10мс</td><td>~2-5мс</td></tr>
+    <tr><td><strong>Нужна БД</strong></td><td>Да (миграции)</td><td>Нет</td></tr>
+  </table>
+  <p><strong>Рекомендация:</strong> используйте оба. Silk — для API. Toolbar — для HTML и EXPLAIN.</p>
+</section>
+
+<!-- Слайд 41 -->
+<section data-background-color="#1a1a2e">
+  <h2>Как использовать связку инструментов правильно</h2>
+  <table>
+    <tr><th>Цель</th><th>Инструмент</th><th>Когда</th></tr>
+    <tr><td>Быстрый анализ запроса при разработке</td><td>Debug Toolbar / Silk</td><td>dev, каждый день</td></tr>
+    <tr><td>Найти «горячие» места в коде</td><td>line_profiler / cProfile</td><td>dev, при тормозах</td></tr>
+    <tr><td>Мониторинг в проде</td><td>Prometheus + Grafana</td><td>prod, 24/7</td></tr>
+    <tr><td>Алерты при ухудшении метрик</td><td>Alertmanager + Grafana</td><td>prod, автоматически</td></tr>
+    <tr><td>История performance</td><td>Grafana Dashboards</td><td>prod, ретроспективы</td></tr>
+  </table>
+  <div class="slide-card">
+    <pre><code>1. Разработка    →  Debug Toolbar + Silk (нашли N+1)
+2. Оптимизация   →  line_profiler / cProfile (нашли строку)
+3. Деплой        →  django-prometheus (/metrics)
+4. Мониторинг    →  Grafana (графики latency, rps, ошибок)
+5. Инцидент      →  Alertmanager → Telegram/Slack</code></pre>
+  </div>
+  <p>На dev — профилируете. На prod — мониторите. Каждый инструмент на своём месте.</p>
+</section>
+
+</div></div>
+<script src="../../../SEMESTR-1/15-16/js/reveal.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/notes.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/markdown.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/highlight.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    transition: 'slide',
+    controls: true,
+    progress: true,
+    slideNumber: true,
+    center: false,
+    margin: 0.02,
+    plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+  });
+</script>
+</body>
+</html>

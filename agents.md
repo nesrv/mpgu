@@ -47,8 +47,8 @@ laba_deploy_vps.md
 и изучить на практике его основные возможности в течение 15-20 мин
 
 
-сделай на основе 
-slides_deploy_vps.md
+на основе 
+lect_deploy_django.md
 сделай html-презентацию со всеми слайдами
 
 референс presentation_deploy.html
