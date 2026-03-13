@@ -1095,3 +1095,247 @@ docker compose -f docker-compose.prod.yml up -d
          ↓
    PostgreSQL (внутри Docker)
 ```
+
+---
+
+## Часть 5. Профилирование с помощью Django Silk
+
+**Цель:** N+1 и лишние SQL по панели **Silk** на debug-эндпоинтах API. Только `DEBUG=True`.
+
+### Шаг 24. Установка Silk
+
+```bash
+pip install django-silk
+```
+
+**`settings.py`:** `INSTALLED_APPS += ["silk"]`, `MIDDLEWARE.insert(0, "silk.middleware.SilkyMiddleware")`, при желании `SILKY_PYTHON_PROFILER = True`. **`urls.py`:** `path("silk/", include("silk.urls", namespace="silk"))`. Затем `migrate`. Панель: `http://127.0.0.1:8000/silk/`.
+
+### Шаг 25. Эндпоинт N+1 (пример; у Order должен быть FK `product`, иначе замените логику)
+
+```python
+@router.get("/debug/orders-naive", tags=["debug"])
+def orders_naive(request):
+    orders = Order.objects.all()[:50]
+    return [{"order_id": o.id, "product": o.product.name} for o in orders]
+```
+
+### Шаг 26. Эндпоинт COUNT в цикле
+
+```python
+@router.get("/debug/products-count-bad", tags=["debug"])
+def products_count_bad(request):
+    return [{"id": c.id, "name": c.name, "n": Order.objects.filter(product=c).count()}
+            for c in VideoCard.objects.all()[:30]]
+```
+
+### Шаг 27. Эндпоинт тяжёлая выборка
+
+```python
+@router.get("/debug/products-dump", tags=["debug"])
+def products_dump(request):
+    return [{"id": p.id, "name": p.name} for p in VideoCard.objects.all()]
+```
+
+### Шаг 28. Задание
+
+Зафиксировать в Silk **Num. Queries** для каждого URL; описать исправления (`select_related`, `annotate`, пагинация).
+
+### Шаг 29. Очистка
+
+```bash
+python manage.py silk_clear_request_log
+```
+
+После Silk удобно перейти к Debug Toolbar на тех же идеях N+1, но на HTML-страницах.
+
+---
+
+## Часть 6. Профилирование с помощью Django Debug Toolbar
+
+**Цель:** N+1 на HTML/HTMX (корзины, заказы). Данные — **`data.sql`**. Только `DEBUG=True`.
+
+> Полный код шаблонов и views — в **`laba_vps_django.html`** (часть 6).
+
+> На продакшене Toolbar не включать.
+
+### Шаг 30. Установка
+
+```bash
+pip install django-debug-toolbar
+```
+
+**`config/settings.py`** (при `DEBUG=True`):
+
+```python
+if DEBUG:
+    INSTALLED_APPS += ["debug_toolbar"]
+    MIDDLEWARE = ["debug_toolbar.middleware.DebugToolbarMiddleware"] + MIDDLEWARE
+    INTERNAL_IPS = ["127.0.0.1", "127.0.0.2"]
+```
+
+**`config/urls.py`:**
+
+```python
+from django.conf import settings
+from django.urls import path, include
+
+urlpatterns = [
+    # ... api, shop ...
+]
+if settings.DEBUG:
+    urlpatterns = [
+        path("__debug__/", include("debug_toolbar.urls")),
+    ] + urlpatterns
+```
+
+### Шаг 31. «Плохие» views (намеренный N+1)
+
+В **`shop/views.py`** добавьте импорты: `Cart`, `Order`. Два сценария:
+
+1. **Корзины** — в шаблоне для каждой строки корзины обращение к `cart.product.name` без `select_related("product")`.
+2. **Заказы** — в шаблоне для каждого заказа цикл по `order.orderitem_set.all` без `prefetch_related`.
+
+```python
+from django.shortcuts import render
+from .models import VideoCard, Cart, Order
+
+
+def home(request):
+    return render(request, "shop/home.html")
+
+
+def products_partial(request):
+    products = VideoCard.objects.all()
+    return render(request, "shop/products_list.html", {"products": products})
+
+
+# --- Debug Toolbar: плохие partials (N+1) ---
+def partial_carts_bad(request):
+    carts = Cart.objects.all().order_by("-created_at")[:20]
+    return render(request, "shop/partials/carts_bad.html", {"carts": carts})
+
+
+def partial_orders_bad(request):
+    orders = Order.objects.all().order_by("-created_at")[:12]
+    return render(request, "shop/partials/orders_bad.html", {"orders": orders})
+
+
+def debug_htmx_lab(request):
+    """Страница с HTMX: два запроса partial — в каждом свой всплеск SQL."""
+    return render(request, "shop/debug_htmx_lab.html")
+
+
+def debug_profile_full(request):
+    """Один запрос: корзины + заказы в одном ответе — много SQL сразу в Toolbar."""
+    carts = Cart.objects.all().order_by("-created_at")[:15]
+    orders = Order.objects.all().order_by("-created_at")[:10]
+    return render(request, "shop/debug_profile_full.html", {
+        "carts": carts,
+        "orders": orders,
+    })
+```
+
+### Шаг 32. Шаблоны partial (проблемные)
+
+**`shop/templates/shop/partials/carts_bad.html`** — N+1 по `product`:
+
+```html
+{% for c in carts %}
+<div class="cart-row">
+  <strong>{{ c.product.name }}</strong> × {{ c.qty }}
+  <span class="muted">{{ c.created_at|date:"d.m H:i" }}</span>
+</div>
+{% empty %}<p>Корзины пусты (залейте data.sql).</p>{% endfor %}
+```
+
+**`shop/templates/shop/partials/orders_bad.html`** — N+1 по позициям заказа:
+
+```html
+{% for o in orders %}
+<section class="order">
+  <header>Заказ #{{ o.id }} — {{ o.total }} ₽ <small>{{ o.created_at|date:"d.m.Y" }}</small></header>
+  {% for line in o.orderitem_set.all %}
+    <div class="line">{{ line.product_name }} × {{ line.qty }} @ {{ line.price }} ₽</div>
+  {% endfor %}
+</section>
+{% empty %}<p>Нет заказов.</p>{% endfor %}
+```
+
+### Шаг 33. HTMX-страница лаборатории
+
+**`shop/templates/shop/debug_htmx_lab.html`**
+
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Debug Toolbar + HTMX</title>
+  <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 1.5rem auto; padding: 0 1rem; }
+    .panel { border: 1px solid #ccc; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; min-height: 3rem; }
+    h1 { font-size: 1.25rem; }
+  </style>
+</head>
+<body>
+  <h1>Лаб: две «плохие» подгрузки (смотри SQL в Toolbar на каждый запрос partial)</h1>
+  <p>Открой по отдельности в новой вкладке: <code>/partials/carts-bad/</code> и <code>/partials/orders-bad/</code> — панель Toolbar покажет число запросов.</p>
+  <div class="panel">
+    <h2>Корзины (HTMX)</h2>
+    <div hx-get="/partials/carts-bad/" hx-trigger="load" hx-swap="innerHTML">Загрузка…</div>
+  </div>
+  <div class="panel">
+    <h2>Заказы (HTMX)</h2>
+    <div hx-get="/partials/orders-bad/" hx-trigger="load" hx-swap="innerHTML">Загрузка…</div>
+  </div>
+</body>
+</html>
+```
+
+### Шаг 34. Одна страница — максимум запросов
+
+**`shop/templates/shop/debug_profile_full.html`** — один GET, в шаблоне и корзины, и заказы (оба антипаттерна):
+
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Полный профиль (плохо нарочно)</title>
+  <style> body { font-family: system-ui; max-width: 800px; margin: 1rem auto; } section { margin-bottom: 2rem; } </style>
+</head>
+<body>
+  <h1>Корзины (N+1 по product)</h1>
+  {% include "shop/partials/carts_bad.html" with carts=carts %}
+  <h1>Заказы (N+1 по orderitem_set)</h1>
+  {% include "shop/partials/orders_bad.html" with orders=orders %}
+</body>
+</html>
+```
+
+### Шаг 35. Маршруты
+
+В **`config/urls.py`** (рядом с `home`, `products_partial`):
+
+```python
+from shop.views import (
+    home, products_partial,
+    partial_carts_bad, partial_orders_bad, debug_htmx_lab, debug_profile_full,
+)
+
+urlpatterns += [
+    path("partials/carts-bad/", partial_carts_bad),
+    path("partials/orders-bad/", partial_orders_bad),
+    path("debug/htmx-lab/", debug_htmx_lab),
+    path("debug/profile-full/", debug_profile_full),
+]
+```
+
+### Задание
+
+1. Залить **`data.sql`** (корзины и заказы уже есть).
+2. Открыть **`/debug/profile-full/`** — в Toolbar записать **число SQL** до оптимизации.
+3. Исправить views: `Cart.objects.select_related("product")…`, `Order.objects.prefetch_related("orderitem_set")…` — снова открыть страницу и сравнить.
+4. Кратко описать разницу для отчёта.
+

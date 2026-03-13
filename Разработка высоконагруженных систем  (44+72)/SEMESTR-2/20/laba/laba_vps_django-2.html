@@ -41,8 +41,6 @@
 <li><a href="#part2">Часть 2: Деплой на VPS через CI/CD</a> (Шаги 10–14)</li>
 <li><a href="#part3">Часть 3: Бенчмарки и оптимизация</a></li>
 <li><a href="#part4">Часть 4: Настройка Nginx для django.h1n.ru</a> (Шаги 15–23)</li>
-<li><a href="#part5">Часть 5: Django Silk</a> (Шаги 24–29)</li>
-<li><a href="#part6">Часть 6: Debug Toolbar + HTMX</a> (Шаги 30–35)</li>
 </ol>
 </div>
 </div>
@@ -472,16 +470,16 @@ volumes:
 <h4>Установить Docker:</h4>
 <div class="code-block"><code class="language-bash">curl -fsSL https://get.docker.com | sh</code></div>
 <h4>Создать пользователя и дать доступ к Docker:</h4>
-<div class="code-block"><code class="language-bash">id alekseeva || adduser --disabled-password --gecos "" alekseeva
-echo "alekseeva:alekseeva" | chpasswd
-usermod -aG docker alekseeva</code></div>
+<div class="code-block"><code class="language-bash">id zaharova-nadezhda || adduser --disabled-password --gecos "" zaharova-nadezhda
+echo "zaharova-nadezhda:zaharova-nadezhda" | chpasswd
+usermod -aG docker zaharova-nadezhda</code></div>
 <h4>Создать директорию проекта:</h4>
 <div class="code-block"><code class="language-bash">mkdir -p /opt/shop
-chown alekseeva:alekseeva /opt/shop</code></div>
+chown zaharova-nadezhda:zaharova-nadezhda /opt/shop</code></div>
 <h4>Переключиться на deploy и склонировать:</h4>
-<div class="code-block"><code class="language-bash">su - alekseeva
+<div class="code-block"><code class="language-bash">su - zaharova-nadezhda
 cd /opt/shop
-git clone https://github.com/alekseeva/cd-cd-django-ninja.git .</code></div>
+git clone https://github.com/zaharova-nadezhda/cd-cd-django-ninja.git .</code></div>
 <h4>Запустить:</h4>
 <div class="code-block"><code class="language-bash">docker compose -f docker-compose.prod.yml up --build -d</code></div>
 <h4>Проверить:</h4>
@@ -495,8 +493,8 @@ git clone https://github.com/alekseeva/cd-cd-django-ninja.git .</code></div>
 <table>
 <tr><th>Имя</th><th>Значение</th></tr>
 <tr><td><code>VPS_HOST</code></td><td><code>81.90.182.174</code></td></tr>
-<tr><td><code>VPS_USER</code></td><td><code>alekseeva</code></td></tr>
-<tr><td><code>VPS_PASSWORD</code></td><td><code>alekseeva</code></td></tr>
+<tr><td><code>VPS_USER</code></td><td><code>zaharova-nadezhda</code></td></tr>
+<tr><td><code>VPS_PASSWORD</code></td><td><code>zaharova-nadezhda</code></td></tr>
 </table>
 
 <h3>Шаг 14. Как работает деплой</h3>
@@ -691,13 +689,13 @@ conn_max_age=600  # безопасно с sync gunicorn</code></div>
 <div class="checkbox-item"><input type="checkbox" id="t3"><label for="t3">Часть 3 выполнена — бенчмарки проведены, таблица заполнена</label></div>
 </div>
 
-<!-- ===== ЧАСТЬ 4 — NGINX ===== -->
+<!-- ===== ЧАСТЬ 4 ===== -->
 <div class="section" id="part4">
 <h2>Часть 4: Настройка Nginx для django.h1n.ru</h2>
 <p>Nginx уже установлен на VPS и работает на порту 80. Django-приложение запущено в Docker на порту 8080. Нужно настроить проксирование: <code>django.h1n.ru</code> → <code>localhost:8080</code>.</p>
 
 <h3>Шаг 15. Подключиться к VPS</h3>
-<div class="code-block"><code class="language-bash">ssh alekseeva@81.90.182.174</code></div>
+<div class="code-block"><code class="language-bash">ssh zaharova-nadezhda@81.90.182.174</code></div>
 
 <h3>Шаг 16. Создать конфиг Nginx</h3>
 <div class="code-block"><code class="language-bash">nano /etc/nginx/sites-available/django.h1n.ru</code></div>
@@ -804,203 +802,6 @@ docker compose -f docker-compose.prod.yml up -d</code></div>
    PostgreSQL (внутри Docker)</code></div>
 
 <div class="checkbox-item"><input type="checkbox" id="t4"><label for="t4">Часть 4 выполнена — Nginx настроен, сайт доступен по домену</label></div>
-</div>
-
-<!-- ===== ЧАСТЬ 5 — SILK ===== -->
-<div class="section" id="part5">
-<h2>Часть 5: Профилирование с помощью Django Silk</h2>
-<p><strong>Цель:</strong> находить N+1 и лишние SQL по панели <strong>Silk</strong> на debug-эндпоинтах API. Только при <code>DEBUG=True</code> (локально).</p>
-<div class="warning"><strong>Важно:</strong> панель <code>/silk/</code> на проде не оставлять открытой; в Docker для VPS не включать.</div>
-
-<h3>Шаг 24. Установка и подключение Silk</h3>
-<div class="code-block"><code class="language-bash">pip install django-silk</code></div>
-<p>В <code>settings.py</code>:</p>
-<div class="code-block"><code class="language-python">if DEBUG:
-    INSTALLED_APPS += ["silk"]
-    MIDDLEWARE.insert(0, "silk.middleware.SilkyMiddleware")
-    SILKY_PYTHON_PROFILER = True
-    SILKY_MAX_RECORDED_REQUESTS = 500</code></div>
-<p>В <code>urls.py</code>:</p>
-<div class="code-block"><code class="language-python">if settings.DEBUG:
-    urlpatterns += [path("silk/", include("silk.urls", namespace="silk"))]</code></div>
-<div class="code-block"><code class="language-bash">python manage.py migrate</code></div>
-<p>Открыть: <code>http://127.0.0.1:8000/silk/</code></p>
-
-<h3>Шаг 25. Эндпоинт 1 — N+1 (пример; модель Order с FK product — иначе замените на свою схему)</h3>
-<div class="code-block"><code class="language-python">@router.get("/debug/orders-naive", tags=["debug"])
-def orders_naive(request):
-    orders = Order.objects.all()[:50]
-    return [{"order_id": o.id, "product": o.product.name} for o in orders]</code></div>
-<p>В Silk: много дублирующихся SQL. Исправление: <code>select_related("product")</code>.</p>
-
-<h3>Шаг 26. Эндпоинт 2 — COUNT в цикле</h3>
-<div class="code-block"><code class="language-python">@router.get("/debug/products-count-bad", tags=["debug"])
-def products_count_bad(request):
-    result = []
-    for card in VideoCard.objects.all()[:30]:
-        n = Order.objects.filter(product=card).count()
-        result.append({"id": card.id, "name": card.name, "orders_count": n})
-    return result</code></div>
-<p>Идея исправления: один запрос с <code>annotate(Count(...))</code>.</p>
-
-<h3>Шаг 27. Эндпоинт 3 — тяжёлая выборка</h3>
-<div class="code-block"><code class="language-python">@router.get("/debug/products-dump", tags=["debug"])
-def products_dump(request):
-    rows = list(VideoCard.objects.all())
-    return [{"id": p.id, "name": p.name, "desc": str(p.description)[:200]} for p in rows]</code></div>
-
-<h3>Шаг 28. Задание по Silk</h3>
-<table>
-<tr><th>Эндпоинт</th><th>Отчёт</th></tr>
-<tr><td><code>/api/debug/orders-naive</code></td><td>Число SQL до/после</td></tr>
-<tr><td><code>/api/debug/products-count-bad</code></td><td>Число SQL; как объединить</td></tr>
-<tr><td><code>/api/debug/products-dump</code></td><td>Время; пагинация</td></tr>
-</table>
-
-<h3>Шаг 29. Очистка логов</h3>
-<div class="code-block"><code class="language-bash">python manage.py silk_clear_request_log</code></div>
-<div class="checkbox-item"><input type="checkbox" id="t5"><label for="t5">Часть 5 выполнена — Silk, три debug-эндпоинта, выводы по SQL</label></div>
-</div>
-
-<!-- ===== ЧАСТЬ 6 — DEBUG TOOLBAR (было ч.5) ===== -->
-<div class="section" id="part6">
-<h2>Часть 6: Профилирование с помощью Django Debug Toolbar</h2>
-<p><strong>Цель:</strong> N+1 на HTML/HTMX (корзины, заказы). Данные — <code>data.sql</code>. Только <code>DEBUG=True</code>.</p>
-<div class="warning"><strong>Важно:</strong> Toolbar на VPS не подключать.</div>
-
-<h3>Шаг 30. Установка Debug Toolbar</h3>
-<div class="code-block"><code class="language-bash">pip install django-debug-toolbar</code></div>
-<p><strong><code>config/settings.py</code></strong> (при <code>DEBUG=True</code>):</p>
-<div class="code-block"><code class="language-python">if DEBUG:
-    INSTALLED_APPS += ["debug_toolbar"]
-    MIDDLEWARE = ["debug_toolbar.middleware.DebugToolbarMiddleware"] + MIDDLEWARE
-    INTERNAL_IPS = ["127.0.0.1", "127.0.0.2"]</code></div>
-<p><strong><code>config/urls.py</code></strong> — подключение панели (в начало списка при DEBUG):</p>
-<div class="code-block"><code class="language-python">from django.conf import settings
-from django.urls import path, include
-
-if settings.DEBUG:
-    urlpatterns = [
-        path("__debug__/", include("debug_toolbar.urls")),
-    ] + urlpatterns</code></div>
-
-<h3>Шаг 31. Views — <code>shop/views.py</code></h3>
-<p>N+1 намеренно: корзины без <code>select_related(&quot;product&quot;)</code>, заказы без <code>prefetch_related(&quot;orderitem_set&quot;)</code>. Объедините с вашими <code>home</code> / <code>products_partial</code> или замените блок целиком:</p>
-<div class="code-block"><code class="language-python">from django.shortcuts import render
-from .models import VideoCard, Cart, Order
-
-def home(request):
-    return render(request, "shop/home.html")
-
-def products_partial(request):
-    products = VideoCard.objects.all()
-    return render(request, "shop/products_list.html", {"products": products})
-
-def partial_carts_bad(request):
-    carts = Cart.objects.all().order_by("-created_at")[:20]
-    return render(request, "shop/partials/carts_bad.html", {"carts": carts})
-
-def partial_orders_bad(request):
-    orders = Order.objects.all().order_by("-created_at")[:12]
-    return render(request, "shop/partials/orders_bad.html", {"orders": orders})
-
-def debug_htmx_lab(request):
-    return render(request, "shop/debug_htmx_lab.html")
-
-def debug_profile_full(request):
-    carts = Cart.objects.all().order_by("-created_at")[:15]
-    orders = Order.objects.all().order_by("-created_at")[:10]
-    return render(request, "shop/debug_profile_full.html", {
-        "carts": carts, "orders": orders,
-    })</code></div>
-
-<h3>Шаг 32. Шаблоны partial</h3>
-<p><strong>Файл:</strong> <code>shop/templates/shop/partials/carts_bad.html</code></p>
-<div class="code-block"><pre style="margin:0;white-space:pre-wrap"><code class="language-xml">{% for c in carts %}
-&lt;div class="cart-row"&gt;
-  &lt;strong&gt;{{ c.product.name }}&lt;/strong&gt; × {{ c.qty }}
-  &lt;span class="muted"&gt;{{ c.created_at|date:"d.m H:i" }}&lt;/span&gt;
-&lt;/div&gt;
-{% empty %}&lt;p&gt;Корзины пусты (залейте data.sql).&lt;/p&gt;{% endfor %}</code></pre></div>
-<p class="note">В partial-блоках теги показаны как <code>&amp;lt;…&amp;gt;</code> (для подсветки). В проекте копируйте с обычными скобками тегов.</p>
-<p><strong>Файл:</strong> <code>shop/templates/shop/partials/orders_bad.html</code></p>
-<div class="code-block"><pre style="margin:0;white-space:pre-wrap"><code class="language-xml">{% for o in orders %}
-&lt;section class="order"&gt;
-  &lt;header&gt;Заказ #{{ o.id }} — {{ o.total }} ₽ &lt;small&gt;{{ o.created_at|date:"d.m.Y" }}&lt;/small&gt;&lt;/header&gt;
-  {% for line in o.orderitem_set.all %}
-    &lt;div class="line"&gt;{{ line.product_name }} × {{ line.qty }} @ {{ line.price }} ₽&lt;/div&gt;
-  {% endfor %}
-&lt;/section&gt;
-{% empty %}&lt;p&gt;Нет заказов.&lt;/p&gt;{% endfor %}</code></pre></div>
-
-<h3>Шаг 33. HTMX-страница — <code>shop/templates/shop/debug_htmx_lab.html</code></h3>
-<p class="note">Ниже HTML с экранированием — в редакторе замените <code>&amp;lt;</code> → <code>&lt;</code> и <code>&amp;gt;</code> → <code>&gt;</code> (или наберите заново по образцу).</p>
-<div class="code-block"><pre style="margin:0;white-space:pre-wrap"><code class="language-xml">&lt;!DOCTYPE html&gt;
-&lt;html lang="ru"&gt;
-&lt;head&gt;
-  &lt;meta charset="UTF-8"&gt;
-  &lt;title&gt;Debug Toolbar + HTMX&lt;/title&gt;
-  &lt;script src="https://unpkg.com/htmx.org@2.0.3"&gt;&lt;/script&gt;
-  &lt;style&gt;
-    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 1.5rem auto; padding: 0 1rem; }
-    .panel { border: 1px solid #ccc; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; min-height: 3rem; }
-    h1 { font-size: 1.25rem; }
-  &lt;/style&gt;
-&lt;/head&gt;
-&lt;body&gt;
-  &lt;h1&gt;Лаб: две «плохие» подгрузки&lt;/h1&gt;
-  &lt;p&gt;Открой в новой вкладке: /partials/carts-bad/ и /partials/orders-bad/&lt;/p&gt;
-  &lt;div class="panel"&gt;&lt;h2&gt;Корзины (HTMX)&lt;/h2&gt;
-    &lt;div hx-get="/partials/carts-bad/" hx-trigger="load" hx-swap="innerHTML"&gt;Загрузка…&lt;/div&gt;
-  &lt;/div&gt;
-  &lt;div class="panel"&gt;&lt;h2&gt;Заказы (HTMX)&lt;/h2&gt;
-    &lt;div hx-get="/partials/orders-bad/" hx-trigger="load" hx-swap="innerHTML"&gt;Загрузка…&lt;/div&gt;
-  &lt;/div&gt;
-&lt;/body&gt;
-&lt;/html&gt;</code></pre></div>
-
-<h3>Шаг 34. Полная страница — <code>shop/templates/shop/debug_profile_full.html</code></h3>
-<div class="code-block"><pre style="margin:0;white-space:pre-wrap"><code class="language-xml">&lt;!DOCTYPE html&gt;
-&lt;html lang="ru"&gt;
-&lt;head&gt;
-  &lt;meta charset="UTF-8"&gt;
-  &lt;title&gt;Полный профиль (плохо нарочно)&lt;/title&gt;
-  &lt;style&gt;body{font-family:system-ui;max-width:800px;margin:1rem auto}&lt;/style&gt;
-&lt;/head&gt;
-&lt;body&gt;
-  &lt;h1&gt;Корзины (N+1 по product)&lt;/h1&gt;
-  {% include "shop/partials/carts_bad.html" with carts=carts %}
-  &lt;h1&gt;Заказы (N+1 по orderitem_set)&lt;/h1&gt;
-  {% include "shop/partials/orders_bad.html" with orders=orders %}
-&lt;/body&gt;
-&lt;/html&gt;</code></pre></div>
-
-<h3>Шаг 35. Маршруты и data.sql</h3>
-<p><strong><code>config/urls.py</code></strong> — добавьте импорты и пути (не дублируйте уже существующие):</p>
-<div class="code-block"><code class="language-python">from shop.views import (
-    home, products_partial,
-    partial_carts_bad, partial_orders_bad, debug_htmx_lab, debug_profile_full,
-)
-# пример — у вас может быть другой порядок:
-urlpatterns += [
-    path("partials/carts-bad/", partial_carts_bad),
-    path("partials/orders-bad/", partial_orders_bad),
-    path("debug/htmx-lab/", debug_htmx_lab),
-    path("debug/profile-full/", debug_profile_full),
-]</code></div>
-<p>После миграций выполните SQL из <strong><code>data.sql</code></strong> (видеокарты, <code>shop_cart</code>, заказы, позиции) — иначе списки пустые.</p>
-
-<h3>Задание</h3>
-<table>
-<tr><th>Действие</th><th>Отчёт</th></tr>
-<tr><td><code>/debug/profile-full/</code> до правок</td><td>Сколько SQL в Toolbar</td></tr>
-<tr><td><code>Cart.objects.select_related(&quot;product&quot;)</code>, <code>Order.objects.prefetch_related(&quot;orderitem_set&quot;)</code></td><td>Сколько SQL после</td></tr>
-<tr><td>Скрин панели SQL</td><td>Приложить</td></tr>
-</table>
-
-<h3>Перед деплоем</h3>
-<p>Удалите или закомментируйте Debug Toolbar в <code>INSTALLED_APPS</code> и <code>MIDDLEWARE</code> для production.</p>
-<div class="checkbox-item"><input type="checkbox" id="t6"><label for="t6">Часть 6 выполнена — Toolbar, HTMX/full-страницы, N+1 зафиксирован и исправлен</label></div>
 </div>
 
 <!-- ВЫВОДЫ -->

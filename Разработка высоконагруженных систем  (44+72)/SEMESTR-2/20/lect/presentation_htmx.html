@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>HTMX и Django — презентация</title>
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/reveal.min.css">
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/black.min.css">
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/monokai.min.css">
+  <style>
+    html, body, .reveal-viewport, .reveal, .reveal .slides, .reveal .slides section, .reveal .slide-background-content { overflow:hidden!important; scrollbar-width:none!important }
+    html::-webkit-scrollbar, body::-webkit-scrollbar, .reveal::-webkit-scrollbar, .reveal .slides::-webkit-scrollbar, .reveal .slides section::-webkit-scrollbar { display:none!important; width:0!important; height:0!important }
+    .reveal .slides { width:80%!important; height:90%!important; position:absolute!important; left:50%!important; top:0!important; transform:translateX(calc(-50% + 5%)) scale(1.2)!important; transform-origin:top center!important }
+    .reveal .slides section { display:flex!important; flex-direction:column!important; justify-content:center!important; align-items:center!important; padding:24px 32px!important; font-size:.95em!important; max-width:100%!important; width:100%!important; overflow:hidden!important; box-sizing:border-box!important; line-height:1.5!important; text-align:center!important }
+    .reveal h1 { font-size:1.7em!important; margin-top:0!important; margin-bottom:.5em!important; color:#FFD700!important; text-align:center!important }
+    .reveal h2 { font-size:1em!important; margin-top:0!important; margin-bottom:.5em!important; text-transform:none!important; text-align:center!important; padding-bottom:.4em!important; border-bottom:2px solid rgba(255,215,0,0.5)!important; color:#FFD700!important; width:100%!important }
+    .reveal h3 { font-size:1.05em!important; margin-top:.6em!important; margin-bottom:.3em!important; text-transform:none!important; color:#90EE90!important; text-align:center!important }
+    .reveal .slides section p, .reveal .slides section div { max-width:100%!important; min-width:0!important; overflow-wrap:break-word!important; word-wrap:break-word!important; word-break:break-word!important; box-sizing:border-box!important }
+    .reveal .slides section ul, .reveal .slides section ol { text-align:left!important; margin:0 auto!important }
+    .reveal .slides section li { overflow-wrap:break-word!important; word-wrap:break-word!important; word-break:break-word!important; margin-bottom:.4em!important; list-style:none!important; position:relative!important; padding-left:.5em!important }
+    .reveal .slides section ul li::before { content:"\25B8"!important; position:absolute!important; left:-1em!important; color:#FFD700!important; font-size:.85em!important }
+    .reveal p, .reveal ul, .reveal ol { font-size:.92em!important }
+    .reveal .slides section ul { padding-left:1.5em!important }
+    pre { max-height:none!important; overflow:hidden!important; margin:10px auto!important; max-width:96%!important; border-radius:10px!important; border:1px solid rgba(255,215,0,0.4)!important; box-shadow:0 6px 20px rgba(0,0,0,.4)!important; padding:4px!important; text-align:left!important }
+    pre code { font-size:.92em!important; padding:14px 18px!important; line-height:1.45!important; white-space:pre-wrap!important; word-break:break-word!important }
+    pre code .hljs-comment, pre code.hljs-comment { color:#888!important; font-style:italic!important }
+    table { font-size:.72em!important; max-width:100%!important; border-collapse:collapse!important; margin:10px auto!important }
+    .reveal table th, .reveal table td { border:1px solid rgba(255,255,255,0.35)!important; padding:6px 10px!important }
+    .reveal table th { background:rgba(0,0,0,0.3)!important; color:#FFD700!important }
+    .slide-card { background:rgba(0,0,0,0.35)!important; border-radius:12px!important; padding:16px 20px!important; border-left:5px solid #FFD700!important; margin-top:10px!important; max-width:95%!important; text-align:left!important; box-shadow:0 4px 16px rgba(0,0,0,.3)!important }
+    .reveal code { color:#90EE90!important }
+    .reveal a { color:#87CEEB!important }
+  </style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<section data-background-color="#1a1a2e">
+  <div style="background:rgba(22,33,62,0.9);padding:36px;border:8px solid #0f3460;text-align:center;max-width:90%;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+    <h1 style="color:#FFD700">HTMX и Django</h1>
+    <h2 style="color:#90EE90">HTML over the wire</h2>
+    <ul>
+      <li>Частичные обновления без SPA</li>
+      <li>Атрибуты в HTML + заголовки ответа <code>HX-*</code></li>
+      <li>19 слайдов + явные примеры кода</li>
+    </ul>
+  </div>
+</section>
+
+<section data-background-color="#16213e">
+  <h2>Слайд 1. HTMX — что это</h2>
+  <div class="slide-card">
+    <p><strong>HTMX</strong> — библиотека ~14 KB: расширяет HTML <strong>атрибутами</strong>, не фреймворком.</p>
+    <ul>
+      <li>Частичные обновления страницы без тяжёлого SPA</li>
+      <li><strong>Гипермедиа</strong> — сервер отдаёт HTML-фрагменты → вставка в DOM</li>
+      <li>Слоган: <em>HTML over the wire</em> вместо JSON + клиентский рендер</li>
+    </ul>
+    <p><strong>Зачем:</strong> меньше JS, проще стек (Django, FastAPI, шаблоны).</p>
+    <p><strong>Контракт:</strong> (1) атрибуты → что запрашивать; (2) заголовки ответа → редирект, события, target/swap.</p>
+  </div>
+</section>
+
+<section data-background-color="#2c3e50">
+  <h2>Слайд 2. Проблема, которую решает HTMX</h2>
+  <table>
+    <tr><th>Подход</th><th>Плюсы</th><th>Минусы</th></tr>
+    <tr><td>Форм + reload</td><td>Просто</td><td>Мерцает страница</td></tr>
+    <tr><td>SPA (React/Vue)</td><td>Богатый UI</td><td>Два «мира» (API + фронт)</td></tr>
+    <tr><td><strong>HTMX</strong></td><td>Частичные обновления, HTML с сервера</td><td>Не заменяет сложный клиентский UI</td></tr>
+  </table>
+  <p>HTMX — «середина»: <strong>динамика без SPA</strong>.</p>
+  <pre><code class="language-js">// Без HTMX: вручную fetch + вставка в DOM (каждый раз одно и то же)
+fetch('/items/partial/')
+  .then(r =&gt; r.text())
+  .then(html =&gt; {
+    document.getElementById('list').innerHTML = html; // риск XSS, если сервер недоверенный
+  });</code></pre>
+  <pre><code class="language-html">&lt;!-- HTMX: тот же сценарий — атрибуты вместо JS --&gt;
+&lt;button hx-get="/items/partial/"
+        hx-target="#list"
+        hx-swap="innerHTML"&gt;Обновить&lt;/button&gt;
+&lt;div id="list"&gt;&lt;/div&gt;</code></pre>
+</section>
+
+<section data-background-color="#16213e">
+  <h2>Слайд 3. Как это работает (модель)</h2>
+  <ol style="text-align:left;max-width:95%">
+    <li style="list-style:decimal;margin-left:1.2em">Клик / ввод / отправка формы</li>
+    <li style="list-style:decimal;margin-left:1.2em">HTMX → HTTP к URL из атрибута (+ заголовки <code>HX-*</code> с клиента)</li>
+    <li style="list-style:decimal;margin-left:1.2em">Сервер → тело (HTML) + при необходимости заголовки <code>HX-*</code></li>
+    <li style="list-style:decimal;margin-left:1.2em">Вставка в DOM (<code>hx-target</code> + <code>hx-swap</code>) или действия по заголовкам</li>
+  </ol>
+  <p><strong>Ключ:</strong> бэкенд — источник правды.</p>
+  <pre><code class="language-http"># Исходящий запрос (фрагмент; Host и др. опущены)
+GET /search/?q=phone HTTP/1.1
+HX-Request: true          # признак HTMX — на бэкенде отдаём partial
+HX-Target: #results        # куда на странице вставят ответ (информативно)</code></pre>
+  <pre><code class="language-html">&lt;!-- Тело ответа 200 OK — не целая страница, а кусок HTML --&gt;
+&lt;ul&gt;
+  &lt;li&gt;Товар A&lt;/li&gt;
+  &lt;li&gt;Товар B&lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+</section>
+
+<section data-background-color="#2c3e50">
+  <h2>Слайд 4. Атрибуты + пример поиска</h2>
+  <table>
+    <tr><th>Атрибут</th><th>Назначение</th></tr>
+    <tr><td><code>hx-get/post/put/delete/patch</code></td><td>URL и метод</td></tr>
+    <tr><td><code>hx-trigger</code></td><td>Когда слать (click, load, keyup delay…)</td></tr>
+    <tr><td><code>hx-target</code></td><td>Куда вставить ответ</td></tr>
+    <tr><td><code>hx-swap</code></td><td>innerHTML, outerHTML, beforebegin…</td></tr>
+    <tr><td><code>hx-select</code></td><td>Из ответа только узлы по селектору</td></tr>
+    <tr><td><code>hx-include</code> / <code>hx-vals</code></td><td>Поля и доп. данные</td></tr>
+  </table>
+  <pre><code class="language-html">&lt;!-- Поиск: debounce 400 ms — не бомбить сервер на каждую букву --&gt;
+&lt;input type="search" name="q"
+       hx-get="/search/"
+       hx-trigger="keyup changed delay:400ms"
+       hx-target="#results"
+       placeholder="Поиск…"&gt;
+
+&lt;!-- POST /like/5/ + скрытое поле source=list (без отдельного input) --&gt;
+&lt;button hx-post="/like/5/"
+        hx-vals='{"source": "list"}'
+        hx-target="#like-count-5"&gt;♥&lt;/button&gt;</code></pre>
+</section>
+
+<section data-background-color="#16213e">
+  <h2>Слайд 5. Подтверждение, sync, файлы</h2>
+  <table>
+    <tr><th>Атрибут</th><th>Назначение</th></tr>
+    <tr><td><code>hx-push-url</code></td><td>URL в историю после swap</td></tr>
+    <tr><td><code>hx-replace-url</code></td><td>Заменить URL без новой записи</td></tr>
+    <tr><td><code>hx-confirm</code> / <code>hx-prompt</code></td><td>Диалог перед запросом</td></tr>
+    <tr><td><code>hx-headers</code> / <code>hx-params</code></td><td>Заголовки; <code>none</code> — не слать поля формы</td></tr>
+    <tr><td><code>hx-sync</code></td><td>Очередь запросов, drop/replace</td></tr>
+  </table>
+  <pre><code class="language-html">&lt;!-- Удаление: confirm + заменить всю строку таблицы --&gt;
+&lt;button hx-delete="/item/7/"
+        hx-confirm="Удалить товар #7?"
+        hx-target="closest tr"
+        hx-swap="outerHTML"&gt;Удалить&lt;/button&gt;
+
+&lt;!-- Превью не уходит, пока идёт POST формы #f (abort) --&gt;
+&lt;form id="f" hx-post="/save"&gt;…поля…&lt;/form&gt;
+&lt;button hx-get="/preview/" hx-sync="#f:abort"&gt;Превью&lt;/button&gt;
+
+&lt;!-- Файлы: обязательны hx-encoding + enctype --&gt;
+&lt;form hx-post="/upload/"
+      hx-encoding="multipart/form-data"
+      enctype="multipart/form-data"
+      hx-target="#status"&gt;
+  {% csrf_token %}  &lt;!-- Django: защита от CSRF --&gt;
+  &lt;input type="file" name="doc"&gt;
+  &lt;button type="submit"&gt;Загрузить&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+</section>
+
+<section data-background-color="#2c3e50">
+  <h2>Слайд 6. Кнопка + Django view</h2>
+  <pre><code class="language-html">&lt;!-- Подключить HTMX один раз (base.html) --&gt;
+&lt;script src="https://unpkg.com/htmx.org@2.0.4"&gt;&lt;/script&gt;
+&lt;!-- Клик → GET → ответ кладётся в #counter --&gt;
+&lt;button hx-get="/fragments/counter/"
+        hx-target="#counter"
+        hx-swap="innerHTML"&gt;+1&lt;/button&gt;
+&lt;div id="counter"&gt;0&lt;/div&gt;</code></pre>
+  <p>Ответ сервера: <code>&lt;span&gt;42&lt;/span&gt;</code></p>
+  <pre><code class="language-python"># urls: path("fragments/counter/", counter_fragment)
+def counter_fragment(request):
+    # Счётчик в сессии (пример; в проде — своя модель/логика)
+    n = int(request.session.get("n", 0)) + 1
+    request.session["n"] = n
+    return HttpResponse(f"&lt;span&gt;{n}&lt;/span&gt;")  # только фрагмент, не layout</code></pre>
+</section>
+
+<section data-background-color="#16213e">
+  <h2>Слайд 7. Форма + ответ сервера</h2>
+  <ul>
+    <li><code>&lt;form hx-post="/save" hx-target="#result"&gt;</code> — фрагмент в ответе</li>
+    <li><code>hx-boost="true"</code> — ссылки и формы через AJAX внутри контейнера</li>
+    <li>Файлы: <code>hx-encoding="multipart/form-data"</code> + <code>enctype</code> + file input</li>
+  </ul>
+  <pre><code class="language-html">&lt;!-- Ответ сервера подменяет #result (ошибка или «OK») --&gt;
+&lt;form hx-post="/contact/" hx-target="#result" hx-swap="innerHTML"&gt;
+  {% csrf_token %}
+  &lt;input name="email" type="email" required&gt;
+  &lt;button type="submit"&gt;Отправить&lt;/button&gt;
+&lt;/form&gt;
+&lt;div id="result"&gt;&lt;/div&gt;</code></pre>
+  <pre><code class="language-python">def contact(request):
+    if request.method == "POST":
+        if not request.POST.get("email"):
+            # Снова форма + ошибка (тот же шаблон)
+            return render(request, "form.html", {"err": "Нужен email"})
+        return HttpResponse('&lt;p class="ok"&gt;Отправлено&lt;/p&gt;')
+        # Успех + редирект: resp["HX-Redirect"] = "/thanks/"
+    return render(request, "contact_full.html")  # первая загрузка — полная страница</code></pre>
+</section>
+
+<section data-background-color="#2c3e50">
+  <h2>Слайд 8. CSRF + partial во view</h2>
+  <ul>
+    <li><code>HX-Request: true</code> — отличить HTMX от обычного запроса (partial vs full page)</li>
+    <li>CSRF: <code>{% csrf_token %}</code> + <code>htmx:configRequest</code> → <code>X-CSRFToken</code></li>
+  </ul>
+  <pre><code class="language-js">// Все HTMX-запросы (POST/PUT/DELETE) получают CSRF — иначе Django 403
+document.body.addEventListener('htmx:configRequest', function (e) {
+  e.detail.headers['X-CSRFToken'] = '{{ csrf_token }}'; // из Django-шаблона
+});</code></pre>
+  <pre><code class="language-python">def item_list(request):
+    ctx = {"items": Item.objects.all()}
+    if request.headers.get("HX-Request"):
+        # Запрос из HTMX — только строки таблицы (без base.html)
+        return render(request, "items/_rows.html", ctx)
+    # Обычный заход — полная страница (SEO, No-JS)
+    return render(request, "items/list.html", ctx)</code></pre>
+</section>
+
+<section data-background-color="#16213e">
+  <h2>Слайд 9. HX-Redirect и HX-Trigger</h2>
+  <table>
+    <tr><th>Заголовок</th><th>Действие</th></tr>
+    <tr><td><code>HX-Redirect</code></td><td>Полный переход (как location)</td></tr>
+    <tr><td><code>HX-Refresh</code></td><td><code>true</code> — перезагрузка страницы</td></tr>
+    <tr><td><code>HX-Trigger</code></td><td>JSON событий на document/body</td></tr>
+    <tr><td><code>HX-Retarget</code> / <code>HX-Reswap</code></td><td>Переопределить target/swap</td></tr>
+    <tr><td><code>HX-Push-Url</code> / <code>HX-Replace-Url</code></td><td>История с сервера</td></tr>
+  </table>
+  <pre><code class="language-python"># После успешного POST — полный переход (как форма с redirect)
+resp = HttpResponse(status=204)  # тело можно пустое
+resp["HX-Redirect"] = "/orders/"
+return resp
+
+# Плюс уведомление на клиенте (слушатель на кастомное событие toast)
+r = HttpResponse("&lt;div&gt;OK&lt;/div&gt;")
+r["HX-Trigger"] = '{"toast": "Заказ создан"}'  # JSON имён событий
+return r</code></pre>
+</section>
+
+<section data-background-color="#2c3e50">
+  <h2>Слайд 10. hx-select + ограничения</h2>
+  <ul>
+    <li>Не заменяет тяжёлый клиентский state (редакторы, канвас) — там SPA</li>
+    <li>Много запросов → debounce (<code>hx-trigger</code>), кэш, <code>hx-sync</code></li>
+    <li>SEO: без JS ссылки должны работать, если важна индексация</li>
+  </ul>
+  <pre><code class="language-html">&lt;!-- Сервер отдал HTML с layout; берём из ответа только #main --&gt;
+&lt;button hx-get="/full-page/"
+        hx-select="#main"
+        hx-target="#main"
+        hx-swap="outerHTML"&gt;Подгрузить контент&lt;/button&gt;</code></pre>
+</section>
+
+<section data-background-color="#16213e">
+  <h2>Слайд 11. FastAPI фрагмент</h2>
+  <table>
+    <tr><th>Стек</th><th>Роль HTMX</th></tr>
+    <tr><td>Django + шаблоны</td><td>Partial templates — идеальный матч</td></tr>
+    <tr><td>Ninja / DRF</td><td>JSON для API; веб — HTML + <code>HX-Trigger</code></td></tr>
+    <tr><td>FastAPI + Jinja2</td><td>Partials, <code>TemplateResponse</code></td></tr>
+  </table>
+  <pre><code class="language-python"># FastAPI + Jinja2 — тот же partial, что и в Django
+@app.get("/fragment/items", response_class=HTMLResponse)
+def items_partial(request: Request):
+    return templates.TemplateResponse(
+        "items_rows.html",
+        {"request": request, "items": []},  # передать список из БД
+    )</code></pre>
+</section>
+
+<section data-background-color="#2c3e50">
+  <h2>Слайд 12. Итоги</h2>
+  <div class="slide-card">
+    <p><strong>Выбирайте HTMX:</strong> списки, формы, фильтры, пагинация, модалки; сильный бэкенд; MVP.</p>
+    <p><strong>SPA:</strong> офлайн, очень сложный UI, большой клиентский state.</p>
+    <p><strong>Резюме:</strong> гипермедиа + двусторонний контракт (атрибуты + заголовки) = мало JS.</p>
+  </div>
+</section>
+
+<section data-background-color="#16213e">
+  <h2>Слайд 13. Out-of-band swap (oob)</h2>
+  <p>Один ответ → основной target + доп. узлы: <code>hx-swap-oob="true"</code> + совпадающий <code>id</code>.</p>
+  <pre><code class="language-html">&lt;!-- Основной swap — в hx-target (например tbody); oob — второй кусок --&gt;
+&lt;tr&gt;&lt;td&gt;Молоко&lt;/td&gt;&lt;td&gt;2&lt;/td&gt;&lt;/tr&gt;
+&lt;!-- Элемент с тем же id на странице заменится дополнительно --&gt;
+&lt;div id="cart-badge" hx-swap-oob="true"&gt;3&lt;/div&gt;</code></pre>
+  <p>Счётчики, хедер, тосты — без второго запроса.</p>
+</section>
+
+<section data-background-color="#2c3e50">
+  <h2>Слайд 14. Индикаторы + CSS</h2>
+  <pre><code class="language-html">&lt;!-- На время запроса: #sp получит класс htmx-request (показать спиннер) --&gt;
+&lt;button hx-get="/slow/" hx-indicator="#sp" hx-disabled-elt="this"&gt;
+  Загрузить
+&lt;/button&gt;
+&lt;span id="sp" class="htmx-indicator"&gt;⏳&lt;/span&gt;</code></pre>
+  <pre><code class="language-css">/* По умолчанию спиннер скрыт; во время запроса — виден */
+.htmx-indicator { opacity: 0; transition: opacity 200ms; }
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator { opacity: 1; }</code></pre>
+</section>
+
+<section data-background-color="#16213e">
+  <h2>Слайд 15. Расширения</h2>
+  <table>
+    <tr><th>Расширение</th><th>Задача</th></tr>
+    <tr><td>htmx-sse</td><td>Server-Sent Events — лента, прогресс</td></tr>
+    <tr><td>htmx-ws</td><td>WebSocket — чат</td></tr>
+    <tr><td>head-support</td><td>Обновление &lt;head&gt; из ответа</td></tr>
+    <tr><td>preload</td><td>Предзагрузка по hover/focus</td></tr>
+  </table>
+  <pre><code class="language-html">&lt;!-- Расширение SSE: поток с сервера → вставка в div --&gt;
+&lt;script src="https://unpkg.com/htmx-ext-sse@2.2.0/sse.js"&gt;&lt;/script&gt;
+&lt;div hx-ext="sse"
+     sse-connect="/events/stream"
+     sse-swap="message"&gt;Ждём события…&lt;/div&gt;</code></pre>
+</section>
+
+<section data-background-color="#2c3e50">
+  <h2>Слайд 16. afterSwap (скролл чата)</h2>
+  <ul>
+    <li><code>htmx:beforeRequest</code> / <code>afterRequest</code></li>
+    <li><code>htmx:afterSwap</code> — после вставки DOM</li>
+    <li><code>htmx:responseError</code> — 4xx/5xx</li>
+  </ul>
+  <pre><code class="language-js">// После подгрузки сообщений — прокрутить чат вниз
+document.body.addEventListener('htmx:afterSwap', function (e) {
+  if (e.detail.target.id === 'chat') {
+    e.detail.target.scrollTop = e.detail.target.scrollHeight;
+  }
+});</code></pre>
+</section>
+
+<section data-background-color="#16213e">
+  <h2>Слайд 17. Тест partial (pytest)</h2>
+  <ul>
+    <li>Метод, CSRF, права — как у обычных форм</li>
+    <li><code>HX-Target</code>, <code>HX-Trigger-Name</code> с клиента — <strong>не доверять</strong> для авторизации</li>
+    <li>XSS: экранирование; не вставлять сырой пользовательский HTML</li>
+  </ul>
+  <pre><code class="language-python"># Имитация HTMX-запроса — ожидаем partial, не полную страницу
+def test_partial(client):
+    r = client.get("/items/", HTTP_HX_REQUEST="true")
+    assert r.status_code == 200
+    body = r.content.decode()
+    assert "tr" in body or "tbody" in body  # фрагмент таблицы</code></pre>
+</section>
+
+<section data-background-color="#2c3e50">
+  <h2>Слайд 18. Шпаргалка</h2>
+  <div class="slide-card" style="font-size:.85em">
+    <p><strong>Клиент:</strong> hx-get/post · target · swap · select · trigger · push/replace-url · confirm/prompt · headers · params · sync · include · vals · indicator · disabled-elt · encoding · boost · oob в ответе</p>
+    <p><strong>Сервер:</strong> HX-Redirect · Refresh · Trigger · Retarget · Reswap · Push-Url · Replace-Url</p>
+    <p><a href="https://htmx.org/reference/" target="_blank" rel="noopener">htmx.org/reference</a></p>
+  </div>
+</section>
+
+<section data-background-color="#1a1a2e">
+  <div style="background:rgba(22,33,62,0.9);padding:32px;border:8px solid #0f3460;max-width:90%;border-radius:12px;text-align:left">
+    <h2 style="border:none;color:#FFD700">Слайд 19. Дорожная карта</h2>
+    <ol style="padding-left:1.2em">
+      <li style="list-style:decimal;margin:.4em 0"><code>hx-get</code> + <code>hx-target</code> + partial</li>
+      <li style="list-style:decimal;margin:.4em 0">Форма <code>hx-post</code> + ошибки HTML</li>
+      <li style="list-style:decimal;margin:.4em 0"><code>HX-Redirect</code> после успеха</li>
+      <li style="list-style:decimal;margin:.4em 0"><code>hx-select</code> для «толстого» ответа</li>
+      <li style="list-style:decimal;margin:.4em 0">oob для второго блока</li>
+      <li style="list-style:decimal;margin:.4em 0"><code>hx-sync</code> + индикатор</li>
+      <li style="list-style:decimal;margin:.4em 0">SSE/WS, события, тесты</li>
+    </ol>
+    <h1 style="margin-top:.8em;color:#90EE90">Спасибо!</h1>
+  </div>
+</section>
+
+</div></div>
+<script src="../../../SEMESTR-1/15-16/js/reveal.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/notes.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/markdown.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/highlight.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    transition: 'slide',
+    controls: true,
+    progress: true,
+    slideNumber: true,
+    center: false,
+    margin: 0.02,
+    scrollActivationWidth: null,
+    plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+  });
+</script>
+</body>
+</html>
