@@ -857,6 +857,120 @@ def list_products(request):
   <p>На dev — профилируете. На prod — мониторите. Каждый инструмент на своём месте.</p>
 </section>
 
+<!-- Слайд 42 -->
+<section data-background-color="#2c3e50">
+  <h2>Пулы соединений — PgBouncer</h2>
+  <div class="slide-card">
+    <ul>
+      <li>Много воркеров Gunicorn → много соединений к Postgres → лимит <code>max_connections</code></li>
+      <li><strong>PgBouncer</strong> — пул между приложением и БД; мало реальных коннектов к PostgreSQL</li>
+      <li>Режим для Django чаще <strong>transaction</strong></li>
+      <li><code>conn_max_age</code> согласовать с пулом (иногда 0 за балансировщиком)</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Слайд 43 -->
+<section data-background-color="#16213e">
+  <h2>Кэш Redis + Django</h2>
+  <div class="slide-card">
+    <ul>
+      <li>Тяжёлые повторяющиеся запросы → <code>cache.set</code>, <code>{% cache %}</code></li>
+      <li><strong>Инвалидация</strong> при обновлении данных — иначе устаревший контент</li>
+      <li>Осторожно с персональными данными в общем кэше</li>
+    </ul>
+  </div>
+  <pre><code class="language-python">CACHES = {
+  'default': {
+    'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+    'LOCATION': 'redis://127.0.0.1:6379/1',
+  }
+}</code></pre>
+</section>
+
+<!-- Слайд 44 -->
+<section data-background-color="#2c3e50">
+  <h2>Фоновые задачи — Celery / RQ</h2>
+  <div class="slide-card">
+    <ul>
+      <li>Письма, отчёты, тяжёлая обработка — не в HTTP-запросе</li>
+      <li>Очередь (Redis/RabbitMQ) + воркеры → стабильная latency для пользователя</li>
+      <li>Мониторить длину очереди и failed jobs</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Слайд 45 — Django 6 Tasks -->
+<section data-background-color="#16213e">
+  <h2>Django 6 — Tasks API</h2>
+  <div class="slide-card">
+    <ul>
+      <li><strong>@task</strong> + <strong>.enqueue()</strong> — единый контракт очереди в ядре (с 6.0)</li>
+      <li><strong>TaskResult</strong> — статусы, <code>priority</code>, <code>queue_name</code>, <code>run_after</code></li>
+      <li>Встроенно: <strong>ImmediateBackend</strong> (сразу в запросе) и <strong>DummyBackend</strong> (тесты)</li>
+      <li>Продакшен: бэкенды community — <code>django-tasks-database</code>, <code>django-tasks-celery</code>, Huey…</li>
+      <li>Аргументы <code>enqueue</code> — только JSON-сериализуемые</li>
+    </ul>
+  </div>
+  <pre><code class="language-python">from django.tasks import task
+
+@task()
+def notify(user_id: int) -> str:
+    return "ok"
+
+notify.enqueue(42)  # TaskResult</code></pre>
+</section>
+
+<!-- Слайд 46 -->
+<section data-background-color="#2c3e50">
+  <h2>Rate limiting в Nginx</h2>
+  <pre><code class="language-nginx">limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+location /api/ {
+    limit_req zone=api burst=20 nodelay;
+    proxy_pass http://127.0.0.1:8080;
+}</code></pre>
+  <p>Грубый предохранитель от перегруза и ботов — не замена auth</p>
+</section>
+
+<!-- Слайд 47 -->
+<section data-background-color="#2c3e50">
+  <h2>Ошибки в prod — Sentry</h2>
+  <div class="slide-card">
+    <ul>
+      <li>Prometheus — сколько 500-х; <strong>Sentry</strong> — stack trace, release, контекст</li>
+      <li>Первые часы после деплоя — алерт при росте error rate</li>
+      <li>Интеграция: <code>sentry-sdk</code> + DSN в переменной окружения</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Слайд 48 -->
+<section data-background-color="#16213e">
+  <h2>Логи · метрики · трейсы</h2>
+  <table>
+    <tr><th>Слой</th><th>Зачем</th></tr>
+    <tr><td><strong>Логи</strong></td><td>JSON, correlation id — что произошло в момент T</td></tr>
+    <tr><td><strong>Метрики</strong></td><td>Prometheus — тренды, алерты</td></tr>
+    <tr><td><strong>Трейсы</strong></td><td>OpenTelemetry — цепочка вызовов, где теряется время</td></tr>
+  </table>
+  <p>Минимум на VPS: логи + метрики + Sentry</p>
+</section>
+
+<!-- Слайд 49 -->
+<section data-background-color="#1a1a2e">
+  <h2 style="color:#FFD700">После деплоя — чек-лист</h2>
+  <div class="slide-card">
+    <ol style="text-align:left">
+      <li>Smoke: <code>curl</code> health</li>
+      <li>Короткий wrk / ab — нет ли просадки к baseline</li>
+      <li>Grafana: ошибки, latency</li>
+      <li>Коннекты к БД, место на диске</li>
+    </ol>
+  </div>
+  <p><strong>Дальше:</strong> read replicas, CDN, blue-green, staging + chaos. Тема — управляемая нагрузка.</p>
+  <p style="margin-top:1em;color:#90EE90">Спасибо за внимание. Вопросы?</p>
+</section>
+
 </div></div>
 <script src="../../../SEMESTR-1/15-16/js/reveal.min.js"></script>
 <script src="../../../SEMESTR-1/15-16/js/notes.min.js"></script>
