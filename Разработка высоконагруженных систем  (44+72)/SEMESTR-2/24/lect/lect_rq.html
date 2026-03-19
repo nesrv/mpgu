@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Фоновые задачи и очереди (RQ, Django Tasks, Celery)</title>
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/reveal.min.css">
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/black.min.css">
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/monokai.min.css">
+  <style>
+    html, body, .reveal-viewport, .reveal, .reveal .slides, .reveal .slides section, .reveal .slide-background-content { overflow:hidden!important; scrollbar-width:none!important }
+    html::-webkit-scrollbar, body::-webkit-scrollbar, .reveal::-webkit-scrollbar, .reveal .slides::-webkit-scrollbar, .reveal .slides section::-webkit-scrollbar { display:none!important; width:0!important; height:0!important }
+    .reveal .slides { width:80%!important; height:90%!important; position:absolute!important; left:50%!important; top:0!important; transform:translateX(calc(-50% + 5%)) scale(1.2)!important; transform-origin:top center!important }
+    .reveal .slides section { display:flex!important; flex-direction:column!important; justify-content:center!important; align-items:center!important; padding:24px 32px!important; font-size:.95em!important; max-width:100%!important; width:100%!important; overflow:hidden!important; box-sizing:border-box!important; line-height:1.5!important; text-align:center!important }
+    .reveal h1 { font-size:1.7em!important; margin-top:0!important; margin-bottom:.5em!important; color:#FFD700!important; text-align:center!important }
+    .reveal h2 { font-size:1em!important; margin-top:0!important; margin-bottom:.5em!important; text-transform:none!important; text-align:center!important; padding-bottom:.4em!important; border-bottom:2px solid rgba(255,215,0,0.5)!important; color:#FFD700!important; width:100%!important }
+    .reveal h3 { font-size:1.05em!important; margin-top:.6em!important; margin-bottom:.3em!important; text-transform:none!important; color:#90EE90!important; text-align:center!important }
+    .reveal .slides section p, .reveal .slides section div { max-width:100%!important; min-width:0!important; overflow-wrap:break-word!important; word-wrap:break-word!important; word-break:break-word!important; box-sizing:border-box!important }
+    .reveal .slides section ul, .reveal .slides section ol { text-align:left!important; margin:0 auto!important }
+    .reveal .slides section li { overflow-wrap:break-word!important; word-wrap:break-word!important; word-break:break-word!important; margin-bottom:.4em!important; list-style:none!important; position:relative!important; padding-left:.5em!important }
+    .reveal .slides section ul li::before { content:"\25B8"!important; position:absolute!important; left:-1em!important; color:#FFD700!important; font-size:.85em!important }
+    .reveal p, .reveal ul, .reveal ol { font-size:.92em!important }
+    .reveal .slides section ul { padding-left:1.5em!important }
+    pre { max-height:none!important; overflow:hidden!important; margin:12px auto!important; max-width:95%!important; border-radius:10px!important; border:1px solid rgba(255,215,0,0.4)!important; box-shadow:0 6px 20px rgba(0,0,0,.4)!important; padding:2px!important; text-align:left!important }
+    pre code { font-size:.72em!important; padding:14px 18px!important; line-height:1.4!important; white-space:pre-wrap!important; word-break:break-word!important }
+    table { font-size:.78em!important; max-width:100%!important; border-collapse:collapse!important; margin:12px auto!important }
+    .reveal table th, .reveal table td { border:1px solid rgba(255,255,255,0.35)!important; padding:8px 12px!important }
+    .reveal table th { background:rgba(0,0,0,0.3)!important; color:#FFD700!important }
+    .slide-card { background:rgba(0,0,0,0.35)!important; border-radius:12px!important; padding:18px 24px!important; border-left:5px solid #FFD700!important; margin-top:12px!important; max-width:95%!important; text-align:left!important; box-shadow:0 4px 16px rgba(0,0,0,.3)!important }
+    .reveal .slides section > div[style*="background"] ul { display:inline-block!important; text-align:left!important }
+    .reveal code { color:#90EE90!important }
+  </style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- Слайд 1 -->
+<section data-background-color="#1a1a2e">
+  <div style="background:rgba(22,33,62,0.9);padding:40px;border:8px solid #0f3460;text-align:center;max-width:90%;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+    <h1 style="color:#FFD700">Фоновые задачи и очереди</h1>
+    <h2 style="color:#90EE90">RQ, Django Tasks, Celery</h2>
+    <p><strong>Тема:</strong> как не блокировать HTTP-запрос тяжёлой работой и как устроены очереди задач в Python/Django.</p>
+    <p><strong>План:</strong> зачем нужны фоновые задачи → эволюция подходов → RQ, Django Tasks, Celery → примеры → прод и практика.</p>
+  </div>
+</section>
+
+<!-- Слайд 2 -->
+<section data-background-color="#16213e">
+  <h2>Зачем нужны фоновые задачи</h2>
+  <p>Пользователь нажал «Оформить заказ» или «Скачать отчёт».</p>
+  <div class="slide-card">
+    <p>Если всё делать <strong>в том же HTTP-запросе</strong>: отправка письма 2 сек, генерация PDF 10 сек, запрос висит, воркер занят, таймаут, плохой UX.</p>
+  </div>
+  <p><strong>Идея:</strong> отдать ответ пользователю сразу («заказ принят», «отчёт ставится в очередь»), а тяжёлую работу выполнить <strong>в фоне</strong> в отдельном процессе.</p>
+</section>
+
+<!-- Слайд 3 -->
+<section data-background-color="#2c3e50">
+  <h2>Синхронный vs фоновый сценарий</h2>
+  <table>
+    <tr><th>Синхронно</th><th>В фоне (очередь)</th></tr>
+    <tr><td>Запрос → отправить письмо → ответ</td><td>Запрос → положить задачу в очередь → ответ</td></tr>
+    <tr><td>Воркер занят 2–10 сек</td><td>Воркер свободен за &lt;100 мс</td></tr>
+    <tr><td>Таймауты, 502 при нагрузке</td><td>Стабильная latency</td></tr>
+    <tr><td>Нет повтора при сбое</td><td>Повтор (retry) при падении воркера</td></tr>
+  </table>
+</section>
+
+<!-- Слайд 4 -->
+<section data-background-color="#16213e">
+  <h2>Типичные кандидаты в фон</h2>
+  <ul>
+    <li>Отправка email (приветствие, заказ, сброс пароля)</li>
+    <li>Генерация отчётов (PDF, Excel), выгрузки</li>
+    <li>Обработка загруженных файлов (ресайз, конвертация)</li>
+    <li>Интеграции с внешними API (платёж, доставка) с таймаутами и retry</li>
+    <li>Периодические задачи (очистка, напоминания) — по расписанию</li>
+  </ul>
+</section>
+
+<!-- Слайд 5 -->
+<section data-background-color="#2c3e50">
+  <h2>Эволюция: от cron к очередям</h2>
+  <div class="slide-card">
+    <p><strong>Раньше:</strong> cron раз в минуту/час запускает скрипт. Нет очереди, нет приоритетов, дубли при долгой работе.</p>
+  </div>
+  <p><strong>Очередь:</strong> задачи кладутся в список, воркеры забирают по одной. Контроль нагрузки, retry, приоритеты.</p>
+  <p><strong>Брокер:</strong> Redis, RabbitMQ, БД — хранят очередь и метаданные.</p>
+</section>
+
+<!-- Слайд 6 -->
+<section data-background-color="#16213e">
+  <h2>Модель «очередь задач»</h2>
+  <pre><code>[ Django / API ]  →  кладёт задачу  →  [ Redis / очередь ]
+                                         ↓
+[ Воркер 1 ]  ←  забирает задачу  ←  [ Redis ]
+[ Воркер 2 ]  ←  забирает задачу  ←  [ Redis ]</code></pre>
+  <p><strong>Producer</strong> — код приложения (view, сервис). <strong>Queue</strong> — хранилище (Redis). <strong>Worker</strong> — процесс, который выполняет задачи.</p>
+</section>
+
+<!-- Слайд 7 -->
+<section data-background-color="#2c3e50">
+  <h2>Redis как брокер для очередей</h2>
+  <p>Redis: быстрый key-value store в памяти. Подходит для очередей: списки (LPUSH/RPOP), TTL, персистентность при необходимости.</p>
+  <div class="slide-card">
+    <p><strong>RQ (Redis Queue)</strong> использует Redis напрямую: одна очередь = один список. Простота — плюс для старта; при очень высокой нагрузке — RabbitMQ и Celery.</p>
+  </div>
+</section>
+
+<!-- Слайд 8 -->
+<section data-background-color="#16213e">
+  <h2>Что такое RQ</h2>
+  <p><strong>RQ (Redis Queue)</strong> — библиотека для фоновых задач на Python. Задачи — обычные функции; аргументы должны быть сериализуемы.</p>
+  <ul>
+    <li>Один брокер — Redis</li>
+    <li>Запуск воркера: <code>rq worker</code></li>
+    <li>Интеграция с Django: пакет <strong>django-rq</strong></li>
+  </ul>
+</section>
+
+<!-- Слайд 9 -->
+<section data-background-color="#2c3e50">
+  <h2>Redis vs RQ — в чём разница</h2>
+  <p><strong>Redis</strong> — хранилище данных в памяти. Key-value store с операциями SET, GET, LPUSH, RPOP.</p>
+  <p><strong>RQ</strong> — Python-библиотека, которая <strong>использует Redis</strong> как брокер для очередей задач.</p>
+  <table>
+    <tr><th></th><th>Redis</th><th>RQ</th></tr>
+    <tr><td><strong>Что это</strong></td><td>Хранилище (сервер)</td><td>Библиотека для фоновых задач</td></tr>
+    <tr><td><strong>Роль</strong></td><td>Хранит данные</td><td>Оркестрирует задачи, воркеры, retry</td></tr>
+    <tr><td><strong>Без другого</strong></td><td>Работает сам по себе</td><td>Требует запущенный Redis</td></tr>
+  </table>
+  <p>Итого: <strong>Redis — низкоуровневый сервис</strong>, <strong>RQ — слой очередей</strong> поверх него.</p>
+</section>
+
+<!-- Слайд 10 -->
+<section data-background-color="#16213e">
+  <h2>Django 6 Tasks — встроенный контракт</h2>
+  <p>С Django 6.0 в ядре появился <strong>Tasks API</strong>: декоратор <code>@task</code>, метод <code>.enqueue()</code>, объект результата <code>TaskResult</code>.</p>
+  <div class="slide-card">
+    <p>Django <strong>не поставляет</strong> продакшен-воркер: только контракт и бэкенды <strong>Immediate</strong> (в том же потоке) и <strong>Dummy</strong> (для тестов). Реальный фон — через бэкенды сообщества.</p>
+  </div>
+</section>
+
+<!-- Слайд 10a -->
+<section data-background-color="#2c3e50" style="overflow:hidden!important">
+  <h2>Django Tasks — контракт, Immediate, Dummy</h2>
+  <p><strong>Контракт:</strong> <code>@task</code>, <code>.enqueue()</code>, <code>TaskResult</code>. Отдельного воркера в ядре <strong>нет</strong>.</p>
+  <div class="slide-card">
+    <p><strong>Immediate:</strong> <code>enqueue</code> вызывает функцию сразу в том же потоке. Нет фона, нет retry. Dev и простые кейсы.</p>
+    <p><strong>Dummy:</strong> задача не выполняется — только запись для тестов. Без Redis в CI.</p>
+  </div>
+  <p><strong>Почему нет воркера в ядре:</strong> разная инфраструктура, масштаб, фокус Django — веб, не очереди; есть RQ/Celery.</p>
+  <table style="font-size:.65em!important">
+    <tr><th>Бэкенд</th><th>Воркер</th><th>Очередь</th><th>Прод</th></tr>
+    <tr><td>Immediate</td><td>Нет</td><td>Нет</td><td>Нет</td></tr>
+    <tr><td>Dummy</td><td>Нет</td><td>Нет</td><td>Нет</td></tr>
+    <tr><td>tasks-database</td><td>run_tasks</td><td>БД</td><td>Да</td></tr>
+    <tr><td>tasks-celery</td><td>Celery</td><td>Redis/Rabbit</td><td>Да</td></tr>
+  </table>
+  <p><strong>Сообщество:</strong> сохраняет задачи во внешнее хранилище + отдельный процесс. Код один — бэкенд в <code>settings</code>.</p>
+</section>
+
+<!-- Слайд 11 -->
+<section data-background-color="#16213e">
+  <h2>Django Tasks — пример кода</h2>
+  <pre><code class="language-python">from django.tasks import task
+
+@task()
+def send_welcome_email(user_id: int) -> str:
+    user = User.objects.get(pk=user_id)
+    send_mail(...)
+    return "sent"
+
+# В view или сервисе:
+result = send_welcome_email.enqueue(user.pk)</code></pre>
+  <p>Аргументы должны быть <strong>JSON-сериализуемы</strong>.</p>
+</section>
+
+<!-- Слайд 12 -->
+<section data-background-color="#2c3e50">
+  <h2>Django Tasks — бэкенды</h2>
+  <table>
+    <tr><th>Бэкенд</th><th>Поведение</th></tr>
+    <tr><td><strong>ImmediateBackend</strong></td><td>Выполняет задачу сразу в текущем потоке</td></tr>
+    <tr><td><strong>DummyBackend</strong></td><td>Не выполняет, для тестов</td></tr>
+    <tr><td><strong>django-tasks-database</strong></td><td>Очередь в PostgreSQL, воркер отдельно</td></tr>
+    <tr><td><strong>django-tasks-celery</strong></td><td>Использует инфраструктуру Celery</td></tr>
+  </table>
+  <p>Итог: один API в коде, смена бэкенда — в настройках.</p>
+</section>
+
+<!-- Слайд 12a -->
+<section data-background-color="#16213e">
+  <h2>django-tasks-database</h2>
+  <p>Очередь в PostgreSQL. Миграции создают таблицу; воркер <code>run_tasks</code> забирает задачи.</p>
+  <div class="slide-card">
+    <p><strong>Плюсы:</strong> без Redis/RabbitMQ, одна БД, простая установка.</p>
+    <p><strong>Минусы:</strong> нагрузка на БД, ниже производительность, polling.</p>
+  </div>
+  <p><strong>Когда:</strong> небольшие проекты, минимум инфраструктуры.</p>
+</section>
+
+<!-- Слайд 12b -->
+<section data-background-color="#2c3e50">
+  <h2>django-tasks-celery</h2>
+  <p>Использует Celery: брокер Redis или RabbitMQ. <code>.enqueue()</code> → Celery → worker.</p>
+  <div class="slide-card">
+    <p><strong>Плюсы:</strong> высокая пропускная способность, retry, beat, масштабирование.</p>
+    <p><strong>Минусы:</strong> нужны Celery и брокер, сложнее настройка.</p>
+  </div>
+  <p><strong>Когда:</strong> уже есть Celery или нужна серьёзная нагрузка. Код один — бэкенд в <code>settings.py</code>.</p>
+</section>
+
+<!-- Слайд 13 -->
+<section data-background-color="#2c3e50">
+  <h2>django-rq — установка</h2>
+  <pre><code class="language-bash">pip install django-rq redis</code></pre>
+  <pre><code class="language-python">INSTALLED_APPS += ['django_rq']
+
+RQ_QUEUES = {
+    'default': {'HOST': 'localhost', 'PORT': 6379, 'DB': 0},
+}</code></pre>
+  <p>Redis должен быть запущен локально или указан URL.</p>
+</section>
+
+<!-- Слайд 14 -->
+<section data-background-color="#16213e">
+  <h2>django-rq — определение задачи</h2>
+  <pre><code class="language-python"># shop/tasks.py
+def send_order_confirmation(order_id: int) -> None:
+    order = Order.objects.get(pk=order_id)
+    send_mail(subject=f"Заказ #{order.id}", ...)</code></pre>
+  <p>В очередь передают примитивы, id моделей, а не объекты ORM.</p>
+</section>
+
+<!-- Слайд 15 -->
+<section data-background-color="#2c3e50">
+  <h2>django-rq — постановка в очередь</h2>
+  <pre><code class="language-python">from django_rq import get_queue
+
+def order_create_view(request):
+    order = Order.objects.create(...)
+    queue = get_queue('default')
+    queue.enqueue(send_order_confirmation, order.id)
+    return JsonResponse({"order_id": order.id})
+
+# С задержкой:
+queue.enqueue(send_order_confirmation, order.id, delay=300)</code></pre>
+</section>
+
+<!-- Слайд 16 -->
+<section data-background-color="#16213e">
+  <h2>Сериализация аргументов</h2>
+  <p>В очередь попадают <strong>сериализованные</strong> аргументы. Передавать нужно:</p>
+  <ul>
+    <li>Примитивы (int, str, float, bool), списки, словари</li>
+    <li>ID моделей, а не объекты <code>User</code>, <code>Order</code></li>
+  </ul>
+  <p><strong>Нельзя:</strong> объекты с открытыми соединениями. В задаче по <code>id</code> заново делают <code>Model.objects.get(pk=...)</code>.</p>
+</section>
+
+<!-- Слайд 17 -->
+<section data-background-color="#2c3e50">
+  <h2>Django ORM в задачах</h2>
+  <p>Воркер — отдельный процесс. У каждого своё соединение к БД. После долгой работы соединение может разорваться.</p>
+  <pre><code class="language-python">from django.db import connection
+connection.close()  # в начале функции при необходимости</code></pre>
+</section>
+
+<!-- Слайд 18 -->
+<section data-background-color="#16213e">
+  <h2>django-rq — запуск воркера</h2>
+  <pre><code class="language-bash">python manage.py rqworker default
+python manage.py rqworker default high low</code></pre>
+  <p>В проде — systemd или supervisor.</p>
+</section>
+
+<!-- Слайд 19 -->
+<section data-background-color="#2c3e50">
+  <h2>django-rq — несколько очередей</h2>
+  <pre><code class="language-python">RQ_QUEUES = {
+  'default': {...}, 'high': {'URL': 'redis://...6379/1'},
+  'low': {'URL': 'redis://...6379/2'},
+}
+get_queue('high').enqueue(critical_task, ...)</code></pre>
+</section>
+
+<!-- Слайд 20 -->
+<section data-background-color="#16213e">
+  <h2>django-rq — результат и статус</h2>
+  <pre><code class="language-python">job = queue.enqueue(send_order_confirmation, order.id)
+job.id  # job.get_status()  # queued, started, finished, failed
+job.result  # после завершения</code></pre>
+</section>
+
+<!-- Слайд 21 -->
+<section data-background-color="#2c3e50">
+  <h2>django-rq — retry</h2>
+  <pre><code class="language-python">from rq import Retry
+queue.enqueue(..., retry=Retry(max=3))</code></pre>
+</section>
+
+<!-- Слайд 22 -->
+<section data-background-color="#16213e">
+  <h2>Отложенное выполнение (scheduled)</h2>
+  <p><strong>rq-scheduler:</strong> <code>scheduler.enqueue_at(datetime(...), task, ...)</code></p>
+  <p><strong>Периодические:</strong> cron → management-команда → постановка задач в RQ.</p>
+</section>
+
+<!-- Слайд 23 -->
+<section data-background-color="#2c3e50">
+  <h2>Celery — кратко</h2>
+  <p>Мощная система: брокеры, beat, цепочки, группы. <code>@celery_app.task</code>, <code>send_email.delay(user_id)</code></p>
+</section>
+
+<!-- Слайд 24 -->
+<section data-background-color="#16213e">
+  <h2>Сравнение</h2>
+  <table>
+    <tr><th></th><th>Django Tasks</th><th>django-rq</th><th>Celery</th></tr>
+    <tr><td>Простота</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐</td><td>⭐</td></tr>
+    <tr><td>Инфраструктура</td><td>минимальная</td><td>Redis</td><td>Redis/Rabbit</td></tr>
+    <tr><td>Расписание</td><td>бэкенд</td><td>rq-scheduler/cron</td><td>beat</td></tr>
+  </table>
+</section>
+
+<!-- Слайд 25 -->
+<section data-background-color="#2c3e50">
+  <h2>Когда что выбирать</h2>
+  <ul>
+    <li>Небольшой проект: Django Tasks или django-rq</li>
+    <li>Уже есть Redis: django-rq</li>
+    <li>Сложные пайплайны: Celery</li>
+    <li>Без Redis: Django Tasks + БД</li>
+  </ul>
+</section>
+
+<!-- Слайд 26–28: примеры -->
+<section data-background-color="#16213e">
+  <h2>Примеры: письмо, PDF, превью</h2>
+  <p><strong>Письмо после заказа:</strong> view создаёт заказ → <code>enqueue(send_order_confirmation, order.id)</code></p>
+  <p><strong>Экспорт PDF:</strong> view ставит задачу → «ссылка придёт на почту»</p>
+  <p><strong>Превью:</strong> загрузка → <code>enqueue(generate_thumbnails, image_id)</code></p>
+</section>
+
+<!-- Слайд 29 -->
+<section data-background-color="#2c3e50">
+  <h2>Мониторинг очереди</h2>
+  <ul>
+    <li><code>queue.count</code>, Redis <code>LLEN</code></li>
+    <li>django-rq веб-интерфейс — очереди, джобы, failed</li>
+    <li>Метрики в Prometheus</li>
+  </ul>
+</section>
+
+<!-- Слайд 30 -->
+<section data-background-color="#16213e">
+  <h2>Прод: systemd (RQ)</h2>
+  <pre><code class="language-ini">[Service]
+ExecStart=/opt/myapp/venv/bin/python manage.py rqworker default
+WorkingDirectory=/opt/myapp
+Restart=always</code></pre>
+</section>
+
+<!-- Слайд 31–32 -->
+<section data-background-color="#2c3e50">
+  <h2>Прод: Redis и масштабирование</h2>
+  <p>Redis: RDB/AOF, maxmemory. Несколько воркеров на одну очередь — задачи распределяются.</p>
+</section>
+
+<!-- Слайд 33–38 -->
+<section data-background-color="#16213e">
+  <h2>Типичные ошибки и практики</h2>
+  <ul>
+    <li>ORM-объект вместо id</li>
+    <li>Долгие задачи без таймаута</li>
+    <li>Игнорировать failed jobs</li>
+    <li>Тесты: DummyBackend или тестовый Redis</li>
+    <li>Безопасность: не передавать пароли в аргументах</li>
+    <li>Идемпотентность — повторное выполнение не даёт дублей</li>
+  </ul>
+</section>
+
+<!-- Слайд 39 -->
+<section data-background-color="#2c3e50">
+  <h2>Резюме</h2>
+  <p>Очередь = producer + broker + worker. Django Tasks, django-rq, Celery. Воркер как служба, мониторинг, failed jobs.</p>
+</section>
+
+<!-- Слайд 40 -->
+<section data-background-color="#16213e">
+  <h2>Полезные ссылки</h2>
+  <ul>
+    <li><a href="https://python-rq.org/">RQ</a> · <a href="https://github.com/rq/django-rq">django-rq</a></li>
+    <li><a href="https://docs.celeryq.dev/">Celery</a> · <a href="https://github.com/rq/rq-scheduler">rq-scheduler</a></li>
+    <li><a href="https://docs.djangoproject.com/en/stable/topics/tasks/">Django Tasks</a></li>
+  </ul>
+</section>
+
+<!-- Слайд 41–48: деплой -->
+<section data-background-color="#2c3e50">
+  <h2>Деплой без Docker (systemd)</h2>
+  <pre><code class="language-ini"># RQ
+ExecStart=.../python manage.py rqworker default
+Environment="REDIS_URL=redis://localhost:6379/0"
+
+# Celery
+ExecStart=.../celery -A myapp worker -l info
+# Beat — отдельный unit, 1 инстанс</code></pre>
+</section>
+
+<section data-background-color="#16213e">
+  <h2>Деплой с Docker</h2>
+  <pre><code class="language-yaml">services:
+  web:          build: . ; command: gunicorn ...
+  rq-worker:    build: . ; command: python manage.py rqworker default
+  celery-worker: command: celery -A myapp worker -l info
+  celery-beat:  command: celery -A myapp beat -l info  # 1 replica
+  redis:        image: redis:7-alpine</code></pre>
+  <p>REDIS_URL=redis://redis:6379/0</p>
+</section>
+
+<section data-background-color="#2c3e50">
+  <h2>Деплой с Kubernetes</h2>
+  <pre><code class="language-yaml"># Deployment rq-worker, replicas: 2
+command: ["python", "manage.py", "rqworker", "default"]
+env: REDIS_URL from Secret
+# Celery Beat: replicas: 1</code></pre>
+  <p>Redis — Service или managed. HPA для workers.</p>
+</section>
+
+<section data-background-color="#16213e">
+  <h2>Сводка: деплой по средам</h2>
+  <table>
+    <tr><th>Без Docker</th><th>Docker</th><th>Kubernetes</th></tr>
+    <tr><td>systemd</td><td>docker-compose</td><td>Deployment + replicas</td></tr>
+    <tr><td>localhost Redis</td><td>контейнер redis</td><td>Service / managed</td></tr>
+    <tr><td>новая машина</td><td>больше контейнеров</td><td>HPA, replicas</td></tr>
+  </table>
+</section>
+
+<section data-background-color="#1a1a2e">
+  <h2 style="color:#FFD700">Вопросы по лекции?</h2>
+  <p><strong>Дальше:</strong> практикум — добавить фоновую задачу (письмо при заказе или экспорт) с django-rq или Django Tasks.</p>
+</section>
+
+</div></div>
+<script src="../../../SEMESTR-1/15-16/js/reveal.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/notes.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/markdown.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/highlight.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    transition: 'slide',
+    controls: true,
+    progress: true,
+    slideNumber: true,
+    center: false,
+    margin: 0.02,
+    plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+  });
+</script>
+</body>
+</html>
