@@ -1,8 +1,8 @@
-laba_rq_var0.md
+laba_rq_celery.md
 создай веб-методичку (нужно взять всю информацию из исходного md файла)
 
 референс
-laba_vps_django.html
+laba_rq_var0.html
 
 
 хочу в ## Часть 1. Django 6 сделать задание на отправку письма 

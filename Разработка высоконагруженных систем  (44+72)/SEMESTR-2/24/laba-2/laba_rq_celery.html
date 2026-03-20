@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Лабораторная работа: RQ, Django Tasks, Celery</title>
+<style media="print">body{font-family:Arial,sans-serif;font-size:12px}.container{box-shadow:none;background:white}.header{background:white!important;color:black!important}.save-btn{display:none!important}.section{page-break-inside:avoid}</style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;line-height:1.6;color:#333;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh}.container{max-width:1200px;margin:20px auto;padding:20px;background:white;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}.header{text-align:center;padding:30px;background:linear-gradient(135deg,#005EB8,#003D82);color:white;border-radius:10px;margin-bottom:30px}.header h1{font-size:2.5em;margin-bottom:10px}.student-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:30px;padding:20px;background:#f8f9fa;border-radius:10px}.form-group{margin-bottom:20px}.form-group label{display:block;margin-bottom:5px;font-weight:bold;color:#003D82}.form-group input,.form-group textarea{width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px;font-size:16px}.section{margin-bottom:40px;padding:25px;background:#fff;border-left:5px solid #005EB8;border-radius:0 10px 10px 0;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.section h2{color:#003D82;margin-bottom:20px;font-size:1.8em}.section h3{color:#005EB8;margin:20px 0 10px;font-size:1.3em}.section h4{color:#333;margin:15px 0 8px;font-size:1.1em}.code-block{background:#282c34;color:#e2e8f0;padding:20px;border-radius:8px;margin:15px 0;font-family:'Courier New',monospace;overflow-x:auto;white-space:pre-wrap;font-size:14px}ul{list-style:none;padding-left:0}ul li{padding:8px 0 8px 30px;position:relative}ul li::before{content:'▸';position:absolute;left:0;color:#005EB8;font-size:18px}ol{padding-left:20px}ol li{padding:5px 0}table{width:100%;border-collapse:collapse;margin:15px 0}table th,table td{border:1px solid #ddd;padding:12px;text-align:left}table th{background:#005EB8;color:white}table tr:nth-child(even){background:#f8f9fa}.checkbox-item{margin:15px 0;padding:15px 20px;background:linear-gradient(135deg,#005EB8,#003D82);border-radius:10px;display:flex;align-items:center}.checkbox-item input[type="checkbox"]{appearance:none;width:26px;height:26px;border:3px solid white;border-radius:6px;margin-right:15px;cursor:pointer;background:transparent;flex-shrink:0}.checkbox-item input[type="checkbox"]:checked{background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23005EB8"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>') center/18px no-repeat;border-color:#fff}.checkbox-item label{color:white;font-weight:500;cursor:pointer}.save-btn{background:linear-gradient(135deg,#005EB8,#003D82);color:white;border:none;padding:15px 30px;font-size:18px;border-radius:10px;cursor:pointer;display:block;margin:30px auto}code{background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:0.9em}.note{background:#e3f2fd;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #2196f3}.warning{background:#fff8e1;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #ff9800}.toc{margin:20px 0;padding:20px;background:#f5f5f5;border-radius:8px}.toc a{color:#005EB8;text-decoration:none}.toc a:hover{text-decoration:underline}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/ini.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js"></script>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+<h1>Учебный проект</h1>
+<h2>Изучение RQ, Django Tasks, Celery</h2>
+<p>Django 6 &bull; HTMX &bull; django-tasks-local &bull; django-rq &bull; Redis &bull; Celery &bull; Flower &bull; CI/CD</p>
+</div>
+
+<div class="student-info">
+<div class="form-group"><label>ФИО:</label><input type="text" id="student-name"></div>
+<div class="form-group"><label>Группа:</label><input type="text" id="group"></div>
+<div class="form-group"><label>Дата:</label><input type="date" id="date"></div>
+</div>
+
+<!-- СОДЕРЖАНИЕ -->
+<div class="section">
+<h2>Содержание</h2>
+<div class="toc">
+<ol>
+<li><a href="#step0">Шаг 0: Создание проекта</a></li>
+<li><a href="#step1">Шаг 1: Установка Django</a></li>
+<li><a href="#step2">Шаг 2: Веб-интерфейс (HTMX)</a></li>
+<li><a href="#step3">Шаг 3: Настройка SMTP</a></li>
+<li><a href="#step4">Шаг 4: Собственный SMTP на VPS</a></li>
+<li><a href="#step5">Шаг 5: Django 6 @task</a></li>
+<li><a href="#step51">Шаг 5.1: HTMX polling</a></li>
+<li><a href="#step6">Шаг 6: RQ (Redis Queue)</a></li>
+<li><a href="#step7">Шаг 7: Celery</a></li>
+<li><a href="#step71">Шаг 7.1: Flower</a></li>
+<li><a href="#step8">Шаг 8: CI/CD</a></li>
+<li><a href="#checklist">Чек-лист</a></li>
+</ol>
+</div>
+</div>
+
+<!-- ПРЕДУСЛОВИЯ -->
+<div class="section">
+<h2>Предусловия</h2>
+<p>Установлены <a href="https://docs.astral.sh/uv/">uv</a>, Python <strong>3.13</strong> (или совместимый с Django 6), ОС Linux/macOS/WSL. Команды выполняются из корня проекта в терминале.</p>
+</div>
+
+<!-- ШАГ 0 -->
+<div class="section" id="step0">
+<h2>Шаг 0. Создание проекта</h2>
+<div class="code-block"><code class="language-bash">mkdir RQ && cd RQ
+uv init
+uv add django</code></div>
+<p>Далее шаг 1 можно начать с <code>uv run django-admin startproject config .</code> (если <code>django</code> уже добавлен на шаге 0).</p>
+<div class="checkbox-item"><input type="checkbox" id="t0"><label for="t0">Шаг 0 выполнен</label></div>
+</div>
+
+<!-- ШАГ 1 -->
+<div class="section" id="step1">
+<h2>Шаг 1. Установка Django</h2>
+<p>Если шаг 0 пропущен: <code>mkdir RQ && cd RQ && uv init && uv add django</code></p>
+<ul>
+<li><code>uv add django</code> (если ещё не добавлен на шаге 0)</li>
+<li><code>uv run django-admin startproject config .</code></li>
+<li><code>uv run python manage.py startapp core</code></li>
+<li>Добавить <code>core</code> в <code>INSTALLED_APPS</code> (config/settings.py)</li>
+</ul>
+<div class="checkbox-item"><input type="checkbox" id="t1"><label for="t1">Шаг 1 выполнен</label></div>
+</div>
+
+<!-- ШАГ 2 -->
+<div class="section" id="step2">
+<h2>Шаг 2. Веб-интерфейс (HTMX)</h2>
+<ul>
+<li><code>uv add django-htmx</code> (версия <code>&gt;=1.27</code>)</li>
+<li>Добавить <code>django_htmx</code> и <code>core</code> в <code>INSTALLED_APPS</code></li>
+<li>Добавить <code>django_htmx.middleware.HtmxMiddleware</code> в <code>MIDDLEWARE</code> (после SessionMiddleware)</li>
+</ul>
+
+<h3>config/urls.py</h3>
+<div class="code-block"><code class="language-python">from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("", include("core.urls")),
+]</code></div>
+
+<h3>core/urls.py</h3>
+<div class="code-block"><code class="language-python">from django.urls import path
+from . import views
+
+urlpatterns = [
+    path("", views.index, name="index"),
+]</code></div>
+
+<h3>core/views.py</h3>
+<div class="code-block"><code class="language-python">from django.core.mail import send_mail
+from django.shortcuts import render
+from django.views.decorators.http import require_http_methods
+
+
+def _parse_emails(text):
+    return [p.strip() for p in text.splitlines() if p.strip()]
+
+
+def _send_to_list(emails, message):
+    if not emails:
+        return "Список email пуст. Введите получателей (по одному на строку)."
+    if not message.strip():
+        return "Введите текст сообщения."
+    try:
+        send_mail("Сообщение", message, None, emails, fail_silently=False)
+        return f"Отправлено {len(emails)} писем (принято сервером 250 OK)"
+    except Exception as e:
+        return f"Ошибка: {e}"
+
+
+@require_http_methods(["GET", "POST"])
+def index(request):
+    success_message = None
+
+    if request.method == "POST":
+        message = request.POST.get("message", "")
+        email_text = request.POST.get("email", "")
+        emails = _parse_emails(email_text)
+        success_message = _send_to_list(emails, message)
+
+        if request.htmx:
+            ctx = {"emails": emails, "success_message": success_message}
+            return render(request, "core/partials/email_list.html", ctx)
+        return render(
+            request,
+            "core/index.html",
+            {"emails": emails, "success_message": success_message},
+        )
+
+    return render(request, "core/index.html", {"emails": [], "success_message": None})</code></div>
+
+<h3>core/templates/core/index.html</h3>
+<div class="code-block"><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;title&gt;Сообщения и email&lt;/title&gt;
+    &lt;script src="https://unpkg.com/htmx.org@2"&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Рассылка по email&lt;/h1&gt;
+
+    &lt;form hx-post="{% url 'index' %}" hx-target="#email-list" hx-swap="innerHTML" hx-trigger="submit"&gt;
+        {% csrf_token %}
+        &lt;textarea name="message" placeholder="Сообщение" rows="4" cols="50"&gt;&lt;/textarea&gt;
+        &lt;textarea name="email" placeholder="Email (по одному на строку)" rows="6" cols="50"&gt;&lt;/textarea&gt;
+        &lt;button type="submit"&gt;Отправить&lt;/button&gt;
+    &lt;/form&gt;
+
+    &lt;h2&gt;Список email&lt;/h2&gt;
+    &lt;div id="email-list"&gt;
+        {% include "core/partials/email_list.html" %}
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></div>
+
+<h3>core/templates/core/partials/email_list.html</h3>
+<div class="code-block"><code class="language-html">{% if success_message %}&lt;p&gt;{{ success_message }}&lt;/p&gt;{% endif %}
+&lt;ul&gt;
+    {% for email in emails %}
+    &lt;li&gt;{{ email }}&lt;/li&gt;
+    {% empty %}
+    &lt;li&gt;Пока пусто&lt;/li&gt;
+    {% endfor %}
+&lt;/ul&gt;</code></div>
+
+<p>Перед запуском: <code>uv run python manage.py migrate</code> (сессии по умолчанию используют БД).</p>
+<div class="checkbox-item"><input type="checkbox" id="t2"><label for="t2">Шаг 2 выполнен</label></div>
+</div>
+
+<!-- ШАГ 3 -->
+<div class="section" id="step3">
+<h2>Шаг 3. Настройка SMTP для отправки почты</h2>
+<p>Для Yandex и Mail.ru нужен <strong>пароль приложения</strong> (не обычный пароль).</p>
+
+<h3>Яндекс — разрешить доступ почтовым клиентам</h3>
+<ol>
+<li>Почта Яндекса → Настройки (⚙) → вкладка «Почтовые программы»</li>
+<li>Включить «Разрешить доступ к почтовому ящику с помощью почтовых клиентов»</li>
+<li>Отметить «С сервера imap.yandex.ru по протоколу IMAP»</li>
+<li>Включить «Пароли приложений и OAuth-токены»</li>
+<li>Сохранить</li>
+</ol>
+
+<p><strong>Пароль приложения (Яндекс):</strong> <a href="https://id.yandex.ru/security/app-passwords">Пароли приложений</a> → тип «Почта» → создать. Использовать в <code>EMAIL_HOST_PASSWORD</code>.</p>
+
+<h3>config/settings.py — добавить в конец</h3>
+<div class="code-block"><code class="language-python"># Email
+DEFAULT_FROM_EMAIL = "your-email@yandex.ru"  # или @mail.ru
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"</code></div>
+
+<h4>Yandex</h4>
+<div class="code-block"><code class="language-python">EMAIL_HOST = "smtp.yandex.ru"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "your-email@yandex.ru"
+EMAIL_HOST_PASSWORD = "пароль-приложения"</code></div>
+
+<h4>Mail.ru</h4>
+<div class="code-block"><code class="language-python">EMAIL_HOST = "smtp.mail.ru"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "your-email@mail.ru"
+EMAIL_HOST_PASSWORD = "пароль-приложения"</code></div>
+
+<h4>Безопасность — через переменные окружения</h4>
+<div class="code-block"><code class="language-python">import os
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.yandex.ru")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")</code></div>
+
+<p><strong>250 OK:</strong> Успешная отправка = SMTP-сервер принял письмо и вернул код 250. Это не гарантия доставки в почтовый ящик получателя.</p>
+<div class="checkbox-item"><input type="checkbox" id="t3"><label for="t3">Шаг 3 выполнен</label></div>
+</div>
+
+<!-- ШАГ 4 -->
+<div class="section" id="step4">
+<h2>Шаг 4. Собственный SMTP на VPS (mail.alekseeva.h1n.ru)</h2>
+<p>VPS, домен alekseeva.h1n.ru, почтовый сервер mail.alekseeva.h1n.ru.</p>
+
+<h3>config/settings.py</h3>
+<div class="code-block"><code class="language-python">EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "mail.alekseeva.h1n.ru")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "true").lower() == "true"
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "alekseeva")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "alekseeva")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@alekseeva.h1n.ru")</code></div>
+
+<h3>Тестовые email</h3>
+<div class="code-block"><code>test1@example.com
+test2@example.com
+user1@example.org
+user2@example.org
+demo@example.net
+sample@example.com
+check@example.org
+verify@example.net
+mail1@example.com
+mail2@example.com
+recipient@example.org
+sender@example.net
+inbox@example.com
+contact@example.org
+info@example.net</code></div>
+<div class="checkbox-item"><input type="checkbox" id="t4"><label for="t4">Шаг 4 выполнен</label></div>
+</div>
+
+<!-- ШАГ 5 -->
+<div class="section" id="step5">
+<h2>Шаг 5. Django 6 @task — фоновые задачи</h2>
+<p>Django 6 встроил Tasks framework. Декоратор <code>@task</code> + <code>.enqueue()</code> ставят задачу в очередь. По умолчанию <code>ImmediateBackend</code> выполняет синхронно; для фона — <code>django-tasks-local</code>.</p>
+
+<h3>Базовое использование (без доп. пакетов)</h3>
+<div class="code-block"><code class="language-python">from django.tasks import task
+
+@task
+def send_email_task(emails, message):
+    send_mail("Сообщение", message, None, emails, fail_silently=False)
+
+# В view: send_email_task.enqueue(emails=emails, message=message)</code></div>
+
+<h3>Фоновое выполнение — django-tasks-local</h3>
+<div class="code-block"><code class="language-bash">uv add django-tasks-local</code></div>
+
+<h3>config/settings.py</h3>
+<div class="code-block"><code class="language-python">TASKS = {
+    "default": {
+        "BACKEND": "django_tasks_local.ThreadPoolBackend",
+        "OPTIONS": {
+            "MAX_WORKERS": 10,
+            "MAX_RESULTS": 1000,
+        },
+    },
+}</code></div>
+
+<h3>core/tasks.py (создать файл)</h3>
+<div class="code-block"><code class="language-python">import time
+from django.core.mail import send_mail
+from django.tasks import task
+
+
+@task
+def send_email_task(emails, message):
+    time.sleep(1)  # искусственная пауза
+    send_mail("Сообщение", message, None, emails, fail_silently=False)</code></div>
+
+<h3>core/views.py — заменить вызов на фоновую постановку</h3>
+<div class="code-block"><code class="language-python">from core.tasks import send_email_task
+
+def _send(emails, message):
+    if not emails:
+        return "Список email пуст."
+    if not message.strip():
+        return "Введите текст сообщения."
+    try:
+        send_email_task.enqueue(emails=emails, message=message)
+        return f"В очередь: {len(emails)} писем"
+    except Exception as e:
+        return f"Ошибка: {e}"</code></div>
+
+<div class="note"><strong>Важно:</strong> этот вариант отправляет все адреса одним вызовом <code>send_mail</code>. Для посекундного прогресса в шаге 5.1 задача переписывается: цикл по одному письму с паузой и запись прогресса в кэш.</div>
+<div class="note"><strong>Ограничения django-tasks-local:</strong> очередь в памяти, задачи теряются при перезапуске; отдельный worker не нужен — потоки в том же процессе.</div>
+<div class="checkbox-item"><input type="checkbox" id="t5"><label for="t5">Шаг 5 выполнен</label></div>
+</div>
+
+<!-- ШАГ 5.1 -->
+<div class="section" id="step51">
+<h2>Шаг 5.1. HTMX polling — посекундный статус отправки</h2>
+<p><strong>Цель:</strong> показывать «Отправлено X из Y» в реальном времени, пока задача выполняется в фоне.</p>
+
+<h3>Поток работы</h3>
+<ol>
+<li>Пользователь отправляет форму → POST → view создаёт <code>job_id</code>, ставит задачу в очередь, возвращает partial с <code>job_id</code>.</li>
+<li>Partial рендерит блок с <code>hx-get="/status/&lt;job_id&gt;/"</code> и <code>hx-trigger="load, every 1s"</code>.</li>
+<li>HTMX каждую секунду запрашивает <code>/status/&lt;job_id&gt;/</code>.</li>
+<li>View <code>status</code> читает из кэша <code>job_{job_id}</code> → <code>{total, sent}</code> и рендерит partial.</li>
+</ol>
+
+<h3>1. config/settings.py — кэш</h3>
+<div class="code-block"><code class="language-python">CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    },
+}</code></div>
+
+<h3>2. core/tasks.py — задача пишет прогресс в кэш</h3>
+<div class="code-block"><code class="language-python">import time
+
+from django.core.cache import cache
+from django.core.mail import send_mail
+from django.tasks import task
+
+
+@task
+def send_email_task(emails, message, job_id):
+    total = len(emails)
+    cache.set(f"job_{job_id}", {"total": total, "sent": 0}, timeout=300)
+    for i, email in enumerate(emails):
+        if i > 0:
+            time.sleep(1)
+        send_mail("Сообщение", message, None, [email], fail_silently=False)
+        cache.set(f"job_{job_id}", {"total": total, "sent": i + 1}, timeout=300)</code></div>
+
+<h3>3. core/views.py — _send возвращает (msg, job_id); view status</h3>
+<div class="code-block"><code class="language-python">import uuid
+
+from django.shortcuts import render
+from django.views.decorators.http import require_http_methods
+
+from core.tasks import send_email_task
+
+
+def _send(emails, message):
+    if not emails:
+        return "Список email пуст.", None
+    if not message.strip():
+        return "Введите текст сообщения.", None
+    try:
+        job_id = str(uuid.uuid4())
+        send_email_task.enqueue(emails=emails, message=message, job_id=job_id)
+        return f"В очередь: {len(emails)} писем", job_id
+    except Exception as e:
+        return f"Ошибка: {e}", None
+
+
+@require_http_methods(["GET", "POST"])
+def index(request):
+    emails = []
+    msg = None
+    job_id = None
+    if request.method == "POST":
+        emails = _parse_emails(request.POST.get("email", ""))
+        msg, job_id = _send(emails, request.POST.get("message", ""))
+    ctx = {"emails": emails, "success_message": msg, "job_id": job_id}
+    tpl = "core/partials/email_list.html" if request.htmx and request.method == "POST" else "core/index.html"
+    return render(request, tpl, ctx)
+
+
+@require_http_methods(["GET"])
+def status(request, job_id):
+    from django.core.cache import cache
+
+    data = cache.get(f"job_{job_id}")
+    if not data:
+        return render(request, "core/partials/status.html", {"sent": 0, "total": 0, "done": False, "job_id": job_id})
+    sent, total = data["sent"], data["total"]
+    done = sent >= total
+    return render(request, "core/partials/status.html", {"sent": sent, "total": total, "done": done, "job_id": job_id})</code></div>
+
+<h3>4. core/urls.py</h3>
+<div class="code-block"><code class="language-python">path("status/&lt;str:job_id&gt;/", views.status, name="status"),</code></div>
+
+<h3>5. core/templates/core/partials/email_list.html</h3>
+<div class="code-block"><code class="language-html">{% if success_message %}&lt;p&gt;{{ success_message }}&lt;/p&gt;{% endif %}
+{% if job_id %}
+&lt;div hx-get="{% url 'status' job_id %}" hx-trigger="load, every 1s" hx-swap="outerHTML"&gt;
+    &lt;p&gt;Отправка...&lt;/p&gt;
+&lt;/div&gt;
+{% endif %}
+&lt;ul&gt;
+    {% for email in emails %}
+    &lt;li&gt;{{ email }}&lt;/li&gt;
+    {% empty %}
+    &lt;li&gt;Пока пусто&lt;/li&gt;
+    {% endfor %}
+&lt;/ul&gt;</code></div>
+
+<h3>6. core/templates/core/partials/status.html</h3>
+<div class="code-block"><code class="language-html">{% if done %}
+&lt;p&gt;Готово: {{ total }} писем&lt;/p&gt;
+{% else %}
+&lt;div hx-get="{% url 'status' job_id %}" hx-trigger="every 1s" hx-swap="outerHTML"&gt;
+    &lt;p&gt;{% if total %}Отправлено {{ sent }} из {{ total }}{% else %}Отправка...{% endif %}&lt;/p&gt;
+&lt;/div&gt;
+{% endif %}</code></div>
+<div class="checkbox-item"><input type="checkbox" id="t51"><label for="t51">Шаг 5.1 выполнен</label></div>
+</div>
+
+<!-- ШАГ 6 -->
+<div class="section" id="step6">
+<h2>Шаг 6. RQ (Redis Queue) — фоновые задачи с Redis</h2>
+<p>RQ — очередь задач на Redis. Отличие от django-tasks-local: задачи хранятся в Redis и не теряются при перезапуске; требуется отдельный worker-процесс.</p>
+
+<h3>Установка</h3>
+<div class="code-block"><code class="language-bash">uv add django-rq django-redis</code></div>
+<p class="note"><strong>Важно:</strong> если проект в pyproject.toml называется <code>rq</code>, переименуйте в <code>rq-lab</code> — иначе конфликт с пакетом rq.</p>
+
+<h3>Redis</h3>
+<ul>
+<li>Linux/WSL: <code>sudo apt update && sudo apt install -y redis-server</code>, затем <code>sudo service redis-server start</code></li>
+<li>Docker: <code>docker run -d -p 6379:6379 redis</code></li>
+<li>На VPS: установить Redis, проверить <code>redis-cli ping</code> → <code>PONG</code></li>
+</ul>
+
+<h3>config/settings.py</h3>
+<div class="code-block"><code class="language-python">INSTALLED_APPS = [
+    # ...
+    "django_rq",
+]
+
+RQ_QUEUES = {
+    "default": {
+        "HOST": "localhost",
+        "PORT": 6379,
+        "DB": 0,
+    },
+}</code></div>
+
+<h3>Кэш — обязательно Redis</h3>
+<p>Worker и runserver — разные процессы. LocMemCache хранит данные в памяти процесса. Нужен общий кэш — Redis.</p>
+<div class="code-block"><code class="language-python">CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    },
+}</code></div>
+<p>DB 1 — чтобы не пересекаться с RQ (DB 0).</p>
+
+<h3>core/rq_jobs.py (создать файл)</h3>
+<div class="code-block"><code class="language-python">import time
+
+from django.core.cache import cache
+from django.core.mail import send_mail
+
+
+def send_email_job(emails, message, job_id):
+    total = len(emails)
+    cache.set(f"job_{job_id}", {"total": total, "sent": 0}, timeout=300)
+    for i, email in enumerate(emails):
+        if i > 0:
+            time.sleep(1)
+        send_mail("Сообщение", message, None, [email], fail_silently=False)
+        cache.set(f"job_{job_id}", {"total": total, "sent": i + 1}, timeout=300)</code></div>
+
+<h3>core/views.py — _send через RQ</h3>
+<div class="code-block"><code class="language-python">from django_rq import get_queue
+from core.rq_jobs import send_email_job
+
+def _send(emails, message):
+    # ... проверки ...
+    try:
+        job_id = str(uuid.uuid4())
+        queue = get_queue("default")
+        queue.enqueue(send_email_job, emails, message, job_id)
+        return f"В очередь RQ: {len(emails)} писем", job_id
+    except Exception as e:
+        return f"Ошибка: {e}", None</code></div>
+
+<h3>Запуск worker</h3>
+<div class="code-block"><code class="language-bash">uv run python manage.py rqworker default</code></div>
+<p><strong>Порядок запуска:</strong> 1) Redis, 2) worker, 3) runserver.</p>
+
+<h3>RQ Dashboard (опционально)</h3>
+<div class="code-block"><code class="language-python">path("admin/django_rq/", include("django_rq.urls")),</code></div>
+<p>Доступ: <a href="http://127.0.0.1:8000/admin/django_rq/">http://127.0.0.1:8000/admin/django_rq/</a></p>
+
+<table>
+<tr><th></th><th>django-tasks-local</th><th>RQ</th></tr>
+<tr><td>Брокер</td><td>память процесса</td><td>Redis</td></tr>
+<tr><td>Worker</td><td>потоки в том же процессе</td><td>отдельный процесс</td></tr>
+<tr><td>Кэш для polling</td><td>LocMemCache</td><td>Redis</td></tr>
+<tr><td>Устойчивость</td><td>задачи теряются при рестарте</td><td>задачи в Redis сохраняются</td></tr>
+</table>
+<div class="checkbox-item"><input type="checkbox" id="t6"><label for="t6">Шаг 6 выполнен</label></div>
+</div>
+
+<!-- ШАГ 7 -->
+<div class="section" id="step7">
+<h2>Шаг 7. Celery — продвинутые фоновые задачи</h2>
+<p>Celery — полнофункциональная очередь: цепочки, группы, retry, отложенный запуск, расписание (Beat). Брокер — Redis или RabbitMQ.</p>
+
+<h3>Установка</h3>
+<div class="code-block"><code class="language-bash">uv add "celery[redis]"</code></div>
+
+<h3>config/celery.py (создать файл)</h3>
+<div class="code-block"><code class="language-python">import os
+
+from celery import Celery
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+app = Celery("config")
+app.config_from_object("django.conf:settings", namespace="CELERY")
+app.autodiscover_tasks()</code></div>
+
+<h3>config/__init__.py</h3>
+<div class="code-block"><code class="language-python">from .celery import app as celery_app
+
+__all__ = ("celery_app",)</code></div>
+
+<h3>config/settings.py</h3>
+<div class="code-block"><code class="language-python">CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/2"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_TASK_DEFAULT_QUEUE = "low"</code></div>
+<p>DB 0 — брокер. DB 2 — результаты (не пересекаться с кэшем DB 1).</p>
+
+<h3>core/celery_tasks.py</h3>
+<div class="code-block"><code class="language-python">import time
+
+from config.celery import app
+from django.core.cache import cache
+from django.core.mail import send_mail
+
+
+@app.task
+def send_email_celery_task(emails, message, job_id):
+    total = len(emails)
+    cache.set(f"job_{job_id}", {"total": total, "sent": 0}, timeout=300)
+    for i, email in enumerate(emails):
+        if i > 0:
+            time.sleep(1)
+        send_mail("Сообщение", message, None, [email], fail_silently=False)
+        cache.set(f"job_{job_id}", {"total": total, "sent": i + 1}, timeout=300)</code></div>
+
+<h3>core/views.py — _send с выбором очереди</h3>
+<div class="code-block"><code class="language-python">from core.celery_tasks import send_email_celery_task
+
+def _send(emails, message, queue="low"):
+    # ... проверки ...
+    if queue not in ("high", "low"):
+        queue = "low"
+    try:
+        job_id = str(uuid.uuid4())
+        send_email_celery_task.apply_async((emails, message, job_id), queue=queue)
+        return f"В очередь Celery ({queue}): {len(emails)} писем", job_id
+    except Exception as e:
+        return f"Ошибка: {e}", None
+
+# В index при POST:
+queue = request.POST.get("queue", "low")
+msg, job_id = _send(emails, request.POST.get("message", ""), queue=queue)</code></div>
+
+<h3>Форма — выбор очереди (index.html)</h3>
+<div class="code-block"><code class="language-html">&lt;p&gt;
+    &lt;label&gt;&lt;input type="radio" name="queue" value="high"&gt; Высокий приоритет&lt;/label&gt;
+    &lt;label&gt;&lt;input type="radio" name="queue" value="low" checked&gt; Низкий приоритет&lt;/label&gt;
+&lt;/p&gt;</code></div>
+
+<h3>Запуск worker</h3>
+<div class="code-block"><code class="language-bash">uv run celery -A config worker -Q high,low -l info</code></div>
+<p><strong>Порядок запуска:</strong> Redis → Celery worker → runserver.</p>
+
+<p><strong>Дополнительно Celery:</strong> Celery Beat (периодические задачи), <code>apply_async(countdown=60)</code>, retry при ошибке.</p>
+<div class="checkbox-item"><input type="checkbox" id="t7"><label for="t7">Шаг 7 выполнен</label></div>
+</div>
+
+<!-- ШАГ 7.1 -->
+<div class="section" id="step71">
+<h2>Шаг 7.1. Flower — веб-мониторинг Celery</h2>
+<p>Flower — веб-интерфейс для просмотра очередей, воркеров, задач и их статусов.</p>
+
+<h3>Установка</h3>
+<div class="code-block"><code class="language-bash">uv add flower</code></div>
+
+<h3>Запуск</h3>
+<div class="code-block"><code class="language-bash">uv run celery -A config flower</code></div>
+<p>По умолчанию: <a href="http://localhost:5555">http://localhost:5555</a></p>
+
+<p><strong>Что показывает Flower:</strong> Dashboard, Tasks, Workers, Broker, Monitor (обновление в реальном времени).</p>
+<p><strong>С аутентификацией:</strong> <code>uv run celery -A config flower --basic_auth=user:password</code></p>
+
+<table>
+<tr><th></th><th>RQ</th><th>Celery</th></tr>
+<tr><td>Сложность</td><td>проще</td><td>сложнее</td></tr>
+<tr><td>Брокер</td><td>только Redis</td><td>Redis, RabbitMQ</td></tr>
+<tr><td>Расписание</td><td>нет</td><td>Celery Beat</td></tr>
+<tr><td>Цепочки/группы</td><td>нет</td><td>есть</td></tr>
+<tr><td>Мониторинг</td><td>django-rq</td><td>Flower</td></tr>
+</table>
+<div class="checkbox-item"><input type="checkbox" id="t71"><label for="t71">Шаг 7.1 выполнен</label></div>
+</div>
+
+<!-- ШАГ 8 -->
+<div class="section" id="step8">
+<h2>Шаг 8. CI/CD (GitHub Actions)</h2>
+<p>В репозитории: <strong>.github/workflows/</strong> — GitHub Actions не читает deploy.yml из корня проекта.</p>
+
+<h3>8.1. CI — .github/workflows/ci.yml</h3>
+<p>Запуск при push и pull request в ветки master и main:</p>
+<ul>
+<li>checkout, установка uv, Python 3.13, uv sync</li>
+<li><code>python manage.py migrate --check</code></li>
+<li><code>python manage.py check</code></li>
+</ul>
+
+<h3>8.2. Deploy — .github/workflows/deploy.yml</h3>
+<p>Запуск при push в <strong>master</strong>:</p>
+<ul>
+<li>SSH на сервер (alekseeva.h1n.ru, root)</li>
+<li>На сервере: cd в DEPLOY_PATH (/root/RQ), git pull, uv sync, migrate, collectstatic, перезапуск systemd</li>
+</ul>
+
+<h3>Secrets в GitHub</h3>
+<table>
+<tr><th>Secret</th><th>Назначение</th></tr>
+<tr><td>SSH_PRIVATE_KEY</td><td>приватный ключ SSH (обязательно)</td></tr>
+<tr><td>DB_PASSWORD</td><td>опционально, для PostgreSQL</td></tr>
+</table>
+
+<h3>Переменные в workflow</h3>
+<ul>
+<li>DEPLOY_SERVER — хост VPS</li>
+<li>DEPLOY_PATH — путь к клону</li>
+<li>systemd: rq-lab (веб), rq-lab-celery (Celery worker)</li>
+</ul>
+
+<p><strong>Подготовка сервера:</strong> клон репозитория, uv в PATH, unit-файлы systemd, secret SSH_PRIVATE_KEY в GitHub.</p>
+<div class="checkbox-item"><input type="checkbox" id="t8"><label for="t8">Шаг 8 выполнен</label></div>
+</div>
+
+<!-- ЧЕК-ЛИСТ -->
+<div class="section" id="checklist">
+<h2>Чек-лист</h2>
+<table>
+<tr><th>№</th><th>Шаг</th><th>Статус</th></tr>
+<tr><td>0</td><td>Создание проекта (uv init, uv add django)</td><td><input type="checkbox" id="c0"></td></tr>
+<tr><td>1</td><td>Django + core app</td><td><input type="checkbox" id="c1"></td></tr>
+<tr><td>2</td><td>Веб-интерфейс HTMX (рассылка)</td><td><input type="checkbox" id="c2"></td></tr>
+<tr><td>3</td><td>SMTP (Yandex/Mail.ru)</td><td><input type="checkbox" id="c3"></td></tr>
+<tr><td>4</td><td>Собственный SMTP на VPS</td><td><input type="checkbox" id="c4"></td></tr>
+<tr><td>5</td><td>Django 6 @task (django-tasks-local)</td><td><input type="checkbox" id="c5"></td></tr>
+<tr><td>5.1</td><td>HTMX polling (прогресс отправки)</td><td><input type="checkbox" id="c51"></td></tr>
+<tr><td>6</td><td>RQ + Redis</td><td><input type="checkbox" id="c6"></td></tr>
+<tr><td>7</td><td>Celery (очереди high/low)</td><td><input type="checkbox" id="c7"></td></tr>
+<tr><td>7.1</td><td>Flower (опционально)</td><td><input type="checkbox" id="c71"></td></tr>
+<tr><td>8</td><td>CI/CD (ci.yml, deploy.yml)</td><td><input type="checkbox" id="c8"></td></tr>
+</table>
+</div>
+
+<!-- ВЫВОДЫ -->
+<div class="section">
+<h2>Выводы</h2>
+<div class="form-group"><label>Что изучили:</label><textarea rows="3" id="ta0" style="width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px"></textarea></div>
+<div class="form-group"><label>Сложности:</label><textarea rows="3" id="ta1" style="width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px"></textarea></div>
+</div>
+
+<button class="save-btn" onclick="window.print()">Сохранить в PDF</button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.code-block code').forEach(function(el){try{hljs.highlightElement(el)}catch(e){}});
+
+  var KEY='laba_rq_celery_';
+
+  ['student-name','group','date'].forEach(function(id){
+    var el=document.getElementById(id);if(!el)return;
+    el.value=localStorage.getItem(KEY+id)||'';
+    el.addEventListener('input',function(){localStorage.setItem(KEY+id,el.value)});
+  });
+  var dateEl=document.getElementById('date');
+  if(dateEl&&!dateEl.value)dateEl.value=new Date().toISOString().split('T')[0];
+
+  document.querySelectorAll('input[type="checkbox"]').forEach(function(cb){
+    if(!cb.id)return;
+    if(localStorage.getItem(KEY+cb.id)==='true')cb.checked=true;
+    cb.addEventListener('change',function(){localStorage.setItem(KEY+cb.id,cb.checked)});
+  });
+
+  document.querySelectorAll('textarea').forEach(function(el){
+    if(!el.id)return;
+    el.value=localStorage.getItem(KEY+el.id)||'';
+    el.addEventListener('input',function(){localStorage.setItem(KEY+el.id,el.value)});
+  });
+});
+</script>
+</body>
+</html>
