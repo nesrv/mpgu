@@ -37,6 +37,23 @@ def md_inline_rich(s: str) -> str:
     return s
 
 
+def is_markdown_table_separator_row(line: str) -> bool:
+    """Строка-разделитель GFM-таблицы: | --- | :--- | ---: | (любое число колонок)."""
+    t = line.strip()
+    if not (t.startswith("|") and t.count("|") >= 2):
+        return False
+    cells = [c.strip() for c in t.strip("|").split("|")]
+    if not cells:
+        return False
+    for c in cells:
+        if not re.fullmatch(r":?-+:?", c):
+            return False
+        core = c.replace(":", "")
+        if len(core) < 3 or set(core) != {"-"}:
+            return False
+    return True
+
+
 def lines_to_html(text: str) -> str:
     text = text.strip()
     if not text:
@@ -99,7 +116,7 @@ def lines_to_html(text: str) -> str:
         if s.startswith("|") and s.count("|") >= 2:
             close_ul()
             close_ol()
-            if re.match(r"^\|\s*[-:| ]+\|\s*$", s):
+            if is_markdown_table_separator_row(s):
                 i += 1
                 continue
             cells = [c.strip() for c in s.strip("|").split("|")]

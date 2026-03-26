@@ -275,8 +275,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, .reveal::-webkit-scrollbar,
 <li>Враги качества: <strong>джиттер (неравномерность задержек)</strong>, <strong>потери пакетов</strong>, узкие места <strong>ЦП</strong> и <strong>ГП</strong>.</li>
 </ul></div>
 <div class="slide-card"><h3>Подробнее</h3><ul>
-<li><strong>SFU (Selective Forwarding Unit):</strong> пересылает потоки участникам без тяжёлого сведения в одном месте (масштабируется лучше).</li>
-<li><strong>MCU (Multipoint Control Unit):</strong> миксует потоки «в одну картинку» — CPU-ёмко, зато простой для слабых клиентов.</li>
+<li><strong>SFU (Selective Forwarding Unit, узел избирательной пересылки):</strong> медиа-сервер принимает от каждого участника <strong>уже закодированные</strong> потоки (аудио/видео) и <strong>пересылает</strong> каждому клиенту <strong>подмножество</strong> потоков (например, активного говорящего + сетку превью). <strong>Тяжёлое перекодирование</strong> на сервере обычно <strong>не нужно</strong> — в основном <strong>маршрутизация RTP</strong> и политика «кому что слать».</li>
+<li><strong>Плюсы SFU:</strong> меньше нагрузки на <strong>ЦП сервера</strong> при большом числе участников; проще масштабировать «ширину» за счёт <strong>горизонтального</strong> добавления узлов (в реальных продуктах это уже целая подсистема).</li>
+<li><strong>Цена SFU:</strong> у каждого клиента <strong>свой декодер</strong> для каждого принимаемого потока; на <strong>слабых</strong> устройствах и при <strong>очень большой</strong> решётке участников клиент может <strong>не потянуть</strong>. Исходящий <strong>канал от сервера</strong> растёт: сервер отдаёт <strong>много индивидуальных</strong> исходящих потоков (не один общий «микс»).</li>
+<li><strong>MCU (Multipoint Control Unit, многоточечный управляющий узел):</strong> сервер <strong>сводит</strong> потоки в <strong>одну или несколько</strong> итоговых композиций (сетка «как в Zoom») — на практике это <strong>декодирование → композиинг → кодирование</strong> (или эквивалент по нагрузке), то есть <strong>очень дорогой</strong> по <strong>ЦП</strong> и <strong>памяти</strong> центр.</li>
+<li><strong>Плюсы MCU:</strong> клиент получает <strong>один</strong> «готовый» поток — проще для <strong>мобильных</strong>, ТВ-приставок, embedded; проще гарантировать <strong>одинаковый</strong> вид раскладки у всех.</li>
+<li><strong>Цена MCU:</strong> <strong>узкое горло</strong> по вычислениям; рост числа участников <strong>быстро</strong> бьёт по одному узлу; задержка может быть <strong>выше</strong>, чем у «чистого» SFU (пока кадр прошёл через миксер).</li>
+<li><strong>Связь с P2P:</strong> если участников мало и сеть позволяет, часть сценариев остаётся <strong>без</strong> медиа-сервера; SFU/MCU подключают, когда <strong>масштаб</strong>, <strong>NAT</strong>, <strong>запись</strong> или <strong>единая раскладка</strong> делают чистый mesh невыгодным.</li>
 </ul></div>
 </section>
 <section data-background-color="#1e2328">
@@ -444,14 +449,14 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, .reveal::-webkit-scrollbar,
 </section>
 <section data-background-color="#1e2328">
 <h2>Слайд 22. SFU и MCU в сравнении</h2>
-<div class="slide-main"><ul>
-<li><strong>SFU:</strong> пересылает потоки — меньше нагрузки на <strong>ЦП сервера</strong>, больше на клиентах.</li>
-<li><strong>MCU:</strong> сводит потоки в одном месте — проще слабым клиентам, <strong>дороже по ресурсам сервера</strong>.</li>
-<li>Выбор зависит от <strong>числа участников и устройств</strong>.</li>
+<div class="slide-main"><table><tr><th>Критерий</th><th><strong>SFU</strong></th><th><strong>MCU</strong></th></tr><tr><td><strong>Идея</strong></td><td>Переслать каждому <strong>свой набор</strong> исходных потоков</td><td>Свести в <strong>общую картинку/поток(и)</strong> на сервере</td></tr><tr><td><strong>ЦП сервера</strong></td><td>Ниже (маршрутизация, реже — перекодирование)</td><td>Высокий (декод + композиция + код)</td></tr><tr><td><strong>ЦП клиента</strong></td><td>Выше (несколько декодов, отрисовка сетки)</td><td>Ниже (часто один поток)</td></tr><tr><td><strong>Исходящий трафик сервера</strong></td><td>Много параллельных исходящих веток</td><td>Обычно <strong>меньше</strong> исходящих «труб» на участника</td></tr><tr><td><strong>Задержка</strong></td><td>Часто <strong>ниже</strong> (нет стадии микса)</td><td>Часто <strong>выше</strong> (буфер + этап сведения)</td></tr><tr><td><strong>Когда логичнее</strong></td><td>Много участников, «толстые» клиенты, гибкие раскладки</td><td>Слабые клиенты, жёсткая <strong>единая</strong> сетка, упрощение на приёмнике</td></tr></table>
+<ul>
+<li><strong>Гибриды:</strong> в продуктах встречаются схемы <strong>«SFU + лёгкий MCU»</strong> (например, только для записи или только для участников с особыми ограничениями).</li>
 </ul></div>
 <div class="slide-card"><h3>Подробнее</h3><ul>
-<li>В крупных звонках иногда <strong>одновременная передача нескольких уровней качества (симулькаст)</strong> — отдельная тема.</li>
-<li><strong>Связь со слайдом 6:</strong> там уже были SFU/MCU «с высоты птичьего полёта»; здесь — после WebRTC/STUN/TURN, без повторного мини-курса.</li>
+<li><strong>Симулькаст / SVC:</strong> SFU часто сочетают с <strong>несколькими слоями качества</strong> одного источника, чтобы сервер мог <strong>не перекодируя</strong> отдавать подписчику подходящий слой под канал (это не отменяет логики SFU, но усложняет <strong>сигнализацию</strong> и <strong>политику</strong> выбора потоков).</li>
+<li><strong>Запись:</strong> записать «как видел модератор» проще при <strong>MCU</strong> или отдельном <strong>композиторе</strong>; при одном SFU запись иногда делают <strong>отдельным клиентом/сервисом</strong>, подписанным на потоки.</li>
+<li><strong>Связь со слайдом 6:</strong> там — позиция в цепочке «микрофон → ухо»; здесь — <strong>после</strong> WebRTC/STUN/TURN: вы <strong>осознанно</strong> выбираете, <strong>где</strong> платить: <strong>в датацентре</strong> (MCU) или <strong>на клиентах и сети</strong> (SFU).</li>
 </ul></div>
 </section>
 <section data-background-color="#252a30">
