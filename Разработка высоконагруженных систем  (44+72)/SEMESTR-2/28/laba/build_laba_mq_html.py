@@ -315,7 +315,7 @@ out.append(
 out.append(
     """<div class="section" id="repo-link-section">
 <h2>Ссылка на репозиторий</h2>
-<div class="form-group"><label for="repo-url">Ссылка на репозиторий Git с полным кодом варианта с PostgreSQL и RabbitMQ:</label><input type="url" id="repo-url" name="repo-url" placeholder="https://github.com/..." autocomplete="url"></div>
+<div class="form-group"><label for="repo-url">Ссылка на репозиторий Git с полным кодом варианта с PostgreSQL и RabbitMQ:</label><input type="text" id="repo-url" name="repo-url" placeholder="https://github.com/... или git@github.com:..."></div>
 </div>
 """
 )

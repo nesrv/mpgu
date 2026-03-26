@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Лекция: системное проектирование потоковых приложений</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/theme/black.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<style>
+
+:root {
+  --bg-deep: #1a1d21;
+  --bg-slide-1: #252a30;
+  --bg-slide-2: #2d343a;
+  --bg-slide-3: #1e2328;
+  --acc-green: #4ade80;
+  --acc-green-dim: #22c55e;
+  --text-soft: #e2e8f0;
+  --card-edge: rgba(74, 222, 128, 0.45);
+}
+html, body, .reveal-viewport, .reveal, .reveal .slides, .reveal .slides section,
+.reveal .slide-background-content {
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+}
+html::-webkit-scrollbar, body::-webkit-scrollbar, .reveal::-webkit-scrollbar,
+.reveal .slides::-webkit-scrollbar, .reveal .slides section::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.reveal .slides {
+  width: 80% !important;
+  height: 90% !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 0 !important;
+  transform: translateX(calc(-50% + 5%)) scale(1.2) !important;
+  transform-origin: top center !important;
+}
+.reveal .slides section {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 24px 32px !important;
+  font-size: 0.95em !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  line-height: 1.5 !important;
+  text-align: center !important;
+  color: var(--text-soft) !important;
+}
+.reveal .slides section .slide-main,
+.reveal .slides section .slide-main * {
+  color: var(--text-soft);
+}
+.reveal h1 {
+  font-size: 1.65em !important;
+  margin-top: 0 !important;
+  margin-bottom: 0.5em !important;
+  color: var(--acc-green) !important;
+  text-align: center !important;
+  font-weight: 700 !important;
+}
+.reveal h2 {
+  font-size: 1em !important;
+  margin-top: 0 !important;
+  margin-bottom: 0.5em !important;
+  text-transform: none !important;
+  text-align: center !important;
+  padding-bottom: 0.4em !important;
+  border-bottom: 2px solid var(--card-edge) !important;
+  color: var(--acc-green) !important;
+  width: 100% !important;
+}
+.reveal h3 {
+  font-size: 1.05em !important;
+  margin: 0.6em 0 0.3em !important;
+  text-transform: none !important;
+  color: #86efac !important;
+  text-align: center !important;
+}
+.reveal .slides section p,
+.reveal .slides section div.slide-main,
+.reveal .slides section div.slide-card {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+  box-sizing: border-box !important;
+}
+.reveal .slides section ul,
+.reveal .slides section ol {
+  text-align: left !important;
+  margin: 0 auto !important;
+}
+.reveal .slides section li {
+  overflow-wrap: break-word !important;
+  margin-bottom: 0.4em !important;
+  list-style: none !important;
+  position: relative !important;
+  padding-left: 0.5em !important;
+}
+.reveal .slides section ul li::before {
+  content: "\25B8" !important;
+  position: absolute !important;
+  left: -1em !important;
+  color: var(--acc-green) !important;
+  font-size: 0.85em !important;
+}
+.reveal .slides section ul { padding-left: 1.5em !important; }
+.reveal p, .reveal ul, .reveal ol { font-size: 0.92em !important; }
+.reveal pre {
+  max-height: none !important;
+  overflow: hidden !important;
+  margin: 12px auto !important;
+  max-width: 95% !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--card-edge) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35) !important;
+  padding: 2px !important;
+  text-align: left !important;
+  background: rgba(0, 0, 0, 0.35) !important;
+}
+.reveal pre code {
+  font-size: 0.68em !important;
+  padding: 12px 16px !important;
+  line-height: 1.42 !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+}
+.reveal table {
+  font-size: 0.76em !important;
+  max-width: 95% !important;
+  border-collapse: collapse !important;
+  margin: 10px auto !important;
+}
+.reveal table th,
+.reveal table td {
+  border: 1px solid rgba(74, 222, 128, 0.35) !important;
+  padding: 8px 12px !important;
+}
+.reveal table th {
+  background: rgba(74, 222, 128, 0.12) !important;
+  color: var(--acc-green) !important;
+}
+.reveal code:not(pre code) {
+  color: #86efac !important;
+  background: rgba(74, 222, 128, 0.12) !important;
+  padding: 1px 6px !important;
+  border-radius: 4px !important;
+}
+.slide-card {
+  background: rgba(30, 35, 40, 0.75) !important;
+  border-radius: 12px !important;
+  padding: 18px 24px !important;
+  border-left: 5px solid var(--acc-green-dim) !important;
+  border-top: 1px solid var(--card-edge) !important;
+  margin-top: 12px !important;
+  max-width: 95% !important;
+  text-align: left !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35) !important;
+}
+.slide-card h3 { color: #86efac !important; text-align: left !important; }
+.lect-note {
+  margin-top: 14px !important;
+  padding: 12px 16px !important;
+  font-size: 0.82em !important;
+  text-align: left !important;
+  max-width: 95% !important;
+  border-radius: 8px !important;
+  background: rgba(34, 197, 94, 0.08) !important;
+  border: 1px solid var(--card-edge) !important;
+  color: #bbf7d0 !important;
+}
+.title-box {
+  background: rgba(30, 35, 40, 0.92);
+  padding: 36px 44px;
+  border: 2px solid var(--card-edge);
+  text-align: center;
+  max-width: 92%;
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+}
+.title-intro {
+  margin-top: 1rem;
+  text-align: left;
+  font-size: 0.88em;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  color: #cbd5e1;
+}
+.title-intro p { margin: 0.5em 0; }
+.reveal .mermaid {
+  background: #f1f5f9;
+  color: #111;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 10px auto;
+  max-width: 100% !important;
+  font-size: 11px !important;
+  text-align: left !important;
+  border: 1px solid var(--card-edge);
+}
+.reveal .controls { color: var(--acc-green) !important; }
+.reveal .progress span { background: var(--acc-green-dim) !important; }
+
+</style>
+<script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";mermaid.initialize({startOnLoad:false,theme:"neutral",securityLevel:"loose"});window.__mermaid=mermaid;</script>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+<section data-background-color="#1e2328"><div class="title-box"><h1 style="color:var(--acc-green)">Лекция: системное проектирование потоковых приложений</h1><div class="title-intro"><p>как проектируют <strong>распределённые системы</strong> с <strong>потоковой доставкой</strong> данных (чаты, уведомления, совместная работа пользователей, аудио- и видеоданные). Опорный набор технологий: <strong>WebSocket + RabbitMQ + фоновый обработчик (worker) + PostgreSQL</strong> (лабораторная работа по методичке).</p><p>---</p></div></div></section>
+<section data-background-color="#252a30"><h2>Карта лекции</h2><table><tr><th>Блок</th><th>Содержание</th><th>Логика в цепочке</th></tr><tr><td><strong>A</strong></td><td>Что такое системное проектирование, почему не только <strong>операции CRUD</strong>, границы курса</td><td><strong>Рамка мышления</strong> — иначе детали набора технологий «не к чему приклеить».</td></tr><tr><td><strong>B</strong></td><td>Мессенджер и видеозвонок «в целом»</td><td><strong>Продуктовая интуиция</strong> и разделение <strong>сигнализация сеанса / передача медиа</strong> до ухода в Python.</td></tr><tr><td><strong>C</strong></td><td>Telegram как масштабный пример</td><td><strong>Мотивация</strong> «как выглядит взрослая система»; сознательно без претензии на внутренности.</td></tr><tr><td><strong>D</strong></td><td>Транспорт, Python, схема сообщения, состояние, БД, наблюдаемость</td><td><strong>Инженерный базис</strong> для текстового взаимодействия <strong>в реальном времени</strong> — напрямую питает лабораторию.</td></tr><tr><td><strong>E</strong></td><td>Кодеки, WebRTC, SFU/MCU, запись</td><td><strong>Отдельная ветка по мультимедиа</strong>; при нехватке времени сокращается первым.</td></tr><tr><td><strong>F</strong></td><td>Лабораторный socket-mq: вариант 0, два экземпляра службы, БД, зачем брокер</td><td><strong>Сюжет курса</strong>: от «всё в памяти» к необходимости очереди (без жаргона AMQP на старте).</td></tr><tr><td><strong>G</strong></td><td>RabbitMQ: модель, точка обмена (<strong>exchange</strong>), Celery/Kafka, подтверждение (<strong>ack</strong>)</td><td><strong>Инструмент</strong>, который закрывает пробел из блока F.</td></tr><tr><td><strong>H</strong></td><td>Одна <strong>диаграмма последовательностей</strong>, узкие места, масштаб, <strong>безопасность</strong></td><td><strong>Второй проход</strong>: собрать F+G в одну схему; отдельно — чем рискует публичный чат в правовом поле РФ.</td></tr><tr><td><strong>I</strong></td><td>Контрольный список, литература, вопросы, связка с <code>laba-simple.md</code>, <strong>слайд 48</strong></td><td><strong>Закрепление</strong> и практика (<strong>41–46</strong>); <strong>слайд 48</strong> — <strong>сверхвысокие нагрузки</strong> в логике курса.</td></tr></table>
+<p>---</p></section>
+<section data-background-color="#252a30">
+<h2>Слайд 2. Что такое системное проектирование сегодня</h2>
+<div class="slide-main"><ul>
+<li><strong>Формально:</strong> проектирование <strong>распределённой системы</strong> под функциональные и <strong>нефункциональные</strong> требования (<strong>задержка</strong>, <strong>пропускная способность</strong>, доступность, стоимость, безопасность).</li>
+<li><strong>На собеседовании</strong> разработчик серверной части <strong>раскладывает по полочкам</strong>: БД, кэш, брокер, <strong>секционирование</strong>, компромиссы <strong>CAP</strong>.</li>
+<li><strong>В 2026+:</strong> работа <strong>в реальном времени</strong> и <strong>периферийные узлы</strong> — часть нормы; «всё в одном монолите за Nginx» — <strong>отправная точка</strong> для старта, не финал.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li><strong>Нефункциональные требования</strong> часто важнее «красивого <strong>API</strong>»: <strong>доступность 99,9%</strong>, <strong>99-й перцентиль задержки</strong>, стоимость <strong>исходящего трафика</strong>.</li>
+<li><strong>CAP</strong> (напоминание): при сетевом разделении нельзя одновременно гарантировать и <strong>полную</strong> согласованность, и <strong>полную</strong> доступность в классической формулировке — нужны осознанные <strong>компромиссы</strong> для продукта.</li>
+</ul></div>
+</section>
+<section data-background-color="#2d343a">
+<h2>Слайд 3. Почему не «просто CRUD через REST»</h2>
+<div class="slide-main"><ul>
+<li><strong>CRUD + HTTP:</strong> модель «запрос–ответ», <strong>без сохранения состояния между запросами</strong> — удобно для многих форм и каталогов.</li>
+<li><strong>Данные «здесь и сейчас»:</strong> нужна <strong>отправка с сервера по событии (push)</strong> или <strong>постоянный канал</strong>; иначе <strong>частый опрос</strong> нагружает батарею и серверную часть.</li>
+<li>Ключевые понятия: <strong>проталкивание данных</strong>, <strong>долгоживущее соединение</strong>, <strong>обратное давление</strong> (клиент и сервер не должны бесконечно накапливать данные в буферах).</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li><strong>Длинный опрос (long polling):</strong> удобен для совместимости, но по сути это «много коротких запросов в ожидании».</li>
+<li><strong>SSE:</strong> односторонний поток <strong>сервер → клиент</strong> по <strong>HTTP</strong>, простое <strong>развёртывание</strong>; нет <strong>двунаправленного обмена</strong>, как у сокета.</li>
+<li><strong>WebSocket:</strong> полный <strong>двунаправленный</strong> обмен; больше контроля и ответственности (<strong>сигналы активности</strong>, <strong>повторное подключение</strong>, формат кадров).</li>
+</ul></div>
+</section>
+<section data-background-color="#1e2328">
+<h2>Слайд 4. Границы лекции и честные упрощения</h2>
+<div class="slide-main"><ul>
+<li>Разбираем <strong>типовые решения и шаблоны</strong>, а не исходники Google Meet / Telegram.</li>
+<li>Набор примеров: <strong>Python (FastAPI)</strong>, <strong>WebSocket</strong>, <strong>RabbitMQ</strong>, <strong>Postgres</strong> — как в методичке <code>laba-simple</code>.</li>
+<li>Не углубляемся: <strong>сквозное шифрование между клиентами</strong>, <strong>собственные кодеки</strong>, <strong>глобальная сеть доставки с маршрутизацией anycast</strong> — только отсылки.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Цель — <strong>мышление</strong>, а не «скопировать архитектуру телеги».</li>
+<li>Лабораторный проект можно <strong>измерять</strong>: две вкладки, нагрузочные кнопки, две копии <strong>веб-службы</strong> за балансировщиком.</li>
+</ul></div>
+</section>
+<section data-background-color="#252a30">
+<h2>Слайд 5. Мессенджер: функции и сложность</h2>
+<div class="slide-main"><ul>
+<li><strong>Ядро:</strong> доставка, <strong>история</strong>, синхронизация между устройствами, статусы прочтения.</li>
+<li><strong>Вокруг:</strong> поиск, вложения, боты, модерация, антиспам.</li>
+<li><strong>Жёсткие места:</strong> порядок сообщений, <strong>идемпотентность</strong> отправки, работа клиента <strong>без сети</strong> (офлайн).</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Часто паттерн <strong>«оптимистичный интерфейс»</strong>: клиент показывает сообщение сразу, потом <strong>сверяется с сервером</strong>.</li>
+<li>Дубликаты: повторная отправка при обрыве сети → на сервере нужен <strong>ключ идемпотентности</strong> или дедупликация.</li>
+</ul></div>
+</section>
+<section data-background-color="#2d343a">
+<h2>Слайд 6. Видеозвонок: цепочка «с микрофона в ухо»</h2>
+<div class="slide-main"><ul>
+<li><strong>Упрощённо:</strong> <code>захват → кодирование → (сеть) → декодирование → отображение</code>.</li>
+<li>Посередине: <strong>медиа-сервер</strong> (SFU/MCU) или <strong>прямое соединение участников (P2P)</strong>, где возможно.</li>
+<li>Враги качества: <strong>джиттер (неравномерность задержек)</strong>, <strong>потери пакетов</strong>, узкие места <strong>ЦП</strong> и <strong>ГП</strong>.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li><strong>SFU (Selective Forwarding Unit):</strong> пересылает потоки участникам без тяжёлого сведения в одном месте (масштабируется лучше).</li>
+<li><strong>MCU (Multipoint Control Unit):</strong> миксует потоки «в одну картинку» — CPU-ёмко, зато простой для слабых клиентов.</li>
+</ul></div>
+</section>
+<section data-background-color="#1e2328">
+<h2>Слайд 7. Сигнализация сеанса и медиапоток — две разные дороги</h2>
+<div class="slide-main"><ul>
+<li><strong>Сигнализация (согласование сеанса):</strong> обмен SDP/ICE, выбор кодеков — часто <strong>HTTP/WebSocket/gRPC</strong>.</li>
+<li><strong>Медиа-плоскость:</strong> RTP/WebRTC, <strong>UDP</strong>, другие тайминги и потери.</li>
+<li>Типичная ошибка проектирования: «пихаем видео бинарём в тот же JSON что и REST».</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li><strong>STUN:</strong> узнать публичные адреса для установки соединения.</li>
+<li><strong>TURN:</strong> ретрансляция, когда прямой путь невозможен (строгий NAT, файрвол) — <strong>деньги и нагрузка</strong>.</li>
+</ul></div>
+</section>
+<section data-background-color="#252a30">
+<h2>Слайд 8. Где здесь «стриминг» в широком смысле</h2>
+<div class="slide-main"><ul>
+<li><strong>Мультимедиа:</strong> непрерывный поток кадров/выборок; <strong>адаптивный битрейт (ABR)</strong> под состояние сети.</li>
+<li><strong>Чат:</strong> поток <strong>событий</strong> — <code>message</code>, <code>typing</code>, <code>read_receipt</code>, <code>reaction</code>.</li>
+<li>Общее: <strong>временная ось</strong> и <strong>согласованность восприятия</strong> пользователем.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Для событий важен <strong>частичный порядок</strong> (<strong>в пределах комнаты / пользователя</strong>), не всегда нужен <strong>глобальный</strong> порядок всех событий в системе.</li>
+<li>Для видео важнее <strong>задержка</strong> и <strong>плавность</strong>, чем «каждый пиксель идеален».</li>
+</ul></div>
+</section>
+<section data-background-color="#2d343a">
+<h2>Слайд 9. Зачем мессенджер-масштаба в программе лекции</h2>
+<div class="slide-main"><ul>
+<li>Плюс: у всех есть интуиция продукта; хороший <strong>пример для собеседования</strong> (секционирование, работа без сети, безопасность).</li>
+<li>Минус: публичные детали неполные — избегаем галлюцинаций «как точно у них внутри».</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Учимся различать <strong>маркетинговое описание</strong> и <strong>инженерно правдоподобную схему</strong> (<strong>плоскость данных</strong> и <strong>плоскость управления</strong>).</li>
+</ul></div>
+</section>
+<section data-background-color="#1e2328">
+<h2>Слайд 10. Мультиплатформенный клиент и облако</h2>
+<div class="slide-main"><ul>
+<li>Много клиентов → <strong>единая семантика</strong> протокола + локальный кэш.</li>
+<li>Ожидание пользователя: <strong>интерфейс отзывчив сразу</strong>, синхронизация идёт в фоне.</li>
+<li>На сервере: учёт <strong>устройств</strong>, сессий, возможно <strong>разделов данных (шардов)</strong> по пользователям/диалогам.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li><strong>Кэш на периферии</strong> и <strong>сеть доставки контента (CDN)</strong> для статики (стикеры, медиафайлы) и отдельно <strong>динамический</strong> трафик сообщений.</li>
+</ul></div>
+</section>
+<section data-background-color="#252a30">
+<h2>Слайд 11. Шифрование и наблюдаемость</h2>
+<div class="slide-main"><ul>
+<li><strong>MTProto / TLS:</strong> уровни защиты; для проектировщика важно: <strong>персональные данные и содержимое сообщений</strong> не утекают в логи без политики.</li>
+<li><strong>Наблюдаемость</strong> при шифровании: меньше «смотрим в тело», больше <strong>метаданные и метрики</strong>.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li><strong>Сквозное шифрование от клиента к клиенту</strong> меняет модель: сервер <strong>не читает</strong> текст — другие механизмы модерации и поиска.</li>
+</ul></div>
+</section>
+<section data-background-color="#2d343a">
+<h2>Слайд 12. Рост и секционирование данных</h2>
+<div class="slide-main"><ul>
+<li>Рост базы и трафика → <strong>партиционирование</strong> по ключу (user_id, chat_id, регион).</li>
+<li><strong>Федерация/кластеры</strong> по географии: задержка и правовые рамки.</li>
+<li>«Один Postgres навсегда» — редко стратегия <strong>планетарного</strong> масштаба.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Часто связка: <strong>оперативные транзакции (OLTP)</strong> для «горячих» данных + <strong>поисковый движок</strong> / аналитическое хранилище.</li>
+</ul></div>
+</section>
+<section data-background-color="#1e2328">
+<h2>Слайд 13. Вывод: Telegram и учебный проект</h2>
+<div class="slide-main"><ul>
+<li>Telegram = продукт + сеть + безопасность + эксплуатация.</li>
+<li>Лабораторная = <strong>учебный срез:</strong> сокет, брокер, фоновый обработчик, БД — чтобы <strong>на практике увидеть узкие места</strong>.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Ценность лабораторной: воспроизвести <strong>потерю сообщений</strong> или <strong>рассинхрон</strong> при горизонтальном масштабировании без брокера и схемы <strong>«публикация — подписка»</strong>.</li>
+</ul></div>
+</section>
+<section data-background-color="#252a30">
+<h2>Слайд 14. Транспортный выбор</h2>
+<div class="slide-main"><table><tr><th>Механизм</th><th>Направление</th><th>Плюсы</th><th>Минусы</th></tr><tr><td>Длинный опрос</td><td>клиент тянет</td><td>просто</td><td>нагрузка, <strong>задержка</strong></td></tr><tr><td>SSE</td><td>сервер → клиент</td><td>удобен с <strong>HTTP</strong></td><td>нет <strong>двунаправленности</strong></td></tr><tr><td>WebSocket</td><td>оба направления</td><td>гибко</td><td>свои протоколы и прокси</td></tr></table></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>За <strong>корпоративными прокси</strong> WebSocket иногда болезнен — нужны политики и <strong>проверки работоспособности</strong>.</li>
+<li><strong>Пульс соединения (heartbeat / ping)</strong> — отдельная дисциплина, иначе остаются «висящие» соединения.</li>
+</ul></div>
+</section>
+<section data-background-color="#2d343a">
+<h2>Слайд 15. Экосистема Python</h2>
+<div class="slide-main"><ul>
+<li><strong>FastAPI + Starlette:</strong> асинхронность, удобные <strong>обработчики WebSocket</strong>.</li>
+<li><strong>Django Channels:</strong> если мир уже Django; иная <strong>концептуальная модель</strong>.</li>
+<li><strong>aiohttp:</strong> ближе к «ручному» асинхронному <strong>циклу событий</strong>.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Выбор = <strong>команда, подбор людей и развёртывание</strong>, а не «кто круче на синтетическом тесте».</li>
+<li>В лабе: шаблоны Jinja2 + <strong>htmx-ext-ws</strong> — минимум JS на клиенте.</li>
+</ul></div>
+</section>
+<section data-background-color="#1e2328">
+<h2>Слайд 16. Сообщение как контракт</h2>
+<div class="slide-main"><ul>
+<li>Поля: автор, комната, текст, время, опционально <strong>идентификатор сообщения на стороне клиента</strong> (<code>client_msg_id</code>) для идемпотентности.</li>
+<li><strong>Версия схемы:</strong> сервер и клиент должны понимать расширения (<code>v1</code>, <code>v2</code>).</li>
+<li>Антипаттерн: «распарсим что пришло» без валидации — риск <strong>известных уязвимостей (CVE)</strong> и аварийных завершений.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Для JSON — <strong>явные</strong> дефолты; для продвинутого — <strong>protobuf / pydantic</strong> с миграциями.</li>
+</ul></div>
+</section>
+<section data-background-color="#252a30">
+<h2>Слайд 17. Где жить состоянию комнаты</h2>
+<div class="slide-main"><ul>
+<li><strong>Словарь комнат в оперативной памяти</strong> процесса: быстро, но:</li>
+<li>перезапуск = пусто;</li>
+<li>второй экземпляр службы = <strong>другая</strong> память → <strong>широковещательная рассылка</strong> не видит чужие сокеты.</li>
+<li>Выходы: <strong>«липкие» сеансы</strong> (временный обход), <strong>общая шина «публикация — подписка»</strong> (Redis, брокер), <strong>единая служба соединений</strong>.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>На собеседовании часто спрашивают: «как чат масштабируется горизонтально» — ответ без <strong>общего распределённого слоя</strong> <strong>неполный</strong>.</li>
+</ul></div>
+</section>
+<section data-background-color="#2d343a">
+<h2>Слайд 18. Хранилище для истории</h2>
+<div class="slide-main"><ul>
+<li><strong>Транзакции (OLTP):</strong> строка сообщения, индексы по <code>(room_id, created_at)</code>.</li>
+<li>Тяжёлые вложения — <strong>объектное хранилище</strong> (совместимое с <strong>S3</strong>), в БД — метаданные и ссылки.</li>
+<li>Для ленты большой длины — пагинация и <strong>ключи страницы (курсоры)</strong>, а не смещение <strong>OFFSET</strong> на миллиарде строк.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li><strong>Упрощённое разделение команд и запросов (CQRS):</strong> отдельная модель «лента для чтения» и «запись» — если нагрузка чтения доминирует.</li>
+</ul></div>
+</section>
+<section data-background-color="#1e2328">
+<h2>Слайд 19. Наблюдаемость в режиме реального времени</h2>
+<div class="slide-main"><ul>
+<li>Метрики: <strong>число активных WebSocket</strong>, <strong>частота переподключений</strong>, <strong>глубина очереди брокера</strong>, <strong>отставание подписчика</strong>.</li>
+<li>Логи: <strong>сквозной идентификатор</strong> <code>trace_id</code> через HTTP и WebSocket (сложнее, но полезно).</li>
+<li><strong>Оповещения:</strong> рост ответов <strong>5xx</strong> при <strong>обновлении протокола</strong>, рост времени <strong>фиксации транзакции</strong> в БД.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Для мультимедиа: <strong>потери пакетов</strong>, <strong>время кругового пути (RTT)</strong>, счётчик <code>frames_dropped</code>.</li>
+</ul></div>
+</section>
+<section data-background-color="#252a30">
+<h2>Слайд 20. Кодеки и контейнеры</h2>
+<div class="slide-main"><ul>
+<li><strong>Видео:</strong> H.264/VP9/AV1 — баланс <strong>совместимость / битрейт / нагрузка на ЦП</strong>.</li>
+<li><strong>Аудио:</strong> Opus — де-факто для WebRTC-голоса.</li>
+<li><strong>Контейнер</strong> (.mp4, WebM) и <strong>транспорт RTP</strong> — разные уровни абстракции.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Кодирование <strong>на лету</strong> жрёт батарею и ядра — в мобильных продуктах это бюджетируется отдельно.</li>
+</ul></div>
+</section>
+<section data-background-color="#2d343a">
+<h2>Слайд 21. WebRTC кратко</h2>
+<div class="slide-main"><ul>
+<li>Идея: <strong>прямое соединение участников</strong>, кандидаты <strong>ICE</strong>, попытка прямого пути.</li>
+<li>Если прямой путь невозможен — <strong>TURN</strong> как «посредник».</li>
+<li><strong>SFU</strong> на сервере маршрутизирует потоки участников.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Задержка: кодек + <strong>буфер неравномерности задержек (jitter buffer)</strong>; «как в кино без буфера» в реальном звонке нельзя.</li>
+</ul></div>
+</section>
+<section data-background-color="#1e2328">
+<h2>Слайд 22. SFU и MCU в сравнении</h2>
+<div class="slide-main"><ul>
+<li><strong>SFU:</strong> пересылает потоки — меньше нагрузки на <strong>ЦП сервера</strong>, больше на клиентах.</li>
+<li><strong>MCU:</strong> сводит потоки в одном месте — проще слабым клиентам, <strong>дороже по ресурсам сервера</strong>.</li>
+<li>Выбор зависит от <strong>числа участников и устройств</strong>.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>В крупных звонках иногда <strong>одновременная передача нескольких уровней качества (симулькаст)</strong> — отдельная тема.</li>
+<li><strong>Связь со слайдом 6:</strong> там уже были SFU/MCU «с высоты птичьего полёта»; здесь — после WebRTC/STUN/TURN, без повторного мини-курса.</li>
+</ul></div>
+</section>
+<section data-background-color="#252a30">
+<h2>Слайд 23. Запись и видео по запросу</h2>
+<div class="slide-main"><ul>
+<li>Запись конференции — отдельный <strong>конвейер обработки</strong>: захват, <strong>мультиплексирование</strong>, хранилище, права доступа.</li>
+<li>Не смешивать с <strong>живой</strong> трансляцией без расчёта ресурсов.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Юридически: согласие на запись, хранение в регионе, <strong>срок хранения записей</strong>.</li>
+</ul></div>
+</section>
+<section data-background-color="#2d343a">
+<h2>Слайд 24. Постановка</h2>
+<div class="slide-main"><ul>
+<li>Клиент: браузер, HTMX, WebSocket.</li>
+<li>Сервер <code>web</code>: страницы, приём WS, публикация в <strong>RabbitMQ</strong>.</li>
+<li><code>worker</code>: запись в <strong>PostgreSQL</strong>, публикация <strong>«persisted»</strong>.</li>
+<li><code>web</code> снова потребляет <strong>persisted</strong> и шлёт HTML в сокеты комнаты.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Это <strong>минимально жизнеспособная</strong> схема: отделить запись в БД от <strong>разветвлённой рассылки</strong> по сокетам.</li>
+</ul></div>
+</section>
+<section data-background-color="#1e2328">
+<h2>Слайд 25. Вариант 0: без RabbitMQ</h2>
+<div class="slide-main"><ul>
+<li>Сообщения в <strong>памяти процесса</strong>, <code>WSManager</code> рассылает в комнате.</li>
+<li>Плюс: мало движущихся частей.</li>
+<li>Минус: нет <strong>долговечности</strong>, нет общей очереди между сервисами, боль при <strong>нескольких экземплярах веб-службы</strong>.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Демонстрация из методички: два экземпляра веб-службы за <strong>последовательным перебором (round-robin)</strong> → часть клиентов <strong>не получает</strong> рассылку.</li>
+</ul></div>
+</section>
+<section data-background-color="#252a30">
+<h2>Слайд 26. Две вкладки и два экземпляра службы</h2>
+<div class="slide-main"><ul>
+<li>Один процесс: обе вкладки счастливы (если не упёрлись в CPU).</li>
+<li>Два процесса без <strong>общего состояния</strong>: вкладка на «чужом» экземпляре <strong>не в комнате</strong> того же <code>manager</code>.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Это не «баг клиентской части» — это <strong>нехватка общего слоя состояния и событий</strong>.</li>
+</ul></div>
+</section>
+<section data-background-color="#2d343a">
+<h2>Слайд 27. Зачем PostgreSQL и worker</h2>
+<div class="slide-main"><ul>
+<li><strong>Долговечность</strong> и запросы к истории (в учебной версии историю в шаблон можно не тянуть — но данные в БД есть).</li>
+<li><strong>Разделение нагрузки:</strong> тяжёлая транзакция не обязана блокировать <strong>цикл событий</strong> при рассылке по WebSocket (хотя в маленькой лабе различие тоньше).</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Паттерн <strong>исходящая очередь (outbox)</strong> и строгая упорядоченность — следующий уровень зрелости (здесь — только упоминание).</li>
+</ul></div>
+</section>
+<section data-background-color="#1e2328">
+<h2>Слайд 28. Роль брокера</h2>
+<div class="slide-main"><ul>
+<li><strong>Буфер</strong> между «приняли сообщение» и «обработали».</li>
+<li><strong>Ослабление связности:</strong> веб-служба и обработчик масштабируются независимо (в пределах возможностей очереди).</li>
+<li>Политики при перегрузе: рост <strong>числа подписчиков</strong>, <strong>максимальная длина очереди</strong>, <strong>очередь отложенных сообщений (DLQ)</strong>, отбрасывание по приоритетам.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Брокер <strong>не заменяет</strong> БД: речь об <strong>асинхронном соглашении</strong> между частями системы, а не о вечном хранении.</li>
+</ul></div>
+</section>
+<section data-background-color="#252a30">
+<h2>Слайд 29. Модель AMQP в лаборатории</h2>
+<div class="slide-main"><ul>
+<li><strong>Издатель (producer)</strong> публикует в <strong>точку обмена (exchange)</strong>.</li>
+<li><strong>Очередь</strong> получает сообщения по <strong>привязке (binding)</strong> (<strong>ключ маршрутизации</strong>).</li>
+<li><strong>Подписчик (consumer)</strong> читает из очереди; <strong>подтверждение (ack)</strong> фиксирует успех.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>В проекте: обмен типа <strong>topic</strong>, две ключевые дорожки: <code>created</code> и <code>persisted</code>.</li>
+</ul></div>
+</section>
+<section data-background-color="#2d343a">
+<h2>Слайд 30. Типы точки обмена (шпаргалка)</h2>
+<div class="slide-main"><ul>
+<li><strong>direct:</strong> точное совпадение <strong>ключа маршрутизации</strong>.</li>
+<li><strong>fanout:</strong> всем привязанным очередям (широковещание, например логов).</li>
+<li><strong>topic:</strong> шаблоны вроде <code>*.order.*</code> — гибко при эволюции событий.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Типичная ошибка — «всё в одну очередь по умолчанию без ключей» и потом удивление, что все <strong>подписчики</strong> получают лишнее.</li>
+</ul></div>
+</section>
+<section data-background-color="#1e2328">
+<h2>Слайд 31. RabbitMQ и Celery — разные полки в магазине</h2>
+<div class="slide-main"><ul>
+<li><strong>RabbitMQ:</strong> инфраструктурный <strong>брокер сообщений</strong>.</li>
+<li><strong>Celery:</strong> библиотека <strong>распределённых задач</strong> (обработчики, брокер как транспорт, <strong>повторы</strong>, <strong>планировщик beat</strong>).</li>
+<li>Корректно: «Celery <strong>использует</strong> RabbitMQ / Redis», не «Celery против Rabbit».</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Celery удобен для <strong>очереди фоновых работ</strong> (отчёт, письмо, изменение размера изображения).</li>
+<li>В лабе: вручную <strong>aio-pika</strong> — проще <strong>наглядно увидеть</strong> обменники и очереди.</li>
+</ul></div>
+</section>
+<section data-background-color="#252a30">
+<h2>Слайд 32. RabbitMQ и Kafka в сравнении (кратко)</h2>
+<div class="slide-main"><ul>
+<li><strong>Kafka:</strong> распределённый <strong>журнал</strong> с <strong>секциями (партициями)</strong>, долгое <strong>хранение записей в логе</strong>, «перемотка» чтения.</li>
+<li><strong>RabbitMQ:</strong> очереди, сложные <strong>схемы маршрутизации</strong>, классические брокерные сценарии.</li>
+<li>Вопрос выбора: <strong>гарантии доставки и чтения</strong>, задержка, хранение, состав команды.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>«Пишем <strong>хранение событий (event sourcing)</strong> надолго» — чаще ближе <strong>Kafka</strong>; «<strong>задачи и очереди команд</strong>» — чаще <strong>RabbitMQ</strong>.</li>
+</ul></div>
+</section>
+<section data-background-color="#2d343a">
+<h2>Слайд 33. Доставка и отказы</h2>
+<div class="slide-main"><ul>
+<li><strong>Ручное подтверждение (manual ack):</strong> подтверждаем после обработки.</li>
+<li><strong>Повторная постановка в очередь:</strong> при временной ошибке — риск <strong>«ядовитого» сообщения</strong>, которое крутится бесконечно.</li>
+<li><strong>Очередь отложенных (DLQ):</strong> отложить проблемные сообщения для разбора.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>В учебном коде <code>requeue=True</code> — осознанное упрощение; в <strong>промышленной эксплуатации</strong> нужна <strong>политика</strong> и <strong>лимит попыток</strong>.</li>
+</ul></div>
+</section>
+<section data-background-color="#1e2328">
+<h2>Слайд 34. Практика: Docker и клиент</h2>
+<div class="slide-main"><ul>
+<li><code>docker-compose</code>: сервис <code>rabbitmq</code>, порты <strong>5672</strong> (AMQP), <strong>15672</strong> (<strong>веб-панель управления</strong>).</li>
+<li>Подключение: <code>amqp://user:pass@host:5672/</code></li>
+<li>В коде: <strong>объявление (declare)</strong> обменников, очередей и привязок при старте (как в <code>app/mq.py</code>).</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Учётная запись <strong>guest/guest</strong> вне <strong>localhost</strong> — обычно только для разработки; в <strong>промышленной среде</strong> — отдельный <strong>виртуальный хост</strong>, пользователь и <strong>списки прав доступа (ACL)</strong>.</li>
+</ul></div>
+</section>
+<section data-background-color="#252a30">
+<h2>Слайд 35. Поток данных: путь сообщения в лабораторном наборе служб</h2>
+<div class="slide-main"><pre class="mermaid">sequenceDiagram
+  participant B as Браузер
+  participant W as web (FastAPI)
+  participant Q as RabbitMQ
+  participant K as worker
+  participant D as PostgreSQL
+
+  B-&gt;&gt;W: JSON по WebSocket (форма)
+  W-&gt;&gt;Q: публикация chat.message.created
+  Q-&gt;&gt;K: приём из очереди
+  K-&gt;&gt;D: INSERT
+  K-&gt;&gt;Q: публикация chat.message.persisted
+  Q-&gt;&gt;W: приём persisted
+  W-&gt;&gt;B: рассылка HTML в комнату</pre></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Здесь <strong>лабораторный контур (F)</strong> и <strong>модель брокера (G)</strong> собраны в <strong>одну цепочку</strong>: повторите схему от руки и по шагам проговорите, что происходит между браузером, веб-службой, очередью, обработчиком и БД — так проще закрепить, а не зубрить картинку с экрана.</li>
+<li>Отдельно существует <strong>POST</strong> <code>/rooms/.../messages</code> для интеграционных скриптов (<code>ws_check.py</code>).</li>
+</ul></div>
+</section>
+<section data-background-color="#2d343a">
+<h2>Слайд 36. Два события — зачем</h2>
+<div class="slide-main"><ul>
+<li><strong>Создано (created):</strong> «контент принят в систему», можно строить <strong>интерфейс «в полёте»</strong>.</li>
+<li><strong>Сохранено (persisted):</strong> «запись в БД зафиксирована», можно показывать <strong>эталонное время и идентификатор</strong>.</li>
+<li>Альтернатива: один этап — проще, но хуже для <strong>отказоустойчивости</strong> и аудита.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>В продвинутых схемах — <strong>сага (saga)</strong> / <strong>исходящая очередь (outbox)</strong>; в лабораторной — учебное разделение.</li>
+</ul></div>
+</section>
+<section data-background-color="#1e2328">
+<h2>Слайд 37. Узкие места этого стека</h2>
+<div class="slide-main"><ul>
+<li><strong>Разветвление «один ко многим»:</strong> много сокетов в комнате — линейный обход, нужен <strong>верхний предел</strong> размера сообщения.</li>
+<li><strong>БД:</strong> пиковая запись; индексы и пул соединений.</li>
+<li><strong>Брокер:</strong> глубина очереди при медленном <strong>обработчике</strong>.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>«Добавить экземпляров веб-службы» без общей шины <strong>«публикация — подписка»</strong> <strong>не</strong> ускорит доставку в одной комнате между <strong>узлами</strong>.</li>
+</ul></div>
+</section>
+<section data-background-color="#252a30">
+<h2>Слайд 38. Как масштабировать мысленно</h2>
+<div class="slide-main"><ul>
+<li>Вариант А: <strong>«липкое» закрепление</strong> по комнате/IP — быстро, но несимметрично при падении <strong>узла</strong>.</li>
+<li>Вариант B: <strong>«публикация — подписка»</strong> (Redis Streams / Kafka / отдельный обмен на комнату — осторожно) для синхронизации экземпляров веб-службы.</li>
+<li>Вариант C: выделенный <strong>шлюз соединений</strong>.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Лаборатория как <strong>учебный полигон</strong>: попробовать вариант А и осознать ограничения — полезно.</li>
+</ul></div>
+</section>
+<section data-background-color="#2d343a">
+<h2>Слайд 39. Безопасность: базовый набор мер</h2>
+<div class="slide-main"><ul>
+<li><strong>TLS</strong> на публичной границе; <code>wss://</code> за прокси с корректными заголовками <strong>перехода на WebSocket</strong>.</li>
+<li><strong>Авторизация комнат</strong> (в учебном проекте часто нет — сознательно).</li>
+<li><strong>Ограничение частоты запросов</strong> на HTTP/WebSocket; закрытые порты БД и брокера от интернета.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Рекомендации <strong>OWASP</strong> для WebSocket: проверка <strong>источника (origin)</strong>, защита от <strong>злоупотребления</strong> длинными сообщениями.</li>
+</ul></div>
+</section>
+<section data-background-color="#1e2328">
+<h2>Слайд 40. Публичный чат в РФ: Роскомнадзор и мессенджеры (контекст для вашего проекта)</h2>
+<div class="slide-main"><ul>
+<li><strong>Локальная лаба / закрытая группа</strong> и <strong>открытый в интернете сервис</strong> — разный профиль риска; слайд про второе.</li>
+<li><strong>Не юридическая консультация:</strong> при реальном запуске — <strong>юрист</strong> и актуальные НПА; нормы менялись и продолжают уточняться.</li>
+<li><strong>Персональные данные (152-ФЗ):</strong> если есть аккаунты, профили, логи с ФИО/телефоном/e-mail — нужны правовые основания, <strong>политика</strong>, часто <strong>локализация</strong> и меры защиты; учёт <strong>детей</strong> отдельный красный флаг.</li>
+<li><strong>Организация распространения информации в сети «Интернет»:</strong> при признаках <strong>публичного</strong> обмена сообщениями (широкий круг лиц, характер сервиса) возможны обязанности <strong>уведомительного / иного порядка</strong> в отношении Роскомнадзора — <strong>пороги и критерии</strong> смотреть по действующим статьям и разъяснениям, не «угадать по аналогии с Telegram».</li>
+<li><strong>Исполнение требований госорганов:</strong> вплоть до <strong>блокировок</strong>, ограничения доступа к отдельным страницам/ресурсам; у крупных мессенджеров отдельная история с <strong>зарубежными</strong> операторами и требованиями к <strong>хранению/доступу</strong> к переписке — это показывает, что <strong>политика + техника</strong> неразделимы.</li>
+<li><strong>Связь с архитектурой лабы:</strong> у вас уже есть <strong>PostgreSQL</strong> с текстами сообщений — при публичном сервисе это перестаёт быть «просто учебной таблицей»: нужны <strong>ретеншн</strong>, доступы, журналирование по политике, иногда <strong>удаление по требованию субъекта ПДн</strong>.</li>
+<li><strong>Практический вывод:</strong> перед <strong>выводом сервиса на публичный домен</strong> осознанно решите: это <strong>демонстрация</strong>, <strong>закрытый пилот</strong> или <strong>продукт</strong> — от ответа зависит объём <strong>соответствия нормам и требованиям регуляторов</strong>.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Сравнение с <strong>Max</strong>, <strong>VK</strong>, иностранными мессенджерами на слайде <strong>не</strong> для политики, а чтобы понять: у крупных операторов отдельные <strong>юридические и инженерные подразделения</strong> именно под исполнение российского регулирования и <strong>списков блокировок</strong>.</li>
+<li>Инженеру полезно знать существование <strong>реестров</strong> и <strong>требований к идентификации пользователей</strong> в отдельных сценариях — даже если реализацию заказывает не вы.</li>
+</ul></div>
+</section>
+<section data-background-color="#252a30">
+<h2>Слайд 41. Чек-лист: что полезно уметь объяснить словами</h2>
+<div class="slide-main"><ul>
+<li>Объяснить на примере звонка разницу между <strong>сигнализацией сеанса</strong> и <strong>медиапотоком</strong>.</li>
+<li>Нарисовать <strong>путь сообщения</strong> в лабе от браузера до БД и обратно в сокет.</li>
+<li>Сформулировать, почему <strong>хранение только в оперативной памяти процесса</strong> ломается при горизонтальном масштабе без общего слоя.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Плюс: назвать, <strong>когда</strong> нужен брокер, а когда — <strong>очередь задач Celery</strong>.</li>
+</ul></div>
+</section>
+<section data-background-color="#2d343a">
+<h2>Слайд 42. Литература и документация (конкретика)</h2>
+<div class="slide-main"><ul>
+<li>Имеет смысл открыть <strong>после пары</strong> (в этом порядке не обязательно проходить всё подряд):</li>
+</ul>
+<table><tr><th>Тема</th><th>Куда смотреть</th></tr><tr><td>RabbitMQ с нуля</td><td>Официальные разделы <strong>«Быстрый старт»</strong> и <strong>учебные руководства</strong> на <a href="https://www.rabbitmq.com/documentation.html" target="_blank" rel="noopener">rabbitmq.com/documentation</a></td></tr><tr><td>AMQP / обменники</td><td>В той же документации — разделы про <strong>обменники, очереди, привязки</strong></td></tr><tr><td>Клиент Python async</td><td><a href="https://aio-pika.readthedocs.io/" target="_blank" rel="noopener">aio-pika</a> — подключение, объявление сущностей, публикация, приём</td></tr><tr><td>WebSocket в FastAPI</td><td>Документация Starlette/FastAPI по <code>WebSocket</code>, жизненный цикл, закрытие при ошибке</td></tr><tr><td>WebRTC (если углубились в блок E)</td><td><a href="https://webrtc.org/" target="_blank" rel="noopener">webrtc.org</a> + статьи про ICE/STUN/TURN</td></tr><tr><td>Хранилища и потоки</td><td>Kleppmann — *Designing Data-Intensive Applications* (главы про репликацию и потоки событий как абстракцию)</td></tr></table></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li><strong>Не</strong> начинать с «чтения всего Kafka» до понимания своей лабораторной очереди.</li>
+<li>Полезные термины для самопроверки: <strong>идемпотентный подписчик</strong>, <strong>доставка «хотя бы один раз» (at-least-once)</strong>, <strong>обратное давление</strong>, <strong>очередь отложенных сообщений (dead-letter)</strong>.</li>
+</ul></div>
+</section>
+<section data-background-color="#1e2328">
+<h2>Слайд 43. Вопросы, с которыми вас встретят (собес / зачёт)</h2>
+<div class="slide-main"><ul>
+<li>Формулировка вопроса → <strong>о чём раскрыть ответ</strong> одной-двумя фразами:</li>
+</ul>
+<ol>
+<li><strong>«Почему для чата не только REST?»</strong> — <strong>проталкивание</strong>, <strong>долгоживущий канал</strong>, сравнить <strong>опрос / SSE / WebSocket</strong> коротко по каждому.</li>
+<li><strong>«Как масштабировать сервер с WebSocket горизонтально?»</strong> — комнаты <strong>в памяти одного процесса</strong> ломаются; нужны <strong>«липкие» сеансы</strong> <strong>или</strong> общая шина <strong>«публикация — подписка»</strong> (Redis/Kafka) <strong>или</strong> отдельный <strong>шлюз</strong>.</li>
+<li><strong>«Чем брокер полезен между веб-службой и обработчиком?»</strong> — буфер, <strong>ослабление связности</strong>, разная скорость обработки пиков; брокер <strong>не заменяет</strong> БД.</li>
+<li><strong>«RabbitMQ или Kafka?»</strong> — не догма: очередь и маршрутизация <strong>против</strong> распределённого журнала и долгого хранения; от <strong>соглашений об уровне сервиса</strong> и команды.</li>
+<li><strong>«Чем Celery отличается от RabbitMQ?»</strong> — библиотека задач <strong>против</strong> брокера; Celery может использовать Rabbit как <strong>транспорт</strong>.</li>
+<li><strong>«Что такое подтверждение (ack) и зачем ручное ack?»</strong> — подтверждение <strong>после</strong> обработки; без политики — потери или бесконечная <strong>повторная постановка</strong> (<strong>«ядовитое» сообщение</strong>).</li>
+</ol></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Ответ «просто добавим ещё один контейнер <strong>веб-службы</strong>» без учёта <strong>где живут сокеты</strong> — типичный провал; на слайде отметить галочкой.</li>
+</ul></div>
+</section>
+<section data-background-color="#252a30">
+<h2>Слайд 44. Практический чек-лист по репозиторию (лаба)</h2>
+<div class="slide-main"><ul>
+<li>Контрольный список по шагам из <code>laba-simple.md</code>:</li>
+<li><strong>Инфраструктура:</strong> <code>docker compose up</code> — в <code>docker compose ps</code> есть <code>postgres</code>, <code>rabbitmq</code>, <code>web</code>, <code>worker</code>; <strong>веб-панель RabbitMQ</strong> (часто <code>:15672</code>).</li>
+<li><strong>Чаты в браузере:</strong> две вкладки <code>/rooms/room-1</code>, сообщение видно в обеих; инструменты разработчика → сеть → канал <strong>WebSocket</strong>.</li>
+<li><strong>Нагрузка:</strong> кнопки «100 / 1000» — смотреть глубину очередей и время отклика (методичка, раздел про нагрузку).</li>
+<li><strong>Интеграция без pytest:</strong> <code>python tests/ws_check.py</code> при поднятом <strong>наборе контейнеров</strong> — два сокета и запрос <strong>POST</strong> (см. §6 методички).</li>
+<li><strong>Непрерывная интеграция:</strong> <code>pytest</code> + <code>tests/test_health.py</code> при отправке в ветку <code>master</code>; зачем там подмена зависимостей (<strong>monkeypatch</strong>) — кратко повторить.</li>
+<li><strong>Типичный сбой:</strong> обработчик не запущен — сообщения «застревают» или клиент не получает отметку <code>persisted</code>; куда смотреть: <code>docker compose logs worker</code>, очереди.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Связка <strong>§5 → §6 → §8</strong> методички — единый сценарий от ручной проверки до <strong>сценариев GitHub Actions</strong>.</li>
+</ul></div>
+</section>
+<section data-background-color="#2d343a">
+<h2>Слайд 45. Антипаттерны в режиме реального времени и в очередях (чего избегать)</h2>
+<div class="slide-main"><ul>
+<li><strong>Постоянное «липкое» закрепление сеанса</strong> как единственный способ масштаба — при падении <strong>узла</strong> теряем часть комнат; <strong>запасной план</strong> обязателен.</li>
+<li><strong>Логировать целиком все кадры WebSocket</strong> с персональными данными — риск по <strong>GDPR</strong> и утечкам; логировать <strong>метаданные</strong> и <strong>сквозной идентификатор корреляции</strong>.</li>
+<li><strong>guest/guest на RabbitMQ в интернете</strong> — открытая дверь; отдельный пользователь, <strong>межсетевой экран</strong>, <strong>TLS</strong>.</li>
+<li><strong>Нет ограничения размера сообщения</strong> — один клиент может <strong>исчерпать память</strong>; настройки <code>max_message_size</code> / <strong>nginx</strong> / приложение.</li>
+<li><strong>Повторная постановка в очередь без счётчика попыток</strong> — <strong>«ядовитое» сообщение</strong> крутится вечно; в <strong>промышленной среде</strong> — <strong>очередь отложенных (DLQ)</strong> или <strong>лимит повторов</strong>.</li>
+<li><strong>Один экземпляр веб-службы «в голове»</strong> при проектировании — забывают, что <code>WSManager</code> <strong>сам по себе</strong> не распределяется между процессами.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Связь с лабораторной: вариант 0 <strong>намеренно</strong> демонстрирует проблему <strong>состояния в памяти</strong> — это особенность обучения, не «ошибка кода».</li>
+</ul></div>
+</section>
+<section data-background-color="#1e2328">
+<h2>Слайд 46. Куда развивать учебный проект (дорожная карта)</h2>
+<div class="slide-main"><ul>
+<li>Ниже — <strong>ориентиры</strong>, а не обязательный список «всё сразу»; достаточно понимать <strong>порядок</strong> и смысл шагов.</li>
+</ul>
+<table><tr><th>Улучшение</th><th>Зачем</th></tr><tr><td><strong>История в интерфейсе из PostgreSQL</strong></td><td>Закрепить чтение ленты, пагинацию, индексы</td></tr><tr><td><strong>Авторизация комнаты / токен</strong></td><td>Минимальная безопасность; не оставлять <code>/ws/{room}</code> полностью открытым в <strong>эксплуатации</strong></td></tr><tr><td><strong>Redis Pub/Sub или отдельный обмен</strong> для рассылки между экземплярами <code>web</code></td><td>Честный горизонтальный масштаб без «магии»</td></tr><tr><td><strong>Исходящая очередь / транзакционная запись</strong></td><td>Согласованность «запись в БД + событие в брокер» без гонок двойной записи</td></tr><tr><td><strong>Лимиты и ограничение частоты</strong> на WebSocket и HTTP</td><td>Защита от злоупотреблений и случайных всплесков нагрузки</td></tr><tr><td><strong>Метрики:</strong> глубина очереди, переподключения, задержка «сохранено → рассылка»</td><td>Сделать узкие места видимыми</td></tr><tr><td><strong>Публичный запуск в РФ</strong></td><td>Юридическая оценка, ПДн, возможные обязанности перед РКН — см. <strong>слайд 40</strong></td></tr></table></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Конспект закрывает <strong>остов</strong> теории; лабораторная даёт <strong>воспроизводимый опыт</strong>; таблица выше — <strong>направления развития</strong>, а не <strong>полный список задач</strong> на одну неделю.</li>
+</ul></div>
+</section>
+<section data-background-color="#2d343a">
+<h2>Слайд 48. Сверхвысокие нагрузки: что меняется относительно учебного контура</h2>
+<div class="slide-main"><ul>
+<li>Учебная схема (<strong>WebSocket → брокер → обработчик → БД → рассылка</strong>) <strong>корректно учит узкие места</strong>, но не претендует на <strong>экстремальный</strong> масштаб одной реплики.</li>
+<li>При <strong>очень больших</strong> числах одновременных соединений и сообщений упираются: <strong>лимит открытых сокетов</strong> и <strong>разветвление по комнатам</strong>, <strong>скорость записи в БД</strong>, <strong>ёмкость и задержка очереди</strong>, <strong>один узел брокера</strong>, <strong>исходящий канал</strong> к клиентам.</li>
+<li>В бою обычно усиливают: <strong>отдельный шлюз соединений</strong>, <strong>общий слой рассылки</strong> (шина событий, <strong>публикация — подписка</strong> на отдельном кластере), <strong>секционирование</strong> данных и трафика, <strong>реплики для чтения</strong>, жёсткие <strong>лимиты</strong>, <strong>обратное давление</strong> и <strong>сброс части нагрузки</strong> при перегрузе.</li>
+<li>Без <strong>метрик</strong> (задержка, глубина очереди, ошибки, ресурсы) и <strong>целевых порогов</strong> разговор о «high load» остаётся декларативным.</li>
+</ul></div>
+<div class="slide-card"><h3>Подробнее</h3><ul>
+<li>Один <strong>RabbitMQ</strong> и один <strong>PostgreSQL</strong> часто <strong>заменяют или дополняют</strong> кластерами, а для «огромного хвоста» событий смотрят в сторону <strong>распределённого журнала</strong> и специализированных решений — но <strong>идеи</strong> тогда те же: буфер, идемпотентность, предсказуемый путь отказа.</li>
+<li>Связь с лекцией: при росте нагрузки <strong>на порядки</strong> пересматривают <strong>каждое звено</strong> диаграммы с слайда <strong>35</strong>, а не только «ещё контейнер <strong>web</strong>».</li>
+</ul></div>
+</section>
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/markdown/markdown.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/highlight/highlight.js"></script>
+
+<script>
+  Reveal.initialize({
+    hash: true,
+    transition: 'slide',
+    controls: true,
+    progress: true,
+    slideNumber: 'c/t',
+    center: false,
+    margin: 0.02,
+    width: 1280,
+    height: 720,
+    plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+  });
+  function runMermaidForSlide() {
+    var cur = Reveal.getCurrentSlide();
+    if (!cur || !window.__mermaid) return;
+    var nodes = cur.querySelectorAll('.mermaid:not([data-processed])');
+    if (nodes.length) {
+      try { window.__mermaid.run({ nodes: nodes }); } catch (e) { console.warn(e); }
+    }
+  }
+  Reveal.on('slidechanged', runMermaidForSlide);
+  Reveal.on('ready', runMermaidForSlide);
+</script>
+
+</body>
+</html>
