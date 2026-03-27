@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Методичка: реакции RabbitMQ и «прочитано» · WebRTC</title>
+<style media="print">body{font-family:Arial,sans-serif;font-size:12px}.container{box-shadow:none;background:white}.header{background:white!important;color:black!important}.save-btn{display:none!important}.section{page-break-inside:avoid}</style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;line-height:1.6;color:#333;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh}.container{max-width:1200px;margin:20px auto;padding:20px;background:white;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}.header{text-align:center;padding:30px;background:linear-gradient(135deg,#005EB8,#003D82);color:white;border-radius:10px;margin-bottom:30px}.header h1{font-size:2.5em;margin-bottom:10px}.student-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:30px;padding:20px;background:#f8f9fa;border-radius:10px}.form-group{margin-bottom:20px}.form-group label{display:block;margin-bottom:5px;font-weight:bold;color:#003D82}.form-group input,.form-group textarea{width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px;font-size:16px}.section{margin-bottom:40px;padding:25px;background:#fff;border-left:5px solid #005EB8;border-radius:0 10px 10px 0;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.section>h2{color:#003D82;margin-bottom:20px;font-size:1.8em}.section>h3{color:#005EB8;margin:20px 0 10px;font-size:1.3em}.section>h4{color:#333;margin:15px 0 8px;font-size:1.1em}.section blockquote{margin:12px 0;padding:12px 16px;background:#f0f7fc;border-left:4px solid #005EB8;border-radius:0 8px 8px 0;color:#333}.section blockquote p{margin:6px 0}.code-block{background:#282c34;color:#e2e8f0;padding:20px;border-radius:8px;margin:15px 0;font-family:'Courier New',monospace;overflow-x:auto;white-space:pre-wrap;font-size:14px}ul.list-plain{list-style:none;padding-left:0}ul.list-plain li{padding:8px 0 8px 30px;position:relative}ul.list-plain li::before{content:'▸';position:absolute;left:0;color:#005EB8;font-size:18px}ol.pad{padding-left:20px}ol.pad li{padding:5px 0}table{width:100%;border-collapse:collapse;margin:15px 0}table th,table td{border:1px solid #ddd;padding:12px;text-align:left}table th{background:#005EB8;color:white}table tr:nth-child(even){background:#f8f9fa}.checkbox-item{margin:15px 0;padding:15px 20px;background:linear-gradient(135deg,#005EB8,#003D82);border-radius:10px;display:flex;align-items:center}.checkbox-item input[type="checkbox"]{appearance:none;width:26px;height:26px;border:3px solid white;border-radius:6px;margin-right:15px;cursor:pointer;background:transparent;flex-shrink:0}.checkbox-item input[type="checkbox"]:checked{background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23005EB8"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>') center/18px no-repeat;border-color:#fff}.checkbox-item label{color:white;font-weight:500;cursor:pointer}.save-btn{background:linear-gradient(135deg,#005EB8,#003D82);color:white;border:none;padding:15px 30px;font-size:18px;border-radius:10px;cursor:pointer;display:block;margin:30px auto}code.k{background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:0.9em}.note{background:#e3f2fd;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #2196f3}.warning{background:#fff8e1;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #ff9800}.toc{margin:20px 0;padding:20px;background:#f5f5f5;border-radius:8px}.toc a{color:#005EB8;text-decoration:none}.toc a:hover{text-decoration:underline}.md-h1{font-size:1.85em;color:#003D82;margin:0 0 16px}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/ini.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/nginx.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/dockerfile.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/powershell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>Методичка (часть 2)</h1>
+<h2>Реакции через RabbitMQ и «прочитано» через HTTP · опционально WebRTC 1:1</h2>
+<p>FastAPI &bull; HTMX ws &bull; RabbitMQ &bull; PostgreSQL &bull; WebSocket &bull; WebRTC</p>
+</div>
+<div class="student-info">
+<div class="form-group"><label>ФИО:</label><input type="text" id="student-name"></div>
+<div class="form-group"><label>Группа:</label><input type="text" id="group"></div>
+<div class="form-group"><label>Дата:</label><input type="date" id="date"></div>
+</div>
+<div class="section">
+<h1 class="md-h1">Методичка: реакции через RabbitMQ и «прочитано» через HTTP.</h1>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h2 id="содержание">Содержание</h2>
+<table><tr><th>Раздел</th><th>Тема</th></tr><tr><td><a href="#краткое-тз">Краткое ТЗ</a></td><td>цель, объём, отличия двух фич</td></tr><tr><td><a href="#0-что-уже-должно-быть-в-проекте">разд. 0</a></td><td>проверка базового проекта</td></tr><tr><td><a href="#1-база-данных-appdbpy">разд. 1</a></td><td><code class="k">Reaction</code>, <code class="k">ReadCursor</code></td></tr><tr><td><a href="#2-очереди-и-ключи-appmqpy">разд. 2</a></td><td>константы и bindings</td></tr><tr><td><a href="#3-новый-файл-workersreactionspy">разд. 3</a></td><td>обработчик реакций</td></tr><tr><td><a href="#4-точка-входа-воркера-workerpy">разд. 4</a></td><td>второй консьюмер</td></tr><tr><td><a href="#5-веб-приложение-appmainpy">разд. 5</a></td><td><code class="k">main.py</code>, в т.ч. эталон</td></tr><tr><td><a href="#6-шаблон-комнаты-apptemplatesroomhtml">разд. 6</a></td><td><code class="k">room.html</code>, JS</td></tr><tr><td><a href="#7-стили-appstaticstylescss">разд. 7</a></td><td>галочки и пикер</td></tr><tr><td><a href="#8-переменные-окружения-по-желанию">разд. 8</a></td><td><code class="k">.env</code></td></tr><tr><td><a href="#9-проверка">разд. 9</a></td><td>сценарии и curl</td></tr><tr><td><a href="#10-практикум-rabbitmq-и-ваш-репозиторий">разд. 10</a></td><td>код, UI, Publish, правка <code class="k">mq.py</code>, <code class="k">.env</code> *(по желанию)*</td></tr><tr><td><a href="#11-webrtc-1-1-сигналинг-json-отдельный-ws">разд. 11</a></td><td>WebRTC 1:1, сигналинг JSON *(по желанию)*</td></tr></table>
+<h2 id="краткое-тз">Краткое ТЗ</h2>
+<h3>Цель</h3>
+<p>На базе <strong>предыдушей работы</strong> добавить:</p>
+<ol class="pad">
+<li><strong>Реакции</strong> — эмодзи на сообщение, полный конвейер как у текста чата.</li>
+<li><strong>Прочитано</strong> — индикатор ✓ / ✓✓ у сообщения.</li>
+</ol>
+<h3>Два потока данных (сравнение)</h3>
+<table><tr><th></th><th>Реакции</th><th>«Прочитано»</th></tr><tr><td><strong>Очереди RabbitMQ</strong></td><td>Да: <code class="k">chat.reactions.incoming</code> / <code class="k">persisted</code></td><td>Нет</td></tr><tr><td><strong>Кто пишет в БД</strong></td><td>worker</td><td>web (<code class="k">POST /read</code>)</td></tr><tr><td><strong>Таблица</strong></td><td><code class="k">reactions</code></td><td><code class="k">read_cursors</code></td></tr><tr><td><strong>Обновление UI</strong></td><td>WebSocket после <code class="k">persisted</code></td><td>WebSocket после <code class="k">broadcast</code> из <code class="k">mark_read</code></td></tr></table>
+<h3>Реакции — кратко по слоям</h3>
+<table><tr><th>Слой</th><th>Что делаем</th></tr><tr><td>PostgreSQL</td><td>Таблица <code class="k"><strong>reactions</code></strong>, уникальность (сообщение, ник, эмодзи)</td></tr><tr><td>RabbitMQ</td><td>Те же <code class="k"><strong>chat.events</code></strong>, +2 очереди, ключи <code class="k">chat.reaction.created</code> / <code class="k">persisted</code></td></tr><tr><td><strong>web</strong></td><td><code class="k">POST</code>/<code class="k">DELETE</code> → publish; фоновая задача читает <code class="k">reactions.persisted</code> → broadcast HTML</td></tr><tr><td><strong>worker</strong></td><td>Читает <code class="k">reactions.incoming</code> → БД → publish счётчиков</td></tr><tr><td><strong>Фронт</strong></td><td>Пикер эмодзи, oob на <code class="k">#reactions-{id}</code></td></tr></table>
+<h3>«Прочитано» — кратко</h3>
+<table><tr><th>Элемент</th><th>Описание</th></tr><tr><td>Таблица</td><td><code class="k"><strong>read_cursors</code></strong> — одна строка на (ник, комната)</td></tr><tr><td>HTTP</td><td><code class="k"><strong>POST /rooms/{room_id}/read</code></strong> с <code class="k">username</code>, <code class="k">message_id</code></td></tr><tr><td>UI</td><td>Класс <code class="k">**read*</code>* на <code class="k">#status-{id}</code> + CSS <code class="k">::before</code> для ✓✓</td></tr><tr><td>Очереди <code class="k"><strong>chat.read.</strong>*</code></td><td>В этой методичке <strong>не</strong> используются</td></tr></table>
+<h3>Файлы, которые меняем</h3>
+<p><code class="k">app/db.py</code> · <code class="k">app/mq.py</code> · <code class="k">app/main.py</code> · <code class="k"><strong>workers/reactions.py</code></strong> (новый) · <code class="k">worker.py</code> · <code class="k">app/templates/room.html</code> · <code class="k">app/static/styles.css</code></p>
+<h2 id="0-что-уже-должно-быть-в-проекте">0. Что уже должно быть в проекте</h2>
+<p>Перед правками убедитесь, что проект <strong>работает</strong>: сообщение из формы проходит <code class="k">web → очередь → worker → БД → persisted → broadcast</code> и видно у всех вкладок в той же комнате.</p>
+<p>Часть 2 <strong>не заменяет</strong> этот поток, а <strong>добавляет</strong> реакции по той же схеме и отдельно — хранение «до какого сообщения дочитал пользователь» с обновлением галочек в UI.</p>
+<p>Контрольный список того, что уже есть в базовом архиве:</p>
+<ul class="list-plain">
+<li><code class="k"><strong>app/db.py</code></strong> — класс <code class="k">Message</code>, <code class="k">init_models()</code>, <code class="k">SessionLocal</code>.</li>
+<li><code class="k"><strong>app/mq.py</code></strong> — <code class="k">MQ_EXCHANGE</code>, очереди <code class="k">MQ_QUEUE_INCOMING</code> / <code class="k">MQ_QUEUE_PERSISTED</code>, ключи <code class="k">MQ_ROUTING_KEY_CREATED</code> / <code class="k">MQ_ROUTING_KEY_PERSISTED</code>, класс <code class="k">MQ</code> с <code class="k">connect</code>, <code class="k">publish</code>, <code class="k">close</code>; в <code class="k">connect()</code> — объявление двух очередей и двух привязок к exchange.</li>
+<li><code class="k"><strong>app/main.py</code></strong> — <code class="k">lifespan</code>: <code class="k">init_models</code>, <code class="k">mq.connect</code>, одна фоновая задача <code class="k">consume_persisted_events</code>, <code class="k">POST /rooms/{room_id}/messages</code>, WebSocket <code class="k">/ws/{room_id}</code> с публикацией <code class="k">chat.message.created</code>.</li>
+<li><code class="k"><strong>worker.py</strong></code> + <code class="k"><strong>workers/messages.py</strong></code> — функция <code class="k">handle_message</code>: читает тело JSON, вставляет строку в <code class="k">messages</code>, публикует <code class="k">chat.message.persisted</code>. В <code class="k">worker.py</code> — <code class="k">consume()</code> и один вызов в <code class="k">asyncio.gather</code> для сообщений.</li>
+</ul>
+<p>Если в вашем архиве вся логика воркера в одном <code class="k"><strong>worker.py</strong></code> без пакета <code class="k">workers/</code> — сначала вынесите обработчик сообщений в <code class="k"><strong>workers/messages.py</strong></code> по тому же принципу, что в образце Part 1; дальше методичка опирается на наличие <code class="k"><strong>workers/messages.py</strong></code> и правку <code class="k"><strong>worker.py</strong></code>.</p>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h2 id="1-база-данных-appdbpy">1. База данных — <code class="k">app/db.py</code></h2>
+<blockquote><p><strong>Контекст</strong> Задаётся <strong>схема PostgreSQL</strong> под две новые возможности. Таблица <code class="k"><strong>reactions</code></strong> — отдельные факты (одна строка = одна реакция). <code class="k"><strong>read_cursors</code></strong> — <strong>состояние</strong> «дочитал до id», одна строка на пару ник + комната. После правок перезапустите приложение: <code class="k">init_models()</code> создаст таблицы.</p></blockquote>
+<h4>Действие 1 — импорты</h4>
+<p>После класса <code class="k">Message</code> (и до <code class="k">engine = create_async_engine</code>) добавьте импорты, если их ещё нет:</p>
+</div>
+<div class="code-block"><code class="language-python">from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint</code></div>
+<div class="section">
+<p>(часть имён может уже быть в <code class="k">from sqlalchemy import …</code> для <code class="k">Message</code> — <strong>дополните</strong> строку, не дублируя её.)</p>
+<h4>Действие 2 — модели</h4>
+<p>Сразу после класса <code class="k">Message</code> вставьте <strong>два</strong> класса целиком:</p>
+</div>
+<div class="code-block"><code class="language-python">class Reaction(Base):
+    __tablename__ = &quot;reactions&quot;
+    # Одна и та же пара (сообщение, ник, эмодзи) не может повториться.
+    __table_args__ = (UniqueConstraint(&quot;message_id&quot;, &quot;username&quot;, &quot;emoji&quot;),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    message_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey(&quot;messages.id&quot;, ondelete=&quot;CASCADE&quot;),  # при удалении сообщения — строки реакций уходят
+        index=True,
+    )
+    username: Mapped[str] = mapped_column(String(64))
+    emoji: Mapped[str] = mapped_column(String(8))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class ReadCursor(Base):
+    __tablename__ = &quot;read_cursors&quot;
+    # Один курсор на пользователя в комнате — upsert будет по этой паре.
+    __table_args__ = (UniqueConstraint(&quot;username&quot;, &quot;room_id&quot;),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    username: Mapped[str] = mapped_column(String(64), index=True)
+    room_id: Mapped[str] = mapped_column(String(100), index=True)
+    last_read_message_id: Mapped[int] = mapped_column(Integer)  # «дочитал до» этого id сообщения
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)</code></div>
+<div class="section">
+<blockquote><p><strong>Итог</strong> <code class="k">Reaction</code> — кто какой эмодзи на каком сообщении; <code class="k"><strong>ondelete=&quot;CASCADE&quot;</code></strong> подчищает реакции при удалении сообщения. <code class="k">ReadCursor</code> — курсор чтения по паре (ник, комната).</p></blockquote>
+<p>После перезапуска контейнеров таблицы создадутся через <code class="k"><strong>init_models()</code></strong>.</p>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h2 id="2-очереди-и-ключи-appmqpy">2. Очереди и ключи — <code class="k">app/mq.py</code></h2>
+<blockquote><p><strong>Контекст</strong> При старте <strong>web</strong> объявляет те же сущности, что и <strong>worker</strong>: exchange, очереди, bindings. Для реакций нужна <strong>вторая пара</strong> очередей и routing key в <code class="k"><strong>chat.events</code></strong>. Имена — в константах / <code class="k">os.getenv</code>, чтобы оба процесса использовали <strong>одинаковые строки</strong>.</p></blockquote>
+<h4>Действие 1 — константы</h4>
+<p>После строк с <code class="k">MQ_ROUTING_KEY_PERSISTED</code> вставьте блок для реакций:</p>
+</div>
+<div class="code-block"><code class="language-python"># Очередь «заявка на реакцию» — читает только worker (как chat.messages.incoming).
+MQ_QUEUE_REACTIONS_INCOMING = os.getenv(&quot;MQ_QUEUE_REACTIONS_INCOMING&quot;, &quot;chat.reactions.incoming&quot;)
+# Очередь «реакция сохранена, вот счётчики» — читает фоновая задача в web.
+MQ_QUEUE_REACTIONS_PERSISTED = os.getenv(&quot;MQ_QUEUE_REACTIONS_PERSISTED&quot;, &quot;chat.reactions.persisted&quot;)
+MQ_ROUTING_KEY_REACTION_CREATED = os.getenv(&quot;MQ_ROUTING_KEY_REACTION_CREATED&quot;, &quot;chat.reaction.created&quot;)
+MQ_ROUTING_KEY_REACTION_PERSISTED = os.getenv(&quot;MQ_ROUTING_KEY_REACTION_PERSISTED&quot;, &quot;chat.reaction.persisted&quot;)</code></div>
+<div class="section">
+<h4>Действие 2 — объявление очередей</h4>
+<p>В <code class="k">MQ.connect()</code> найдите цикл <code class="k">for name in (...)</code> и расширьте кортеж:</p>
+<p><strong>Было (Part 1):</strong></p>
+</div>
+<div class="code-block"><code class="language-python">for name in (MQ_QUEUE_INCOMING, MQ_QUEUE_PERSISTED):</code></div>
+<div class="section">
+<p><strong>Стало:</strong></p>
+</div>
+<div class="code-block"><code class="language-python">for name in (
+    MQ_QUEUE_INCOMING,
+    MQ_QUEUE_PERSISTED,
+    MQ_QUEUE_REACTIONS_INCOMING,
+    MQ_QUEUE_REACTIONS_PERSISTED,
+):</code></div>
+<div class="section">
+<h4>Действие 3 — bindings</h4>
+<p>Список <code class="k">bindings</code> — добавьте две пары (очередь → routing key):</p>
+</div>
+<div class="code-block"><code class="language-python"># Пара (очередь, ключ): сообщение с данным routing key попадёт в указанную очередь.
+bindings = [
+    (MQ_QUEUE_INCOMING, MQ_ROUTING_KEY_CREATED),
+    (MQ_QUEUE_PERSISTED, MQ_ROUTING_KEY_PERSISTED),
+    (MQ_QUEUE_REACTIONS_INCOMING, MQ_ROUTING_KEY_REACTION_CREATED),
+    (MQ_QUEUE_REACTIONS_PERSISTED, MQ_ROUTING_KEY_REACTION_PERSISTED),
+]</code></div>
+<div class="section">
+<blockquote><p><strong>Не трогать</strong> остальной <code class="k">connect()</code>: цикл по <code class="k">bindings</code> уже подходит для новых пар.</p></blockquote>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h2 id="3-новый-файл-workersreactionspy">3. Новый файл — <code class="k">workers/reactions.py</code></h2>
+<blockquote><p><strong>Контекст</strong> Симметрия <code class="k"><strong>workers/messages.py</code></strong>: AMQP → БД → публикация с другим ключом. Здесь — INSERT/DELETE <code class="k"><strong>Reaction</code></strong>, пересчёт <code class="k"><strong>Counter</strong></code>, событие <code class="k"><strong>chat.reaction.persisted</strong></code>. <code class="k"><strong>requeue=True</strong></code>: при ошибке до коммита сообщение снова попадёт в очередь.</p></blockquote>
+<h4>Действие — новый файл</h4>
+<p>Создайте <code class="k"><strong>workers/reactions.py</strong></code> в пакете <code class="k">workers</code> (рядом с <code class="k">messages.py</code>). Содержимое <strong>целиком</strong>:</p>
+</div>
+<div class="code-block"><code class="language-python">&quot;&quot;&quot;Обработчик chat.reaction.created: upsert/delete реакции, публикация счётчиков.&quot;&quot;&quot;
+
+import json
+from collections import Counter
+
+import aio_pika
+from sqlalchemy import delete, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+from app.db import Reaction, SessionLocal
+from app.mq import MQ_ROUTING_KEY_REACTION_PERSISTED
+
+
+async def handle_reaction(incoming, exchange):
+    &quot;&quot;&quot;Добавить или убрать реакцию; опубликовать обновлённые счётчики.&quot;&quot;&quot;
+    # incoming.process — контекст aio-pika: ack после успешного выхода, иначе requeue.
+    async with incoming.process(requeue=True):
+        payload = json.loads(incoming.body.decode(&quot;utf-8&quot;))
+        message_id = payload[&quot;message_id&quot;]
+
+        async with SessionLocal() as session:
+            if payload.get(&quot;delete&quot;):
+                # Снятие реакции: точное совпадение тройки (сообщение, ник, эмодзи).
+                await session.execute(
+                    delete(Reaction).where(
+                        Reaction.message_id == message_id,
+                        Reaction.username == payload[&quot;username&quot;],
+                        Reaction.emoji == payload[&quot;emoji&quot;],
+                    )
+                )
+            else:
+                # Дубликат по уникальному индексу не ломает запрос — просто ничего не вставится.
+                stmt = pg_insert(Reaction).values(
+                    message_id=message_id,
+                    username=payload[&quot;username&quot;],
+                    emoji=payload[&quot;emoji&quot;],
+                ).on_conflict_do_nothing()
+                await session.execute(stmt)
+
+            # Все эмодзи по этому сообщению после операции — для агрегата «эмодзи → количество».
+            rows = (
+                await session.execute(
+                    select(Reaction.emoji).where(Reaction.message_id == message_id)
+                )
+            ).scalars().all()
+            await session.commit()
+
+        counts = dict(Counter(rows))
+        persisted = {
+            &quot;room_id&quot;: payload[&quot;room_id&quot;],
+            &quot;message_id&quot;: message_id,
+            &quot;counts&quot;: counts,  # например {&quot;👍&quot;: 2, &quot;❤️&quot;: 1}
+        }
+        msg = aio_pika.Message(
+            body=json.dumps(persisted).encode(&quot;utf-8&quot;),
+            delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+        )
+        # Тот же exchange, другой routing key — подписчики «reactions persisted» в web.
+        await exchange.publish(msg, routing_key=MQ_ROUTING_KEY_REACTION_PERSISTED)</code></div>
+<div class="section">
+<blockquote><p><strong>Итог</strong> Вход — JSON из web; <code class="k">delete</code> → <code class="k">DELETE</code>, иначе <code class="k">ON CONFLICT DO NOTHING</code>; после commit → <code class="k"><strong>chat.reaction.persisted</code></strong> с полем <code class="k"><strong>counts</code></strong>.</p></blockquote>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h2 id="4-точка-входа-воркера-workerpy">4. Точка входа воркера — <code class="k">worker.py</code></h2>
+<blockquote><p><strong>Контекст</strong> Один процесс <code class="k">python worker.py</code>, внутри — <strong>два</strong> параллельных <code class="k">consume</code> на общем <strong>channel</strong> и <strong>exchange</strong>.</p></blockquote>
+<p>Каждый <code class="k">consume</code> объявляет свою очередь, bind и цикл <code class="k"><strong>async for incoming</code></strong>. Обработчики — в разных модулях: <code class="k">handle_message</code> / <code class="k">handle_reaction</code>.</p>
+<h4>Действие 1 — импорты из <code class="k">app.mq</code></h4>
+<p>Дополните импорт:</p>
+</div>
+<div class="code-block"><code class="language-python">from app.mq import (
+    MQ_EXCHANGE,
+    MQ_QUEUE_INCOMING,
+    MQ_QUEUE_REACTIONS_INCOMING,
+    MQ_ROUTING_KEY_CREATED,
+    MQ_ROUTING_KEY_REACTION_CREATED,
+    RABBITMQ_URL,
+)</code></div>
+<div class="section">
+<h4>Действие 2 — обработчик</h4>
+</div>
+<div class="code-block"><code class="language-python">from workers.reactions import handle_reaction</code></div>
+<div class="section">
+<h4>Действие 3 — <code class="k">asyncio.gather</code></h4>
+<p>В <code class="k">run_worker()</code> добавьте второй вызов <code class="k">consume</code>:</p>
+</div>
+<div class="code-block"><code class="language-python">    await asyncio.gather(
+        consume(MQ_QUEUE_INCOMING, MQ_ROUTING_KEY_CREATED, handle_message, channel, exchange),
+        consume(  # вторая очередь — только реакции; общий channel и exchange
+            MQ_QUEUE_REACTIONS_INCOMING,
+            MQ_ROUTING_KEY_REACTION_CREATED,
+            handle_reaction,
+            channel,
+            exchange,
+        ),
+    )</code></div>
+<div class="section">
+<p><strong>Полный файл</strong> <code class="k">worker.py</code> <strong>— развернуть для сверки</strong></p>
+<p>*(Ниже тот же код одним блоком — удобно сравнить с диском.)*</p>
+</div>
+<div class="code-block"><code class="language-python">&quot;&quot;&quot;Точка входа воркера: два параллельных консьюмера одного exchange.
+
+- chat.message.created  → workers/messages.py
+- chat.reaction.created → workers/reactions.py
+&quot;&quot;&quot;
+
+import asyncio
+
+import aio_pika
+
+from app.db import init_models
+from app.mq import (
+    MQ_EXCHANGE,
+    MQ_QUEUE_INCOMING,
+    MQ_QUEUE_REACTIONS_INCOMING,
+    MQ_ROUTING_KEY_CREATED,
+    MQ_ROUTING_KEY_REACTION_CREATED,
+    RABBITMQ_URL,
+)
+from workers.messages import handle_message
+from workers.reactions import handle_reaction
+
+
+async def consume(queue_name, routing_key, handler, channel, exchange):
+    &quot;&quot;&quot;Очередь + bind + бесконечный цикл: каждое сообщение — await handler(...).&quot;&quot;&quot;
+    queue = await channel.declare_queue(queue_name, durable=True)
+    await queue.bind(exchange, routing_key=routing_key)
+    async with queue.iterator() as iterator:
+        async for incoming in iterator:
+            await handler(incoming, exchange)
+
+
+async def run_worker():
+    await init_models()  # таблицы messages / reactions / read_cursors при необходимости
+    connection = await aio_pika.connect_robust(RABBITMQ_URL)
+    channel = await connection.channel()
+    exchange = await channel.declare_exchange(
+        MQ_EXCHANGE, aio_pika.ExchangeType.TOPIC, durable=True
+    )
+
+    # Две «зелёные нити» в одном процессе: не блокируют друг друга на ожидании I/O.
+    await asyncio.gather(
+        consume(MQ_QUEUE_INCOMING, MQ_ROUTING_KEY_CREATED, handle_message, channel, exchange),
+        consume(
+            MQ_QUEUE_REACTIONS_INCOMING,
+            MQ_ROUTING_KEY_REACTION_CREATED,
+            handle_reaction,
+            channel,
+            exchange,
+        ),
+    )
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(run_worker())</code></div>
+<div class="section">
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h2 id="5-веб-приложение-appmainpy">5. Веб-приложение — <code class="k">app/main.py</code></h2>
+<blockquote><p><strong>Контекст</strong> web уже <strong>публикует</strong> и <strong>потребляет</strong> по цепочке сообщений. Часть 2: то же для <strong>реакций</strong>. <code class="k"><strong>mark_read</code></strong> — исключение: БД + broadcast <strong>без</strong> очереди (сравните компромиссы).</p></blockquote>
+<p>Правки <strong>по порядку</strong>; п. <strong>5.7</strong> — полный <code class="k">main.py</code> для сверки.</p>
+<h3>5.1. Импорты в начале файла</h3>
+<table><tr><th>Импорт</th><th>Зачем</th></tr><tr><td><code class="k">select</code></td><td>Автор сообщения в <code class="k"><strong>mark_read</code></strong> (логика ✓✓)</td></tr><tr><td><code class="k">pg_insert</code></td><td>Upsert <code class="k"><strong>read_cursors</code></strong> (PostgreSQL)</td></tr><tr><td><code class="k">MQ_QUEUE_REACTIONS_PERSISTED</code></td><td>Та же очередь, что у воркера для <code class="k">persisted</code></td></tr></table>
+<p><strong>Добавьте</strong> <code class="k">select</code> и <code class="k">pg_insert</code> (если их ещё нет):</p>
+</div>
+<div class="code-block"><code class="language-python">from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert</code></div>
+<div class="section">
+<p><strong>Дополните</strong> импорт из <code class="k">app.db</code>:</p>
+</div>
+<div class="code-block"><code class="language-python">from app.db import Message, ReadCursor, SessionLocal, init_models</code></div>
+<div class="section">
+<p>(добавьте <code class="k">Message</code>, <code class="k">ReadCursor</code>, <code class="k">SessionLocal</code> к тому, что уже импортируете из <code class="k">app.db</code>.)</p>
+<p><strong>Дополните</strong> импорт из <code class="k">app.mq</code>:</p>
+</div>
+<div class="code-block"><code class="language-python">from app.mq import (
+    mq,
+    MQ_QUEUE_PERSISTED,
+    MQ_QUEUE_REACTIONS_PERSISTED,
+    MQ_ROUTING_KEY_CREATED,
+    MQ_ROUTING_KEY_REACTION_CREATED,
+)</code></div>
+<div class="section">
+<h3>5.2. Замените тело <code class="k">consume_persisted_events</code></h3>
+<blockquote><p>В Part 1 в <code class="k">&lt;header&gt;</code> не было статуса и блока реакций. Остальной каркас функции не меняйте — только сборку <code class="k"><strong>html_fragment</strong></code>.</p></blockquote>
+</div>
+<div class="code-block"><code class="language-python">                html_fragment = (
+                    &#x27;&lt;div id=&quot;messages&quot; hx-swap-oob=&quot;beforeend&quot;&gt;&#x27;
+                    f&#x27;&lt;article id=&quot;msg-{data[&quot;id&quot;]}&quot; class=&quot;msg&quot;&gt;&#x27;
+                    &quot;&lt;header&gt;&quot;
+                    f&quot;&lt;strong&gt;{escape(str(data[&#x27;username&#x27;]))}&lt;/strong&gt;&quot;
+                    f&quot;&lt;small&gt;{escape(str(data[&#x27;created_at&#x27;]))}&lt;/small&gt;&quot;
+                    f&#x27;&lt;span id=&quot;status-{data[&quot;id&quot;]}&quot; class=&quot;msg-status&quot; title=&quot;доставлено&quot;&gt;&lt;/span&gt;&#x27;
+                    &quot;&lt;/header&gt;&quot;
+                    f&quot;&lt;p&gt;{escape(str(data[&#x27;text&#x27;]))}&lt;/p&gt;&quot;
+                    f&#x27;&lt;div id=&quot;reactions-{data[&quot;id&quot;]}&quot; class=&quot;reactions&quot;&gt;&lt;/div&gt;&#x27;
+                    &quot;&lt;/article&gt;&quot;
+                    &quot;&lt;/div&gt;&quot;
+                )</code></div>
+<div class="section">
+<blockquote><p><strong>Разметка</strong> <code class="k">beforeend</code> — новая карточка в <code class="k">#messages</code>. <code class="k">#status-{id}</code> — пустой span, ✓ из CSS. <code class="k">#reactions-{id}</code> — зона счётчиков (пикер рядом; сервер потом делает <code class="k">innerHTML</code>).</p></blockquote>
+<h3>5.3. Новая фоновая задача — вставьте <strong>после</strong> <code class="k">consume_persisted_events</code></h3>
+</div>
+<div class="code-block"><code class="language-python">async def consume_reaction_events():
+    # Зеркало consume_persisted_events: другая очередь, другой формат JSON тела.
+    queue = await mq.channel.get_queue(MQ_QUEUE_REACTIONS_PERSISTED)
+    async with queue.iterator() as iterator:
+        async for message in iterator:
+            async with message.process(requeue=True):
+                data = json.loads(message.body.decode(&quot;utf-8&quot;))
+                # Кнопки со счётчиком; escape(e) обязателен в onclick, если эмодзи в шаблоне.
+                counts_html = &quot;&quot;.join(
+                    f&#x27;&lt;button class=&quot;reaction&quot; &#x27;
+                    f&#x27;onclick=&quot;toggleReaction(\&#x27;{data[&quot;room_id&quot;]}\&#x27;,{data[&quot;message_id&quot;]},\&#x27;{escape(e)}\&#x27;)&quot;&gt;&#x27;
+                    f&#x27;{escape(e)} {c}&lt;/button&gt;&#x27;
+                    for e, c in data[&quot;counts&quot;].items()
+                )
+                # innerHTML — заменить только блок реакций, не весь article.
+                html_fragment = (
+                    f&#x27;&lt;div id=&quot;reactions-{data[&quot;message_id&quot;]}&quot; &#x27;
+                    f&#x27;class=&quot;reactions&quot; hx-swap-oob=&quot;innerHTML&quot;&gt;&#x27;
+                    + counts_html
+                    + &quot;&lt;/div&gt;&quot;
+                )
+                await manager.broadcast(data[&quot;room_id&quot;], html_fragment)</code></div>
+<div class="section">
+<blockquote><p><strong>Итог</strong> В разметку кладутся кнопки с <code class="k"><strong>onclick=&quot;toggleReaction(...)&quot;</code></strong>, чтобы после oob снова можно было кликать по счётчикам.</p></blockquote>
+<h3>5.4. <code class="k">lifespan</code> — зарегистрируйте вторую задачу</h3>
+<blockquote><p>Без второго <code class="k"><strong>create_task</code></strong> очередь <code class="k"><strong>chat.reactions.persisted</code></strong> растёт, UI реакций молчит.</p></blockquote>
+<p>Список задач должен содержать <strong>оба</strong> консьюмера:</p>
+</div>
+<div class="code-block"><code class="language-python">    _bg_tasks = [
+        asyncio.create_task(consume_persisted_events()),   # новые сообщения в чат
+        asyncio.create_task(consume_reaction_events()),       # обновление счётчиков реакций
+    ]</code></div>
+<div class="section">
+<h3>5.5. Маршруты реакций</h3>
+<blockquote><p>Вставьте <strong>после</strong> <code class="k">send_message</code> (рядом с другими <code class="k">@app.post</code>). Только <code class="k"><strong>publish</code></strong> в брокер; воркер отличает удаление по <code class="k"><strong>delete</code></strong>.</p></blockquote>
+</div>
+<div class="code-block"><code class="language-python">@app.post(&quot;/rooms/{room_id}/messages/{message_id}/reactions&quot;)
+async def add_reaction(room_id: str, message_id: int, username: str = Form(...), emoji: str = Form(...)):
+    await mq.publish(MQ_ROUTING_KEY_REACTION_CREATED, {  # воркер: INSERT reaction
+        &quot;room_id&quot;: room_id,
+        &quot;message_id&quot;: message_id,
+        &quot;username&quot;: username.strip(),
+        &quot;emoji&quot;: emoji.strip(),
+    })
+    return {&quot;status&quot;: &quot;queued&quot;}
+
+
+@app.delete(&quot;/rooms/{room_id}/messages/{message_id}/reactions&quot;)
+async def remove_reaction(room_id: str, message_id: int, username: str = Form(...), emoji: str = Form(...)):
+    await mq.publish(MQ_ROUTING_KEY_REACTION_CREATED, {
+        &quot;room_id&quot;: room_id,
+        &quot;message_id&quot;: message_id,
+        &quot;username&quot;: username.strip(),
+        &quot;emoji&quot;: emoji.strip(),
+        &quot;delete&quot;: True,  # воркер выполнит DELETE вместо INSERT
+    })
+    return {&quot;status&quot;: &quot;queued&quot;}</code></div>
+<div class="section">
+<h3>5.6. «Прочитано» — маршрут <code class="k">mark_read</code></h3>
+<blockquote><p>Разместите <strong>после</strong> WebSocket (или перед <code class="k">/health</code>). Серая ✓ у всех; <strong>✓✓</strong> автору — только если «прочитал» <strong>другой</strong> пользователь. Курсор только <strong>вперёд</strong> (<code class="k">on_conflict_do_update</code> + <code class="k">where</code>).</p></blockquote>
+</div>
+<div class="code-block"><code class="language-python">@app.post(&quot;/rooms/{room_id}/read&quot;)
+async def mark_read(room_id: str, username: str = Form(...), message_id: int = Form(...)):
+    &quot;&quot;&quot;Курсор «прочитано»: БД + сразу broadcast ✓✓ (без очереди RabbitMQ).&quot;&quot;&quot;
+    reader = username.strip()
+
+    async with SessionLocal() as session:
+        # INSERT … ON CONFLICT DO UPDATE: не откатывать курсор на более старый message_id.
+        stmt = pg_insert(ReadCursor).values(
+            username=reader,
+            room_id=room_id,
+            last_read_message_id=message_id,
+        ).on_conflict_do_update(
+            index_elements=[&quot;username&quot;, &quot;room_id&quot;],
+            set_={&quot;last_read_message_id&quot;: message_id},
+            where=(ReadCursor.last_read_message_id &lt; message_id),
+        )
+        await session.execute(stmt)
+        await session.commit()
+
+        row = (
+            await session.execute(
+                select(Message.username).where(
+                    Message.id == message_id,
+                    Message.room_id == room_id,
+                )
+            )
+        ).one_or_none()
+
+    if row is None:
+        return {&quot;status&quot;: &quot;ok&quot;}
+    if row[0] == reader:
+        # Автор сам «прочитал» своё сообщение — вторые галочки не шлём.
+        return {&quot;status&quot;: &quot;ok&quot;}
+
+    # outerHTML: заменить весь span#status-{id}, добавив класс .read для ✓✓ в CSS.
+    html_fragment = (
+        f&#x27;&lt;span id=&quot;status-{message_id}&quot; &#x27;
+        f&#x27;class=&quot;msg-status read&quot; hx-swap-oob=&quot;outerHTML&quot; title=&quot;прочитано&quot;&gt;&lt;/span&gt;&#x27;
+    )
+    await manager.broadcast(room_id, html_fragment)
+    return {&quot;status&quot;: &quot;ok&quot;}</code></div>
+<div class="section">
+<blockquote><p><strong>Итог</strong> Курсор не откатывается (<code class="k">where</code> в <code class="k">on_conflict_do_update</code>). Если читатель = автор сообщения — без broadcast ✓✓, только <code class="k">{&quot;status&quot;:&quot;ok&quot;}</code>.</p></blockquote>
+<h3>5.7. Полный листинг <code class="k">app/main.py</code> (эталон)</h3>
+<p>Тот же код, что собран по пп. 5.1–5.6, в <strong>одном файле</strong>; комментарии <code class="k"># ...</code> поясняют узлы.</p>
+<p><strong>Полный листинг — развернуть</strong></p>
+</div>
+<div class="code-block"><code class="language-python">&quot;&quot;&quot;FastAPI-приложение чата: HTML-страницы, WebSocket (HTMX), постановка сообщений в RabbitMQ.
+
+Запись сообщений и реакций через worker; «прочитано» — upsert в БД и broadcast из HTTP без отдельной очереди.&quot;&quot;&quot;
+
+import asyncio
+import json
+from html import escape
+from datetime import datetime
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Form, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+from app.db import Message, ReadCursor, SessionLocal, init_models
+from app.mq import (
+    mq,
+    MQ_QUEUE_PERSISTED,
+    MQ_QUEUE_REACTIONS_PERSISTED,
+    MQ_ROUTING_KEY_CREATED,
+    MQ_ROUTING_KEY_REACTION_CREATED,
+)
+from app.ws import manager
+
+
+templates = Jinja2Templates(directory=&quot;app/templates&quot;)
+_bg_tasks: list[asyncio.Task] = []
+
+
+async def consume_persisted_events():
+    # События от worker после INSERT в messages (ключ chat.message.persisted).
+    queue = await mq.channel.get_queue(MQ_QUEUE_PERSISTED)
+    async with queue.iterator() as iterator:
+        async for message in iterator:
+            async with message.process(requeue=True):
+                data = json.loads(message.body.decode(&quot;utf-8&quot;))
+                html_fragment = (
+                    &#x27;&lt;div id=&quot;messages&quot; hx-swap-oob=&quot;beforeend&quot;&gt;&#x27;
+                    f&#x27;&lt;article id=&quot;msg-{data[&quot;id&quot;]}&quot; class=&quot;msg&quot;&gt;&#x27;
+                    &quot;&lt;header&gt;&quot;
+                    f&quot;&lt;strong&gt;{escape(str(data[&#x27;username&#x27;]))}&lt;/strong&gt;&quot;
+                    f&quot;&lt;small&gt;{escape(str(data[&#x27;created_at&#x27;]))}&lt;/small&gt;&quot;
+                    f&#x27;&lt;span id=&quot;status-{data[&quot;id&quot;]}&quot; class=&quot;msg-status&quot; title=&quot;доставлено&quot;&gt;&lt;/span&gt;&#x27;
+                    &quot;&lt;/header&gt;&quot;
+                    f&quot;&lt;p&gt;{escape(str(data[&#x27;text&#x27;]))}&lt;/p&gt;&quot;
+                    f&#x27;&lt;div id=&quot;reactions-{data[&quot;id&quot;]}&quot; class=&quot;reactions&quot;&gt;&lt;/div&gt;&#x27;
+                    &quot;&lt;/article&gt;&quot;
+                    &quot;&lt;/div&gt;&quot;
+                )
+                await manager.broadcast(data[&quot;room_id&quot;], html_fragment)
+
+
+async def consume_reaction_events():
+    # События после сохранения реакций в БД (ключ chat.reaction.persisted).
+    queue = await mq.channel.get_queue(MQ_QUEUE_REACTIONS_PERSISTED)
+    async with queue.iterator() as iterator:
+        async for message in iterator:
+            async with message.process(requeue=True):
+                data = json.loads(message.body.decode(&quot;utf-8&quot;))
+                counts_html = &quot;&quot;.join(
+                    f&#x27;&lt;button class=&quot;reaction&quot; &#x27;
+                    f&#x27;onclick=&quot;toggleReaction(\&#x27;{data[&quot;room_id&quot;]}\&#x27;,{data[&quot;message_id&quot;]},\&#x27;{escape(e)}\&#x27;)&quot;&gt;&#x27;
+                    f&#x27;{escape(e)} {c}&lt;/button&gt;&#x27;
+                    for e, c in data[&quot;counts&quot;].items()
+                )
+                html_fragment = (
+                    f&#x27;&lt;div id=&quot;reactions-{data[&quot;message_id&quot;]}&quot; &#x27;
+                    f&#x27;class=&quot;reactions&quot; hx-swap-oob=&quot;innerHTML&quot;&gt;&#x27;
+                    + counts_html
+                    + &quot;&lt;/div&gt;&quot;
+                )
+                await manager.broadcast(data[&quot;room_id&quot;], html_fragment)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global _bg_tasks
+    await init_models()
+    await mq.connect()
+    # Два вечных consumer loop; без второго — «зависнут» реакции в очереди.
+    _bg_tasks = [
+        asyncio.create_task(consume_persisted_events()),
+        asyncio.create_task(consume_reaction_events()),
+    ]
+    yield
+    for t in _bg_tasks:
+        t.cancel()
+    await mq.close()
+
+
+app = FastAPI(title=&quot;Socket MQ Chat&quot;, lifespan=lifespan)
+app.mount(&quot;/static&quot;, StaticFiles(directory=&quot;app/static&quot;), name=&quot;static&quot;)
+
+
+@app.get(&quot;/&quot;, response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name=&quot;room.html&quot;,
+        context={&quot;request&quot;: request, &quot;room_id&quot;: &quot;room-1&quot;},
+    )
+
+
+@app.get(&quot;/rooms/{room_id}&quot;, response_class=HTMLResponse)
+async def room_page(request: Request, room_id: str):
+    return templates.TemplateResponse(
+        request=request,
+        name=&quot;room.html&quot;,
+        context={&quot;request&quot;: request, &quot;room_id&quot;: room_id},
+    )
+
+
+@app.post(&quot;/rooms/{room_id}/messages&quot;)
+async def send_message(room_id: str, username: str = Form(...), text: str = Form(...)):
+    username = username.strip()
+    text = text.strip()
+    if not username or not text:
+        raise HTTPException(status_code=400, detail=&quot;username/text cannot be empty&quot;)
+
+    await mq.publish(MQ_ROUTING_KEY_CREATED, {
+        &quot;room_id&quot;: room_id,
+        &quot;username&quot;: username,
+        &quot;text&quot;: text,
+        &quot;created_at&quot;: datetime.utcnow().isoformat(),
+    })
+    return {&quot;status&quot;: &quot;queued&quot;}
+
+
+@app.post(&quot;/rooms/{room_id}/messages/{message_id}/reactions&quot;)
+async def add_reaction(room_id: str, message_id: int, username: str = Form(...), emoji: str = Form(...)):
+    # Только очередь; запись в БД — в handle_reaction.
+    await mq.publish(MQ_ROUTING_KEY_REACTION_CREATED, {
+        &quot;room_id&quot;: room_id,
+        &quot;message_id&quot;: message_id,
+        &quot;username&quot;: username.strip(),
+        &quot;emoji&quot;: emoji.strip(),
+    })
+    return {&quot;status&quot;: &quot;queued&quot;}
+
+
+@app.delete(&quot;/rooms/{room_id}/messages/{message_id}/reactions&quot;)
+async def remove_reaction(room_id: str, message_id: int, username: str = Form(...), emoji: str = Form(...)):
+    await mq.publish(MQ_ROUTING_KEY_REACTION_CREATED, {
+        &quot;room_id&quot;: room_id,
+        &quot;message_id&quot;: message_id,
+        &quot;username&quot;: username.strip(),
+        &quot;emoji&quot;: emoji.strip(),
+        &quot;delete&quot;: True,
+    })
+    return {&quot;status&quot;: &quot;queued&quot;}
+
+
+@app.websocket(&quot;/ws/{room_id}&quot;)
+async def ws_room(ws: WebSocket, room_id: str):
+    await manager.connect(room_id, ws)
+    try:
+        while True:
+            raw = await ws.receive_text()
+            try:
+                data = json.loads(raw)
+            except json.JSONDecodeError:
+                continue
+
+            username = str(data.get(&quot;username&quot;, &quot;&quot;)).strip()
+            text = str(data.get(&quot;text&quot;, &quot;&quot;)).strip()
+            if not username or not text:
+                continue
+
+            await mq.publish(MQ_ROUTING_KEY_CREATED, {
+                &quot;room_id&quot;: room_id,
+                &quot;username&quot;: username,
+                &quot;text&quot;: text,
+                &quot;created_at&quot;: datetime.utcnow().isoformat(),
+            })
+    except WebSocketDisconnect:
+        manager.disconnect(room_id, ws)
+    except Exception:
+        manager.disconnect(room_id, ws)
+
+
+@app.post(&quot;/rooms/{room_id}/read&quot;)
+async def mark_read(room_id: str, username: str = Form(...), message_id: int = Form(...)):
+    &quot;&quot;&quot;Курсор «прочитано»: БД + сразу broadcast ✓✓ (без очереди RabbitMQ).&quot;&quot;&quot;
+    reader = username.strip()
+
+    async with SessionLocal() as session:
+        # Upsert курсора; не двигаем назад (см. where).
+        stmt = pg_insert(ReadCursor).values(
+            username=reader,
+            room_id=room_id,
+            last_read_message_id=message_id,
+        ).on_conflict_do_update(
+            index_elements=[&quot;username&quot;, &quot;room_id&quot;],
+            set_={&quot;last_read_message_id&quot;: message_id},
+            where=(ReadCursor.last_read_message_id &lt; message_id),
+        )
+        await session.execute(stmt)
+        await session.commit()
+
+        row = (
+            await session.execute(
+                select(Message.username).where(
+                    Message.id == message_id,
+                    Message.room_id == room_id,
+                )
+            )
+        ).one_or_none()
+
+    if row is None:
+        return {&quot;status&quot;: &quot;ok&quot;}
+    if row[0] == reader:
+        return {&quot;status&quot;: &quot;ok&quot;}
+
+    # Читатель ≠ автор: шлём oob, CSS нарисует ✓✓.
+    html_fragment = (
+        f&#x27;&lt;span id=&quot;status-{message_id}&quot; &#x27;
+        f&#x27;class=&quot;msg-status read&quot; hx-swap-oob=&quot;outerHTML&quot; title=&quot;прочитано&quot;&gt;&lt;/span&gt;&#x27;
+    )
+    await manager.broadcast(room_id, html_fragment)
+    return {&quot;status&quot;: &quot;ok&quot;}
+
+
+@app.get(&quot;/health&quot;)
+async def health():
+    return {&quot;status&quot;: &quot;ok&quot;}</code></div>
+<div class="section">
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h2 id="6-шаблон-комнаты-apptemplatesroomhtml">6. Шаблон комнаты — <code class="k">app/templates/room.html</code></h2>
+<blockquote><p><strong>Контекст</strong> После каждого WS-фрагмента HTMX вызывает <code class="k"><strong>htmx:wsAfterMessage</code></strong>: вешаем пикер на новые сообщения и <strong>debounce</strong> для <code class="k">POST /read</code>, чтобы не зациклить read на патчи реакций/статуса. Сервер отдаёт статичный «скелет» страницы, лента растёт за счёт oob-вставок.</p></blockquote>
+<h4>Действие</h4>
+<p>Внутри <code class="k">&lt;script&gt;</code> (перед <code class="k">&lt;/script&gt;</code>), лучше <strong>после</strong> <code class="k">sendBurst</code> и кнопок 100/1000, вставьте фрагмент <strong>целиком</strong>. Шаблон Jinja2 подставит <code class="k">{{ room_id }}</code> в URL.</p>
+</div>
+<div class="code-block"><code class="language-javascript">    // Доступные эмодзи (список можно сузить или вынести в шаблон).
+    const EMOJIS = [&#x27;👍&#x27;, &#x27;❤️&#x27;, &#x27;😂&#x27;, &#x27;😮&#x27;, &#x27;😢&#x27;];
+
+    function getUsername() {
+      return document.querySelector(&#x27;input[name=&quot;username&quot;]&#x27;)?.value.trim() || &#x27;&#x27;;
+    }
+
+    async function toggleReaction(roomId, messageId, emoji) {
+      const username = getUsername();
+      if (!username) { alert(&#x27;Введите ник, чтобы поставить реакцию&#x27;); return; }
+
+      // Есть «активная» кнопка в блоке реакций — шлём DELETE (см. также п. 6.1).
+      const btn = document.querySelector(
+        `#reactions-${messageId} [data-emoji=&quot;${emoji}&quot;][data-active=&quot;1&quot;]`
+      );
+      const method = btn ? &#x27;DELETE&#x27; : &#x27;POST&#x27;;
+      const fd = new FormData();
+      fd.append(&#x27;username&#x27;, username);
+      fd.append(&#x27;emoji&#x27;, emoji);
+      await fetch(`/rooms/${roomId}/messages/${messageId}/reactions`, { method, body: fd });
+      // Итоговый UI придёт по WebSocket из consume_reaction_events (oob innerHTML).
+    }
+
+    let _readTimer = null;
+    // Запоминаем последний «увиденный» id статьи, чтобы не дергать /read на каждый мелкий патч DOM.
+    let _lastSeenMsgId = 0;
+
+    function scheduleReadReceipt() {
+      clearTimeout(_readTimer);
+      _readTimer = setTimeout(doSendReadReceipt, 800);  // debounce
+    }
+
+    function doSendReadReceipt() {
+      const username = getUsername();
+      if (!username) return;
+
+      const msgs = document.querySelectorAll(&#x27;article.msg[id^=&quot;msg-&quot;]&#x27;);
+      if (!msgs.length) return;
+      const lastId = parseInt([...msgs].at(-1).id.replace(&#x27;msg-&#x27;, &#x27;&#x27;), 10);
+      if (!lastId) return;
+
+      const fd = new FormData();
+      fd.append(&#x27;username&#x27;, username);
+      fd.append(&#x27;message_id&#x27;, lastId);
+      fetch(&#x27;/rooms/{{ room_id }}/read&#x27;, { method: &#x27;POST&#x27;, body: fd });
+    }
+
+    document.addEventListener(&#x27;htmx:wsAfterMessage&#x27;, () =&gt; {
+      // Новые message-карточки обогащаем пикером (по одному разу на article).
+      document.querySelectorAll(&#x27;.msg:not([data-emoji-added])&#x27;).forEach((article) =&gt; {
+        const msgId = article.id?.replace(&#x27;msg-&#x27;, &#x27;&#x27;);
+        if (!msgId) return;
+        const roomId = &#x27;{{ room_id }}&#x27;;
+        const picker = document.createElement(&#x27;div&#x27;);
+        picker.className = &#x27;emoji-picker&#x27;;
+        EMOJIS.forEach((e) =&gt; {
+          const btn = document.createElement(&#x27;button&#x27;);
+          btn.className = &#x27;emoji-btn&#x27;;
+          btn.dataset.emoji = e;
+          btn.dataset.active = &#x27;0&#x27;;
+          btn.textContent = e;
+          btn.onclick = () =&gt; toggleReaction(roomId, msgId, e);
+          picker.appendChild(btn);
+        });
+        const reactDiv = article.querySelector(`#reactions-${msgId}`);
+        if (reactDiv) article.insertBefore(picker, reactDiv);
+        article.dataset.emojiAdded = &#x27;1&#x27;;
+      });
+
+      const list = document.querySelectorAll(&#x27;article.msg[id^=&quot;msg-&quot;]&#x27;);
+      if (!list.length) return;
+      const maxId = Math.max(
+        ...[...list].map((el) =&gt; parseInt(el.id.replace(&#x27;msg-&#x27;, &#x27;&#x27;), 10) || 0),
+      );
+      if (maxId &gt; _lastSeenMsgId) {
+        _lastSeenMsgId = maxId;
+        scheduleReadReceipt();
+      }
+    });
+
+    document.querySelector(&#x27;input[name=&quot;username&quot;]&#x27;).addEventListener(&#x27;input&#x27;, () =&gt; {
+      scheduleReadReceipt();
+    });</code></div>
+<div class="section">
+<blockquote><p><strong>Итог</strong> Новый <code class="k">article.msg</code> → пикер эмодзи. Рост <strong>max(msg id)</strong> → отложенный <code class="k">POST /read</code> (800 ms). Патчи только реакций/✓✓ не увеличивают max id → <strong>нет петли</strong>.</p></blockquote>
+<blockquote><p><strong>Важно</strong> Обработчик <code class="k">input</code> на ник должен находить то же поле, что и Part 1 (<code class="k">input[name=&quot;username&quot;]</code>).</p></blockquote>
+<h3>6.1. Повторный клик и <code class="k">DELETE</code> (по желанию)</h3>
+<blockquote><p><strong>Дополнительно</strong> Здесь описан <strong>разрыв</strong> между минимальным серверным HTML (только эмодзи и числа) и желаемым UX «кликнул ещё раз — убрал реакцию». <code class="k">toggleReaction</code> выбирает <code class="k">POST</code> или <code class="k">DELETE</code> по кнопке внутри <code class="k">#reactions-{id}</code> с <code class="k">data-emoji</code> и <code class="k">data-active=&quot;1&quot;</code>. HTML из <code class="k">consume_reaction_events</code> в учебном виде часто <strong>не</strong> помечает, что <strong>этот</strong> ник уже нажал эмодзи. Чтобы <code class="k">DELETE</code> реально вызывался, добавьте учёт на клиенте (<code class="k">Map</code> / <code class="k">sessionStorage</code> по паре ник + <code class="k">message_id</code>) или расширьте JSON <code class="k">chat.reaction.persisted</code> (например, список эмодзи текущего пользователя) и при сборке фрагмента выставляйте <code class="k">data-active=&quot;1&quot;</code>.</p></blockquote>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h2 id="7-стили-appstaticstylescss">7. Стили — <code class="k">app/static/styles.css</code></h2>
+<blockquote><p><strong>Контекст</strong> Галочки через <code class="k"><strong>::before</code></strong>, не текстом в HTML — при oob достаточно сменить класс (<code class="k">msg-status</code> / <code class="k">msg-status read</code>). Блок <code class="k">.emoji-picker</code> — визуальное разрежение кнопок.</p></blockquote>
+<h4>Действие</h4>
+<p>Добавьте в конец файла (или после <code class="k">.msg header</code>) блок ниже:</p>
+</div>
+<div class="code-block"><code class="language-css">/* Контейнер галочки в шапке сообщения (flex: прижать вправо через margin-left: auto). */
+.msg-status {
+  font-size: 13px;
+  color: #aaa;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Серая одна галочка — «доставлено в чат» */
+.msg-status::before {
+  content: &#x27;✓&#x27;;
+}
+
+.msg-status.read {
+  color: #4fc3f7;
+}
+
+/* Две галочки — «кто-то другой прочитал» (см. mark_read) */
+.msg-status.read::before {
+  content: &#x27;✓✓&#x27;;
+}
+
+.emoji-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0;
+}
+
+.emoji-btn {
+  border: 1px solid #ddd;
+  background: #fafafa;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 2px 6px;
+}</code></div>
+<div class="section">
+<p>Убедитесь, что у <code class="k">.msg header</code> во Flex есть выравнивание (как в Part 1), чтобы <code class="k">margin-left: auto</code> у <code class="k">.msg-status</code> прижимал галочку вправо.</p>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h2 id="8-переменные-окружения-по-желанию">8. Переменные окружения (по желанию)</h2>
+<blockquote><p><strong>Контекст</strong> <code class="k">os.getenv</code> позволяет подставить свои имена очередей. <strong>Web и worker должны совпадать</strong> по значениям.</p></blockquote>
+<p>Если требуется переопределение, в <code class="k"><strong>.env</code></strong> / окружении контейнера (пример = значения по умолчанию):</p>
+</div>
+<div class="code-block"><code class="language-ini">MQ_QUEUE_REACTIONS_INCOMING=chat.reactions.incoming
+MQ_QUEUE_REACTIONS_PERSISTED=chat.reactions.persisted
+MQ_ROUTING_KEY_REACTION_CREATED=chat.reaction.created
+MQ_ROUTING_KEY_REACTION_PERSISTED=chat.reaction.persisted</code></div>
+<div class="section">
+<p>Для работы «из коробки» этот шаг <strong>не обязателен</strong>.</p>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h2 id="9-проверка">9. Проверка</h2>
+<blockquote><p><strong>Порядок</strong> Сначала сообщения (Part 1), затем реакции (очереди в UI RabbitMQ), затем read (второй браузер). Частые проблемы: нет второго <code class="k"><strong>create_task</code></strong>, разные имена очередей в <code class="k"><strong>mq.py</code></strong> и <code class="k"><strong>worker.py</strong></code>.</p></blockquote>
+<table><tr><th>#</th><th>Что проверить</th></tr><tr><td>1</td><td><code class="k">docker compose up --build -d</code> — все сервисы поднялись</td></tr><tr><td>2</td><td>Два браузера, разные ники: серая ✓ → после чтения другим пользователем у автора голубая ✓✓</td></tr><tr><td>3</td><td>Реакции: клик → мигание <code class="k">chat.reactions.*</code> → счётчики у всех вкладок; снятие — разд. 6.1</td></tr><tr><td>4</td><td>В UI RabbitMQ у <code class="k">chat.events</code> четыре bindings; у рабочих очередей <strong>Consumers: 1</strong></td></tr></table>
+<p><strong>curl</strong> (подставьте <code class="k">room_id</code> и <code class="k">message_id</code>):</p>
+</div>
+<div class="code-block"><code class="language-bash">curl -s -X POST &quot;http://localhost:8100/rooms/room-1/messages/1/reactions&quot; -F &quot;username=bob&quot; -F &quot;emoji=👍&quot;
+curl -s -X POST &quot;http://localhost:8100/rooms/room-1/read&quot; -F &quot;username=bob&quot; -F &quot;message_id=1&quot;</code></div>
+<div class="section">
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h2 id="10-практикум-rabbitmq-и-ваш-репозиторий">10. Практикум: RabbitMQ и ваш репозиторий</h2>
+<blockquote><p>Дополнение: вы <strong>смотрите реальный код</strong>, <strong>сверяете</strong> его с Management UI и <strong>один раз</strong> меняете <code class="k">app/mq.py</code>, затем <strong>откатываете</strong> изменение. Нужен запущенный стек: <code class="k">docker compose up -d</code>, браузер на <strong><a href="http://localhost:15672">http://localhost:15672</a></strong> (<code class="k">guest</code> / <code class="k">guest</code>).</p></blockquote>
+<h3>10.1. Где в проекте задаётся маршрутизация</h3>
+<table><tr><th>Что искать</th><th>Файл</th><th>Зачем смотреть</th></tr><tr><td>Имена exchange, очередей, <strong>routing key</strong></td><td><code class="k">app/mq.py</code></td><td>Константы <code class="k">MQ_</code>* и список <code class="k"><strong>bindings</code></strong> в <code class="k">MQ.connect()</code></td></tr><tr><td>Тот же exchange у воркера</td><td><code class="k">worker.py</code></td><td><code class="k">declare_exchange(..., TOPIC)</code> и аргументы <code class="k">consume(...)</code></td></tr><tr><td>Какие поля ждёт JSON</td><td><code class="k">workers/messages.py</code>, <code class="k">workers/reactions.py</code></td><td>Ключи <code class="k">payload[&quot;...&quot;]</code> после <code class="k">json.loads</code></td></tr></table>
+<p><strong>Сделайте сейчас:</strong> откройте <code class="k">app/mq.py</code>, найдите список <code class="k"><strong>bindings</code></strong>, выпишите четыре пары <strong>очередь → routing key</strong>. Это эталон для проверки в UI (разд. 10.2).</p>
+<blockquote><p><strong>Соглашение об именах</strong> Ключи вроде <code class="k">chat.message.created</code> и <code class="k">chat.reaction.persisted</code> следуют шаблону <code class="k"><strong>chat.&lt;сущность&gt;.&lt;событие&gt;</code></strong>. Если бы read шёл через брокер, логично было бы <code class="k">chat.read.updated</code> / <code class="k">chat.read.persisted</code> — в этой методичке read без очереди, но в отчёте можно описать такое расширение.</p></blockquote>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h3>10.2. Практика без кода: Exchanges и Bindings</h3>
+<ol class="pad">
+<li><strong>Exchanges</strong> → <code class="k"><strong>chat.events</code></strong> — тип <strong>topic</strong> (как в коде: <code class="k">ExchangeType.TOPIC</code> в <code class="k">app/mq.py</code>).</li>
+<li>Блок <strong>Bindings</strong> на той же странице — сравните с выпиской из разд. 10.1 (имя очереди и routing key <strong>построчно</strong>).</li>
+<li><strong>Queues</strong> → для <code class="k">chat.messages.incoming</code> и остальных: <strong>Consumers</strong> = 1 при запущенных <code class="k">web</code> и <code class="k">worker</code>.</li>
+</ol>
+<p><strong>Что сдать:</strong> скрин Bindings у <code class="k">chat.events</code> или таблица «как в <code class="k">mq.py</code> / как в UI».</p>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h3>10.3. Publish из UI с JSON, который реально обработает проект</h3>
+<p>Смысл: тело сообщения в том виде, в каком его ждут <code class="k"><strong>handle_message</code></strong> / <code class="k"><strong>handle_reaction</code></strong> после <code class="k">json.loads</code> (см. <code class="k">workers/messages.py</code>, <code class="k">workers/reactions.py</code>).</p>
+<p><strong>Чтобы увидеть Ready в очереди:</strong> на минуту остановите worker — <code class="k">docker compose stop worker</code> — иначе сообщение сразу заберёт консьюмер.</p>
+<ol class="pad">
+<li><strong>Exchanges</strong> → <code class="k"><strong>chat.events</code></strong> → внизу <strong>Publish message</strong>.</li>
+<li>Routing key: <code class="k"><strong>chat.message.created</code></strong>. Payload (одна строка):</li>
+</ol>
+</div>
+<div class="code-block"><code class="language-json">{&quot;room_id&quot;:&quot;room-1&quot;,&quot;username&quot;:&quot;lab&quot;,&quot;text&quot;:&quot;Сообщение из RabbitMQ UI&quot;}</code></div>
+<div class="section">
+<ol class="pad">
+<li><strong>Publish message</strong> → в <strong>Queues</strong> → <code class="k"><strong>chat.messages.incoming</code></strong> должен вырасти <strong>Ready</strong>.</li>
+<li>Запустите worker: <code class="k">docker compose start worker</code> — сообщение уйдёт в обработку, появится запись в БД и событие в <code class="k"><strong>chat.messages.persisted</code></strong> (в открытом чате может мелькнуть новое сообщение).</li>
+</ol>
+<p><strong>Реакция (по желанию):</strong> worker снова остановите. Routing key <code class="k"><strong>chat.reaction.created</code></strong>, подставьте реальный <code class="k"><strong>message_id</code></strong> из чата или БД:</p>
+</div>
+<div class="code-block"><code class="language-json">{&quot;room_id&quot;:&quot;room-1&quot;,&quot;message_id&quot;:1,&quot;username&quot;:&quot;lab&quot;,&quot;emoji&quot;:&quot;👍&quot;}</code></div>
+<div class="section">
+<p>Очередь <code class="k"><strong>chat.reactions.incoming</strong></code> получит сообщение; после <code class="k">docker compose start worker</code> пойдёт обычная цепочка.</p>
+<p><strong>Неверный ключ:</strong> routing key <code class="k"><strong>chat.lab.unknown</code></strong> — в учебные очереди сообщение <strong>не</strong> попадёт (нет binding). Зафиксируйте в отчёте.</p>
+<blockquote><p><strong>Важно</strong> Поля <code class="k"><strong>room_id</code></strong>, <code class="k"><strong>username</code></strong>, <code class="k"><strong>text</strong></code> для сообщений и <code class="k"><strong>message_id</strong></code>, <code class="k"><strong>username</strong></code>, <code class="k"><strong>emoji</strong></code> для реакций обязательны; иначе воркер упадёт при обработке (и при <code class="k">requeue=True</code> сообщение может крутиться снова — смотрите логи <code class="k">docker compose logs worker</code>).</p></blockquote>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h3>10.4. Изменение проекта: очередь-аудит со шаблоном <code class="k">chat.#</code></h3>
+<p><strong>Цель:</strong> увидеть, что в <strong>topic</strong> к одному exchange можно привязать очередь <strong>шаблоном</strong>; сообщение с ключом <code class="k">chat.message.created</code> попадёт <strong>и</strong> в <code class="k">chat.messages.incoming</code>, <strong>и</strong> в новую «аудиторскую» очередь (маршрутизация множественная).</p>
+<p>В <strong>topic</strong> символ <code class="k">*</code><strong>** — ровно одно слово в сегменте, <code class="k"></strong>#</code><strong> — ноль и больше слов с текущего места до конца ключа. Шаблон <code class="k"></strong>chat.#</code>** совпадает с <code class="k">chat.message.created</code>, <code class="k">chat.reaction.persisted</code> и т.д.</p>
+<h4>Шаг 1 — правка <code class="k">app/mq.py</code></h4>
+<ol class="pad">
+<li>После строки с <code class="k">MQ_ROUTING_KEY_REACTION_PERSISTED</code> добавьте:</li>
+</ol>
+</div>
+<div class="code-block"><code class="language-python"># Лабораторная очередь (после практикума разд. 10.4 удалите константы, строку в for и пару в bindings).
+MQ_QUEUE_AUDIT = os.getenv(&quot;MQ_QUEUE_AUDIT&quot;, &quot;chat.lab.audit&quot;)
+MQ_BINDING_AUDIT_PATTERN = os.getenv(&quot;MQ_BINDING_AUDIT_PATTERN&quot;, &quot;chat.#&quot;)</code></div>
+<div class="section">
+<ol class="pad">
+<li>В цикл <code class="k">for name in (</code> … <code class="k">):</code> (объявление очередей) добавьте <code class="k"><strong>MQ_QUEUE_AUDIT</strong></code> рядом с остальными именами.</li>
+<li>В список <code class="k"><strong>bindings</strong></code> добавьте в конец:</li>
+</ol>
+</div>
+<div class="code-block"><code class="language-python">(MQ_QUEUE_AUDIT, MQ_BINDING_AUDIT_PATTERN),</code></div>
+<div class="section">
+<h4>Шаг 2 — перезапуск и проверка</h4>
+</div>
+<div class="code-block"><code class="language-bash">docker compose up -d --build web</code></div>
+<div class="section">
+<p>В UI: <strong>Queues</strong> → появится <code class="k"><strong>chat.lab.audit</code></strong>. Отправьте сообщение из чата или Publish из разд. 10.3 — счётчик <strong>Ready</strong> у аудит-очереди тоже вырастет (все события с ключами <code class="k">chat.</code>* дублируются сюда). <strong>Get messages</strong> покажет те же JSON, что у рабочих очередей.</p>
+<h4>Шаг 3 — откат</h4>
+<p>Удалите добавленные константы, правку <code class="k">for name in</code> и строку в <code class="k">bindings</code>. Перезапустите <code class="k">web</code>. Очередь в брокере при желании удалите вручную в UI.</p>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h3>10.5. Практика отладки: сломать и починить ключ через <code class="k">.env</code></h3>
+<p><strong>Только локально</strong>, не коммитьте ошибку.</p>
+<ol class="pad">
+<li>В <code class="k"><strong>.env</code></strong> (или в <code class="k">environment</code> сервиса <code class="k">web</code> в <code class="k">docker-compose.yml</code> временно) задайте опечатку, например:</li>
+</ol>
+</div>
+<div class="code-block"><code class="language-ini">MQ_ROUTING_KEY_REACTION_CREATED=chat.reaction.creatd</code></div>
+<div class="section">
+<ol class="pad">
+<li>Перезапустите <strong>web</strong> и <strong>worker</strong>. Реакции в UI перестанут обновляться: publish уходит на «чужой» ключ, binding ждёт <code class="k">chat.reaction.created</code>.</li>
+<li>Уберите строку или исправьте на правильное значение, перезапустите контейнеры — поведение восстановится.</li>
+</ol>
+<p><strong>Вывод для отчёта (1–2 предложения):</strong> почему строки ключей и имён очередей должны <strong>совпадать</strong> у всех процессов, читающих те же <code class="k">os.getenv</code>.</p>
+<blockquote><p><strong>Заметка про репозиторий</strong> В <code class="k">docker-compose.yml</code> файл <code class="k"><strong>.env</code></strong> подключён к сервису <code class="k"><strong>web</code></strong> (<code class="k">env_file</code>). У <code class="k"><strong>worker</code></strong> по умолчанию своего <code class="k">env_file</code> нет — он использует значения по умолчанию из <code class="k">app/mq.py</code>. Опечатка в <code class="k">.env</code> ломает <strong>публикацию</strong> реакций с web (ключ не совпадает с binding очереди, которую объявляет воркер). Если преподаватель просит «сломать и воркер», временно добавьте тому же сервису <code class="k">worker</code> блок <code class="k">env_file: .env</code> и <strong>одинаковую</strong> ошибочную переменную — тогда и bind уйдёт не туда; после отчёта верните compose как было.</p></blockquote>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<p>&lt;a id=&quot;11-webrtc-11-сигналинг-json-отдельный-ws&quot;&gt;&lt;/a&gt;</p>
+<h2 id="11-webrtc-1-1-сигналинг-json-отдельный-ws">11. WebRTC 1:1 (сигналинг JSON, отдельный WS)</h2>
+<blockquote><p><strong>Цель</strong> Добавить <strong>видеозвонок между двумя вкладками</strong> в одной комнате <code class="k">room_id</code>: аудио/видео идёт <strong>напрямую между браузерами</strong> (WebRTC), сервер только <strong>пересылает короткие JSON-сообщения</strong> (SDP offer/answer, ICE candidates).</p></blockquote>
+<blockquote><p><strong>Почему не тот же WebSocket, что у HTMX-чата</strong> Сокет <code class="k">/ws/{room_id}</code> в <code class="k">room.html</code> обёрнут в <code class="k">hx-ext=&quot;ws&quot;</code>: сервер рассылает <strong>HTML-фрагменты</strong> для чата. Если в тот же сокет слать <strong>сырой JSON</strong> сигналинга, расширение HTMX может попытаться вставить его в DOM и сломать страницу. <strong>Практичное решение:</strong> второй эндпоинт <strong><code class="k">/ws/signal/{room_id}</code></strong> — тот же FastAPI, тот же <code class="k">room_id</code>, <strong>только JSON</strong>, без RabbitMQ и без HTMX.</p></blockquote>
+<blockquote><p><strong>Ограничения учебной версии</strong></p><p>- Режим <strong>1:1</strong>: в комнате одновременно <strong>две</strong> вкладки с открытым видео (или один пир). - <strong>STUN</strong> публичный (<code class="k">stun.l.google.com</code>) — часто хватает в локальной сети / localhost. За жёстким NAT нужен <strong>TURN</strong> (отдельный сервис, в методичку не входит). - Камера/микрофон — по <strong>HTTPS</strong> или <strong>localhost</strong> (политика браузера).</p></blockquote>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h3>11.0. Как устроено (без кода)</h3>
+<p><strong>Сервер не видит видео и звук.</strong> Он только <strong>копирует текстовые сообщения</strong> (JSON) между WebSocket-клиентами в одной комнате <code class="k">room_id</code>. Медиапоток идёт <strong>напрямую</strong> между браузерами после согласования WebRTC.</p>
+</div>
+<div class="code-block"><code class="language-plaintext">flowchart LR
+  subgraph media[&quot;Медиа WebRTC&quot;]
+    A[Вкладка A] &lt;--&gt;|RTP| B[Вкладка B]
+  end
+  subgraph sig[&quot;Сигналинг&quot;]
+    A --&gt;|JSON| S[FastAPI /ws/signal]
+    S --&gt;|JSON| B
+    B --&gt;|JSON| S
+    S --&gt;|JSON| A
+  end</code></div>
+<div class="section">
+<p><strong>Порядок шагов</strong> (удобно кратко описать в отчёте):</p>
+<ol class="pad">
+<li>Обе вкладки открыли <strong>одну и ту же</strong> комнату (<code class="k">room_id</code>).</li>
+<li>Вкладка <strong>A</strong> нажимает «Позвонить» → браузер запрашивает камеру/микрофон (<code class="k">getUserMedia</code>).</li>
+<li>A → сервер → B: сообщение <strong>offer</strong> (SDP — «предложение» кодеков и параметров).</li>
+<li>B → сервер → A: сообщение <strong>answer</strong>.</li>
+<li>Обмен сообщениями <strong>ICE</strong> (кандидаты сетевых путей).</li>
+<li>У B в элементе <code class="k">&lt;video&gt;</code> появляется <strong>удалённый</strong> поток (<code class="k">ontrack</code>).</li>
+</ol>
+<p><strong>Роль инициатора:</strong> звонок начинает только вкладка, где нажали «Позвонить»; вторая <strong>только отвечает</strong> на пришедший <code class="k">offer</code> — так проще объяснять и меньше гонок в коде.</p>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h3>11.1. <code class="k">app/ws.py</code> — менеджер сигналинга</h3>
+<p>Добавьте <strong>в конец</strong> файла (после <code class="k">manager = WSManager()</code>), не удаляя существующий класс:</p>
+</div>
+<div class="code-block"><code class="language-python">class SignalingManager:
+    &quot;&quot;&quot;Отдельные WebSocket только для JSON WebRTC (не смешивать с HTML чата).&quot;&quot;&quot;
+
+    def __init__(self) -&gt; None:
+        self.rooms: dict[str, set[WebSocket]] = defaultdict(set)
+
+    async def connect(self, room_id: str, ws: WebSocket) -&gt; None:
+        await ws.accept()
+        self.rooms[room_id].add(ws)
+
+    def disconnect(self, room_id: str, ws: WebSocket) -&gt; None:
+        if room_id in self.rooms and ws in self.rooms[room_id]:
+            self.rooms[room_id].remove(ws)
+            if not self.rooms[room_id]:
+                del self.rooms[room_id]
+
+    async def relay(self, room_id: str, sender: WebSocket, text: str) -&gt; None:
+        &quot;&quot;&quot;Переслать сырую строку всем другим сокетам в комнате (1:1 — одному пиру).&quot;&quot;&quot;
+        dead: list[WebSocket] = []
+        for peer in self.rooms.get(room_id, set()):
+            if peer is sender:
+                continue
+            try:
+                await peer.send_text(text)
+            except Exception:
+                dead.append(peer)
+        for w in dead:
+            self.disconnect(room_id, w)
+
+
+signal_manager = SignalingManager()</code></div>
+<div class="section">
+<p>В начале файла уже есть <code class="k">from collections import defaultdict</code> и <code class="k">from fastapi import WebSocket</code> — дополнительных импортов не нужно.</p>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h3>11.2. <code class="k">app/main.py</code> — маршрут WebSocket сигналинга</h3>
+<p><strong>Импорт</strong> (рядом с <code class="k">from app.ws import manager</code>):</p>
+</div>
+<div class="code-block"><code class="language-python">from app.ws import manager, signal_manager</code></div>
+<div class="section">
+<p><strong>Эндпоинт</strong> (удобно разместить <strong>сразу после</strong> <code class="k">ws_room</code>):</p>
+</div>
+<div class="code-block"><code class="language-python">@app.websocket(&quot;/ws/signal/{room_id}&quot;)
+async def ws_signal(ws: WebSocket, room_id: str):
+    &quot;&quot;&quot;Только relay JSON между пирами в комнате; тело не парсится.&quot;&quot;&quot;
+    await signal_manager.connect(room_id, ws)
+    try:
+        while True:
+            raw = await ws.receive_text()
+            await signal_manager.relay(room_id, ws, raw)
+    except WebSocketDisconnect:
+        signal_manager.disconnect(room_id, ws)
+    except Exception:
+        signal_manager.disconnect(room_id, ws)</code></div>
+<div class="section">
+<p>Существующий <code class="k"><strong>ws_room</strong></code> и публикация в RabbitMQ <strong>не меняются</strong>.</p>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h3>11.3. <code class="k">app/templates/room.html</code> — разметка</h3>
+<p><strong>Сразу после</strong> заголовка <code class="k">&lt;h1&gt;Комната: …&lt;/h1&gt;</code> (или над блоком <code class="k">hx-ext=&quot;ws&quot;</code>) вставьте блок видео:</p>
+</div>
+<div class="code-block"><code class="language-xml">  &lt;div id=&quot;webrtc-panel&quot; class=&quot;webrtc-panel&quot;&gt;
+    &lt;h2&gt;Видео 1:1&lt;/h2&gt;
+    &lt;p class=&quot;webrtc-hint&quot;&gt;Откройте эту же комнату во &lt;strong&gt;второй вкладке&lt;/strong&gt;, разные ники. Нажмите «Позвонить» в одной вкладке.&lt;/p&gt;
+    &lt;div class=&quot;webrtc-videos&quot;&gt;
+      &lt;div&gt;
+        &lt;span&gt;Вы&lt;/span&gt;
+        &lt;video id=&quot;localVideo&quot; autoplay playsinline muted&gt;&lt;/video&gt;
+      &lt;/div&gt;
+      &lt;div&gt;
+        &lt;span&gt;Собеседник&lt;/span&gt;
+        &lt;video id=&quot;remoteVideo&quot; autoplay playsinline&gt;&lt;/video&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;button type=&quot;button&quot; id=&quot;btn-call&quot;&gt;Позвонить&lt;/button&gt;
+    &lt;button type=&quot;button&quot; id=&quot;btn-hangup&quot;&gt;Завершить&lt;/button&gt;
+  &lt;/div&gt;</code></div>
+<div class="section">
+<ul class="list-plain">
+<li><code class="k"><strong>muted</strong></code> у локального превью — чтобы не было эха (микрофон и динамик).</li>
+</ul>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h3>11.4. <code class="k">app/templates/room.html</code> — скрипт WebRTC</h3>
+<p>Внутри существующего <code class="k">&lt;script&gt;</code> в <strong>конце</strong> (перед <code class="k">&lt;/script&gt;</code>) добавьте фрагмент ниже.</p>
+</div>
+<div class="code-block"><code class="language-javascript">    // ─── WebRTC 1:1 (сигналинг через /ws/signal/{room_id}) ─────────────────
+    const ROOM_ID = &#x27;{{ room_id }}&#x27;;
+    const wsProto = location.protocol === &#x27;https:&#x27; ? &#x27;wss:&#x27; : &#x27;ws:&#x27;;
+    const signalWs = new WebSocket(`${wsProto}//${location.host}/ws/signal/${ROOM_ID}`);
+
+    const ICE_SERVERS = { iceServers: [{ urls: &#x27;stun:stun.l.google.com:19302&#x27; }] };
+    let pc = null;
+    let localStream = null;
+
+    const localVideo = document.getElementById(&#x27;localVideo&#x27;);
+    const remoteVideo = document.getElementById(&#x27;remoteVideo&#x27;);
+    const btnCall = document.getElementById(&#x27;btn-call&#x27;);
+    const btnHangup = document.getElementById(&#x27;btn-hangup&#x27;);
+
+    function sendSignal(obj) {
+      if (signalWs.readyState === WebSocket.OPEN) signalWs.send(JSON.stringify(obj));
+    }
+
+    signalWs.onmessage = async (ev) =&gt; {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch { return; }
+      if (msg.type === &#x27;offer&#x27;) {
+        await ensurePc();
+        await pc.setRemoteDescription(new RTCSessionDescription({ type: &#x27;offer&#x27;, sdp: msg.sdp }));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        sendSignal({ type: &#x27;answer&#x27;, sdp: answer.sdp });
+      } else if (msg.type === &#x27;answer&#x27;) {
+        if (pc &amp;&amp; !pc.currentRemoteDescription) {
+          await pc.setRemoteDescription(new RTCSessionDescription({ type: &#x27;answer&#x27;, sdp: msg.sdp }));
+        }
+      } else if (msg.type === &#x27;ice&#x27; &amp;&amp; msg.candidate &amp;&amp; pc) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+        } catch (e) { console.warn(&#x27;ICE&#x27;, e); }
+      }
+    };
+
+    async function ensurePc() {
+      if (pc) return pc;
+      pc = new RTCPeerConnection(ICE_SERVERS);
+      pc.ontrack = (e) =&gt; { remoteVideo.srcObject = e.streams[0]; };
+      pc.onicecandidate = (e) =&gt; {
+        if (e.candidate) sendSignal({ type: &#x27;ice&#x27;, candidate: e.candidate.toJSON() });
+      };
+      if (localStream) localStream.getTracks().forEach((t) =&gt; pc.addTrack(t, localStream));
+      return pc;
+    }
+
+    function cleanupPeer() {
+      if (pc) { pc.close(); pc = null; }
+      remoteVideo.srcObject = null;
+    }
+
+    btnCall.onclick = async () =&gt; {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        localVideo.srcObject = localStream;
+        await ensurePc();
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        sendSignal({ type: &#x27;offer&#x27;, sdp: offer.sdp });
+      } catch (e) {
+        alert(&#x27;Нет доступа к камере/микрофону или WebRTC: &#x27; + e);
+      }
+    };
+
+    btnHangup.onclick = () =&gt; {
+      cleanupPeer();
+      if (localStream) {
+        localStream.getTracks().forEach((t) =&gt; t.stop());
+        localStream = null;
+        localVideo.srcObject = null;
+      }
+    };</code></div>
+<div class="section">
+<p><strong>Логика:</strong> инициатор нажимает <strong>«Позвонить»</strong> → <code class="k">getUserMedia</code> → <code class="k">createOffer</code> → JSON уходит второй вкладке → там автоматически <strong>answer</strong> → обмен <strong>ICE</strong>. По сети пересылаются только типы <strong><code class="k">offer</code></strong>, <strong><code class="k">answer</code></strong>, <strong><code class="k">ice</code></strong> — меньше веток в коде.</p>
+<p>Кнопка <strong>«Завершить»</strong> только <strong>локально</strong> закрывает соединение и останавливает камеру/микрофон на этой вкладке; собеседнику отдельное сообщение не шлётся (в «боевом» варианте можно добавить <code class="k">hangup</code> по сокету или полагаться на закрытие WebSocket).</p>
+<blockquote><p><strong>Заметка</strong> Вторая вкладка создаёт <code class="k">RTCPeerConnection</code> только при получении <strong>offer</strong>; до этого у неё нет локального потока — это нормально для «входящего» пира в упрощённой схеме. При необходимости добавьте симметричный <code class="k">getUserMedia</code> в обработчике <code class="k">offer</code> перед <code class="k">createAnswer</code>.</p></blockquote>
+<blockquote><p><strong>По желанию — не раздувать <code class="k">room.html</code>:</strong> вынесите тот же код в <code class="k">app/static/webrtc-11.js</code>, в шаблоне перед подключением задайте <code class="k">window.__ROOM_ID__ = &#x27;{{ room_id }}&#x27;;</code>, подключите <code class="k">&lt;script src=&quot;/static/webrtc-11.js&quot; defer&gt;&lt;/script&gt;</code> и в файле используйте <code class="k">const ROOM_ID = window.__ROOM_ID__;</code> вместо подстановки Jinja внутри <code class="k">.js</code>.</p></blockquote>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h3>11.5. <code class="k">app/static/styles.css</code> (по желанию)</h3>
+</div>
+<div class="code-block"><code class="language-css">.webrtc-panel {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+.webrtc-videos {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+.webrtc-videos video {
+  width: 240px;
+  max-width: 100%;
+  background: #111;
+  border-radius: 6px;
+}
+.webrtc-hint {
+  font-size: 14px;
+  color: #555;
+}</code></div>
+<div class="section">
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h3>11.6. Проверка</h3>
+<ol class="pad">
+<li><code class="k">docker compose up --build -d</code> (или локально <code class="k">uvicorn</code>).</li>
+<li>Две вкладки: <code class="k">http://localhost:8100/rooms/room-1</code> (или тот же <code class="k">room_id</code>).</li>
+<li>Разрешить камеру/микрофон.</li>
+<li>В <strong>одной</strong> вкладке — <strong>«Позвонить»</strong>; во <strong>второй</strong> должно появиться удалённое видео после ответа.</li>
+<li><strong>«Завершить»</strong> на вкладке, где звонили — локальная камера останавливается; у собеседника картинка может зависеть от браузера до обновления страницы или следующего звонка (в учебной версии нет сигнала <code class="k">hangup</code> пиру).</li>
+</ol>
+<p>Если картинки нет: консоль браузера (F12), вкладка <strong>Network → WS</strong> для <code class="k">/ws/signal/...</code>; убедитесь, что обе вкладки в <strong>одной</strong> комнате.</p>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h3>11.7. Связь с RabbitMQ</h3>
+<p>Медиа <strong>не</strong> проходит через RabbitMQ. Брокер по-прежнему только для сообщений чата и реакций. В отчёте можно пояснить: <strong>сигналинг</strong> — малые JSON в реальном времени через <strong>WebSocket</strong>; <strong>RabbitMQ</strong> — очередь для конвейера чата.</p>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h3>11.8. Возможные доработки (не в минимуме)</h3>
+<ul class="list-plain">
+<li>Сообщение <strong><code class="k">hangup</code></strong> по сокету и обработка у пира — аккуратное завершение с обеих сторон.</li>
+<li>Роли <strong>caller/callee</strong> по нику, чтобы оба не слали <code class="k">offer</code> одновременно.</li>
+<li><strong>Только аудио</strong> — в <code class="k">getUserMedia</code> указать <code class="k">video: false</code>.</li>
+<li>Ограничение <strong>двух</strong> сигнальных сокетов на комнату на сервере (отказ третьему).</li>
+</ul>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+<h3>11.9. Вопросы для самопроверки</h3>
+<ol class="pad">
+<li>Почему сигналинг WebRTC <strong>не</strong> отправляют в тот же WebSocket, что использует HTMX для чата?</li>
+<li>Что именно проходит через <strong><code class="k">/ws/signal/{room_id}</code></strong>, а что — <strong>напрямую между браузерами</strong>?</li>
+<li>Зачем нужен <strong>STUN</strong>? В какой ситуации одного STUN может не хватить и зачем тогда <strong>TURN</strong>?</li>
+<li>При текущей реализации <code class="k">relay</code> на сервере: что произойдёт, если в одной комнате открыть <strong>третью</strong> вкладку с тем же сигнальным сокетом?</li>
+<li>Почему в упрощённой методичке кнопка «Завершить» <strong>не обязана</strong> уведомлять вторую вкладку по сети?</li>
+</ol>
+<hr style="margin:24px 0;border:none;border-top:1px solid #ddd"/>
+</div>
+<div class="section" id="checklist">
+<h2>Чек-лист</h2>
+<table>
+<tr><th>Этап</th><th>Статус</th></tr>
+<tr><td>разд. 0 — базовый проект из части 1</td><td><input type="checkbox" id="c-s0"></td></tr>
+<tr><td>разд. 1–2 — БД и очереди реакций</td><td><input type="checkbox" id="c-s12"></td></tr>
+<tr><td>разд. 3–4 — worker реакций и точка входа</td><td><input type="checkbox" id="c-s34"></td></tr>
+<tr><td>разд. 5–7 — main, room.html, стили</td><td><input type="checkbox" id="c-s57"></td></tr>
+<tr><td>разд. 8–9 — .env и проверка</td><td><input type="checkbox" id="c-s89"></td></tr>
+<tr><td>разд. 10 — практикум RabbitMQ</td><td><input type="checkbox" id="c-s10"></td></tr>
+<tr><td>разд. 11 — WebRTC 1:1 (по желанию)</td><td><input type="checkbox" id="c-s11"></td></tr>
+</table>
+</div>
+<div class="section" id="repo-link-section">
+<h2>Ссылка на репозиторий</h2>
+<div class="form-group"><label for="repo-url">Ссылка на репозиторий Git с полным кодом:</label><input type="text" id="repo-url" name="repo-url" placeholder="https://github.com/... или git@github.com:..."></div>
+</div>
+<div class="section" id="vyvody">
+<h2>Выводы</h2>
+<div class="form-group"><label>Что изучили:</label><textarea rows="3" id="ta0" style="width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px"></textarea></div>
+<div class="form-group"><label>Сложности:</label><textarea rows="3" id="ta1" style="width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px"></textarea></div>
+</div>
+<button class="save-btn" onclick="window.print()">Сохранить в PDF</button>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.code-block code').forEach(function(el){try{hljs.highlightElement(el)}catch(e){}});
+  var KEY='laba_2_rabbit_webrtc_';
+  ['student-name','group','date','repo-url'].forEach(function(id){
+    var el=document.getElementById(id);if(!el)return;
+    el.value=localStorage.getItem(KEY+id)||'';
+    el.addEventListener('input',function(){localStorage.setItem(KEY+id,el.value)});
+  });
+  var dateEl=document.getElementById('date');
+  if(dateEl&&!dateEl.value)dateEl.value=new Date().toISOString().split('T')[0];
+  document.querySelectorAll('input[type="checkbox"]').forEach(function(cb){
+    if(!cb.id)return;
+    if(localStorage.getItem(KEY+cb.id)==='true')cb.checked=true;
+    cb.addEventListener('change',function(){localStorage.setItem(KEY+cb.id,cb.checked)});
+  });
+  document.querySelectorAll('textarea').forEach(function(el){
+    if(!el.id)return;
+    el.value=localStorage.getItem(KEY+el.id)||'';
+    el.addEventListener('input',function(){localStorage.setItem(KEY+el.id,el.value)});
+  });
+});
+</script>
+</body>
+</html>
