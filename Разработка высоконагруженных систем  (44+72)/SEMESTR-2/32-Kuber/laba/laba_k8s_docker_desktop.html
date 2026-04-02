@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Практическое занятие: Kubernetes в Docker Desktop (Windows)</title>
+<style media="print">body{font-family:Arial,sans-serif;font-size:12px}.container{box-shadow:none;background:white}.header{background:white!important;color:black!important}.save-btn{display:none!important}.section{page-break-inside:avoid}</style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;line-height:1.6;color:#333;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh}.container{max-width:1200px;margin:20px auto;padding:20px;background:white;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}.header{text-align:center;padding:30px;background:linear-gradient(135deg,#005EB8,#003D82);color:white;border-radius:10px;margin-bottom:30px}.header h1{font-size:2.2em;margin-bottom:10px}.header p{opacity:.95;margin-top:8px}.student-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:30px;padding:20px;background:#f8f9fa;border-radius:10px}.form-group{margin-bottom:20px}.form-group label{display:block;margin-bottom:5px;font-weight:bold;color:#003D82}.form-group input,.form-group textarea{width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px;font-size:16px}.section{margin-bottom:40px;padding:25px;background:#fff;border-left:5px solid #005EB8;border-radius:0 10px 10px 0;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.section h2{color:#003D82;margin-bottom:20px;font-size:1.65em}.section h3{color:#005EB8;margin:20px 0 10px;font-size:1.25em}.section h4{color:#1565c0;margin:16px 0 8px;font-size:1.1em}.code-block{background:#282c34;color:#e2e8f0;padding:20px;border-radius:8px;margin:15px 0;font-family:Consolas,'Courier New',monospace;overflow-x:auto;white-space:pre-wrap;font-size:13px;word-break:break-word}ul{list-style:none;padding-left:0}ul li{padding:8px 0 8px 30px;position:relative}ul li::before{content:'\25b8';position:absolute;left:0;color:#005EB8;font-size:18px}ol{margin:10px 0 10px 24px}ol li{margin:8px 0;padding-left:6px}table{width:100%;border-collapse:collapse;margin:15px 0}table th,table td{border:1px solid #ddd;padding:12px;text-align:left;vertical-align:top}table th{background:#005EB8;color:white}table tr:nth-child(even){background:#f8f9fa}.checkbox-item{margin:15px 0;padding:15px 20px;background:linear-gradient(135deg,#005EB8,#003D82);border-radius:10px;display:flex;align-items:center}.checkbox-item input[type="checkbox"]{appearance:none;width:26px;height:26px;border:3px solid white;border-radius:6px;margin-right:15px;cursor:pointer;background:transparent;flex-shrink:0}.checkbox-item input[type="checkbox"]:checked{background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23005EB8"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>') center/18px no-repeat;border-color:#fff}.checkbox-item label{color:white;font-weight:500;cursor:pointer}.save-btn{background:linear-gradient(135deg,#005EB8,#003D82);color:white;border:none;padding:15px 30px;font-size:18px;border-radius:10px;cursor:pointer;display:block;margin:30px auto}code{background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:0.9em}.section .code-block code{background:transparent;padding:0}.note{background:#e3f2fd;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #2196f3}.toc{margin:20px 0;padding:20px;background:#f5f5f5;border-radius:8px}.toc a{color:#005EB8;text-decoration:none}.toc a:hover{text-decoration:underline}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<style>
+/* Глобальный `code { background:#f0f0f0 }` ломает hljs: светлый текст на светлом фоне */
+.section .code-block > code.hljs,
+.section .code-block > code {
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+/* Только PowerShell: все токены — синие, комментарии — отдельно (строка после # … снова видна) */
+.section .code-block code.language-powershell.hljs,
+.section .code-block code.language-powershell *:not(.hljs-comment) {
+  color: #005EB8 !important;
+}
+.section .code-block code.language-powershell .hljs-comment {
+  color: #5d6d7e !important;
+}
+@media print {
+  .code-block {
+    background: #eef2f7 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .section .code-block code.language-powershell.hljs,
+  .section .code-block code.language-powershell * {
+    color: #003D82 !important;
+    background: transparent !important;
+  }
+  .section .code-block code.language-powershell .hljs-comment {
+    color: #004d40 !important;
+  }
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/powershell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/dockerfile.min.js"></script>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>🐳 Практическое занятие</h1>
+<p><strong>Kubernetes внутри Docker Desktop (Windows)</strong></p>
+<p>Локальный кластер • kubectl • Deployment • Service • port-forward</p>
+</div>
+<div class="student-info">
+<div class="form-group"><label>ФИО:</label><input type="text" id="student-name"></div>
+<div class="form-group"><label>Группа:</label><input type="text" id="group"></div>
+<div class="form-group"><label>Дата:</label><input type="date" id="date"></div>
+</div>
+
+<div class="section" id="toc-top">
+<h2>📑 Содержание</h2>
+<div class="toc">
+<ol>
+  <li><a href="#1-цель">1. Цель</a></li>
+  <li><a href="#2-что-должно-быть-установлено">2. Что должно быть установлено</a></li>
+  <li><a href="#3-включение-kubernetes-в-docker-desktop">3. Включение Kubernetes в Docker Desktop</a></li>
+  <li><a href="#4-мини-приложение-пример">4. Мини-приложение (пример)</a></li>
+  <li><a href="#5-сборка-образа">5. Сборка образа</a></li>
+  <li><a href="#6-манифесты-kubernetes">6. Манифесты Kubernetes</a></li>
+  <li><a href="#7-развертывание">7. Развертывание</a></li>
+  <li><a href="#8-доступ-к-приложению">8. Доступ к приложению</a></li>
+  <li><a href="#9-отличия-от-minikube">9. Отличия от minikube</a></li>
+  <li><a href="#10-типичные-проблемы-и-решения">10. Типичные проблемы и решения</a></li>
+  <li><a href="#11-чеклист">11. Чеклист</a></li>
+  <li><a href="#12-полезные-команды">12. Полезные команды</a></li>
+  <li><a href="#13-усложнение-зачем-реально-нужен-kubernetes">13. Усложнение: зачем реально нужен Kubernetes</a></li>
+</ol>
+
+</div>
+</div>
+
+<div class="section" id="1-цель">
+<h2>1. Цель</h2>
+<p>Научиться запускать локальный кластер Kubernetes в Docker Desktop и развернуть в нем свое контейнерное приложение через <code>kubectl</code>.</p>
+</div>
+<div class="section" id="2-что-должно-быть-установлено">
+<h2>2. Что должно быть установлено</h2>
+<ul>
+<li>Docker Desktop (запускается без ошибок).</li>
+<li><code>kubectl</code> (рекомендуется <code>v1.35.x</code>).</li>
+<li>Любой терминал PowerShell.</li>
+</ul>
+<p>Проверка:</p>
+<div class="code-block"><code class="language-powershell">docker version
+# Проверяет, что Docker Engine запущен и доступен из CLI
+kubectl version --client
+# Проверяет, что kubectl установлен и команда работает</code></div>
+</div>
+<div class="section" id="3-включение-kubernetes-в-docker-desktop">
+<h2>3. Включение Kubernetes в Docker Desktop</h2>
+<ol>
+<li>Откройте Docker Desktop.</li>
+<li>В разделе Kubernetes нажмите <code>Create cluster</code> (или <code>Enable Kubernetes</code>, в зависимости от версии интерфейса).</li>
+<li>Дождитесь статуса, что кластер запущен.</li>
+</ol>
+<p>После запуска Docker Desktop обычно автоматически создает/обновляет контекст <code>docker-desktop</code> в kubeconfig.</p>
+<p>Проверьте:</p>
+<div class="code-block"><code class="language-powershell">kubectl config get-contexts
+# Показывает список контекстов kubeconfig и текущий активный контекст
+kubectl config use-context docker-desktop
+# Переключает kubectl на встроенный кластер Docker Desktop
+kubectl cluster-info
+# Проверяет доступность API-сервера и системных сервисов
+kubectl get nodes
+# Показывает узлы кластера и их статус (должно быть Ready)</code></div>
+<p>Ожидается: узел в статусе <code>Ready</code>.</p>
+<p>Пример успешной проверки:</p>
+<ul>
+<li>текущий контекст: <code>docker-desktop</code> ✅</li>
+<li><code>kubectl cluster-info</code> отвечает ✅</li>
+<li>нода <code>desktop-control-plane</code> в статусе <code>Ready</code> ✅</li>
+<li>версия кластера: <code>v1.35.1</code> ✅</li>
+</ul>
+</div>
+<div class="section" id="4-мини-приложение-пример">
+<h2>4. Мини-приложение (пример)</h2>
+<p>Структура:</p>
+<div class="code-block"><code class="language-text">k8s-docker-desktop-lab/
+  main.py
+  requirements.txt
+  Dockerfile
+  k8s/
+    deployment.yaml
+    service.yaml</code></div>
+<p><code>main.py</code>:</p>
+<div class="code-block"><code class="language-python">from fastapi import FastAPI
+
+app = FastAPI(title=&quot;Docker Desktop K8s Lab&quot;)
+
+@app.get(&quot;/&quot;)
+def root():
+    return {&quot;msg&quot;: &quot;hello from docker-desktop k8s&quot;}
+
+@app.get(&quot;/health&quot;)
+def health():
+    return {&quot;status&quot;: &quot;ok&quot;}</code></div>
+<p><code>requirements.txt</code>:</p>
+<div class="code-block"><code class="language-text">fastapi==0.115.6
+uvicorn[standard]==0.34.0</code></div>
+<p><code>Dockerfile</code>:</p>
+<div class="code-block"><code class="language-dockerfile">FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY main.py .
+EXPOSE 8000
+CMD [&quot;uvicorn&quot;, &quot;main:app&quot;, &quot;--host&quot;, &quot;0.0.0.0&quot;, &quot;--port&quot;, &quot;8000&quot;]</code></div>
+</div>
+<div class="section" id="5-сборка-образа">
+<h2>5. Сборка образа</h2>
+<p>Важно: при работе с Kubernetes в Docker Desktop образ обычно доступен кластеру сразу, если вы собрали его в том же Docker Desktop.</p>
+<div class="code-block"><code class="language-powershell">docker build -t lab1-api:1.0 .
+# Собирает образ из Dockerfile в текущей папке и присваивает тег lab1-api:1.0
+docker images
+# Показывает локальные образы и позволяет убедиться, что lab1-api:1.0 создан</code></div>
+<p>Пример вывода после успешной сборки:</p>
+<div class="code-block"><code class="language-text">docker images
+docker/desktop-cloud-provider-kind:v0.5.0
+docker/desktop-containerd-registry-mirror:v0.0.3
+envoyproxy/envoy:v1.36.4
+kindest/node:v1.35.1
+lab1-api:1.0     93e1c34dc52b        243MB         58.4MB</code></div>
+<p>Что это означает:</p>
+<ul>
+<li><code>lab1-api:1.0</code> — ваш пользовательский образ, который будет использоваться в <code>deployment.yaml</code>.</li>
+<li><code>kindest/node:v1.35.1</code> и <code>docker/desktop-*</code> — служебные образы Kubernetes Docker Desktop; они нужны для самого локального кластера.</li>
+<li>В новых версиях Docker Desktop вывод <code>docker images</code> может быть в &quot;расширенном&quot; табличном формате (колонки вроде <code>IN USE</code>, <code>DISK USAGE</code>, <code>CONTENT SIZE</code>) и иногда визуально &quot;съезжать&quot; в PowerShell — это нормально.</li>
+<li>Для лабы важно, что строка <code>lab1-api:1.0</code> присутствует: значит образ собран и доступен локально.</li>
+</ul>
+</div>
+<div class="section" id="6-манифесты-kubernetes">
+<h2>6. Манифесты Kubernetes</h2>
+<p>Зачем они нужны:</p>
+<ul>
+<li>чтобы описать приложение в виде декларации (&quot;что должно быть&quot;), а не запускать контейнеры вручную;</li>
+<li>чтобы Kubernetes мог автоматически поддерживать нужное число реплик и восстанавливать pod после сбоев;</li>
+<li>чтобы отделить сетевой доступ (<code>Service</code>) от жизненного цикла приложения (<code>Deployment</code>);</li>
+<li>чтобы одинаково воспроизводить запуск на любом ПК/в любой среде через <code>kubectl apply -f ...</code>.</li>
+</ul>
+<p><code>k8s/deployment.yaml</code>:</p>
+<div class="code-block"><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lab1-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: lab1-api
+  template:
+    metadata:
+      labels:
+        app: lab1-api
+    spec:
+      containers:
+      - name: lab1-api
+        image: lab1-api:1.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000</code></div>
+<p>Пояснения к <code>Deployment</code>:</p>
+<ul>
+<li><code>kind: Deployment</code> — контроллер, который поддерживает нужное число одинаковых pod-реплик.</li>
+<li><code>metadata.name: lab1-api</code> — имя Deployment в кластере.</li>
+<li><code>replicas: 2</code> — Kubernetes должен держать 2 pod одновременно.</li>
+<li><code>selector.matchLabels</code> и <code>template.metadata.labels</code> должны совпадать; так Deployment понимает, какими pod он управляет.</li>
+<li><code>image: lab1-api:1.0</code> — образ контейнера, собранный на шаге <code>docker build</code>.</li>
+<li><code>imagePullPolicy: IfNotPresent</code> — сначала использовать локальный образ, а не пытаться всегда тянуть из внешнего registry.</li>
+<li><code>containerPort: 8000</code> — порт приложения внутри контейнера (для FastAPI/uvicorn в этом примере).</li>
+</ul>
+<p><code>k8s/service.yaml</code>:</p>
+<div class="code-block"><code class="language-yaml">apiVersion: v1
+kind: Service
+metadata:
+  name: lab1-api
+spec:
+  selector:
+    app: lab1-api
+  ports:
+  - port: 80
+    targetPort: 8000
+  type: ClusterIP</code></div>
+<p>Пояснения к <code>Service</code>:</p>
+<ul>
+<li><code>kind: Service</code> — стабильная точка доступа к группе pod по меткам.</li>
+<li><code>selector.app: lab1-api</code> — сервис направляет трафик в pod с меткой <code>app=lab1-api</code>.</li>
+<li><code>port: 80</code> — порт самого сервиса внутри кластера.</li>
+<li><code>targetPort: 8000</code> — порт контейнера, куда сервис проксирует запросы.</li>
+<li><code>type: ClusterIP</code> — сервис доступен внутри кластера; с хоста используем <code>kubectl port-forward</code>.</li>
+</ul>
+<p>Итого: <code>Deployment</code> отвечает за запуск и самовосстановление pod, а <code>Service</code> — за сетевой доступ к этим pod.</p>
+</div>
+<div class="section" id="7-развертывание">
+<h2>7. Развертывание</h2>
+<div class="code-block"><code class="language-powershell">kubectl apply -f k8s/deployment.yaml
+# Создает/обновляет Deployment (поды приложения)
+kubectl apply -f k8s/service.yaml
+# Создает/обновляет Service для доступа к подам
+kubectl get deploy
+# Проверяет состояние Deployment и число доступных реплик
+kubectl get pods
+# Проверяет, что поды перешли в статус Running
+kubectl get svc
+# Проверяет, что сервис создан и слушает нужный порт</code></div>
+<p>Проверка логов:</p>
+<div class="code-block"><code class="language-powershell">kubectl logs -l app=lab1-api --tail=50
+# Показывает последние 50 строк логов всех подов приложения</code></div>
+</div>
+<div class="section" id="8-доступ-к-приложению">
+<h2>8. Доступ к приложению</h2>
+<p>Для <code>ClusterIP</code> используйте <code>port-forward</code>:</p>
+<div class="code-block"><code class="language-powershell">kubectl port-forward service/lab1-api 8080:80
+# Пробрасывает локальный порт 8080 на порт 80 сервиса в кластере</code></div>
+<p>В другом терминале:</p>
+<div class="code-block"><code class="language-powershell">curl http://127.0.0.1:8080/
+# Проверяет основной endpoint приложения
+curl http://127.0.0.1:8080/health
+# Проверяет health endpoint (ожидается статус ok)</code></div>
+</div>
+<div class="section" id="9-отличия-от-minikube">
+<h2>9. Отличия от minikube</h2>
+<ul>
+<li>Не нужно <code>minikube start</code>.</li>
+<li>Не нужны команды <code>minikube image load</code> в типовом случае.</li>
+<li>Контекст обычно <code>docker-desktop</code>.</li>
+<li>Версия Kubernetes зависит от версии Docker Desktop и его настроек.</li>
+<li>Ресурсы Kubernetes берутся из лимитов Docker Desktop (CPU/RAM/Disk).</li>
+</ul>
+</div>
+<div class="section" id="10-типичные-проблемы-и-решения">
+<h2>10. Типичные проблемы и решения</h2>
+<table>
+<tr>
+<th>Симптом</th>
+<th>Причина</th>
+<th>Что сделать</th>
+</tr>
+<tr>
+<td><code>Unable to connect to the server</code></td>
+<td>Kubernetes в Docker Desktop не запущен</td>
+<td>Включить Kubernetes в UI, дождаться запуска, проверить контекст <code>docker-desktop</code></td>
+</tr>
+<tr>
+<td><code>ErrImagePull</code> / <code>ImagePullBackOff</code></td>
+<td>Неверный <code>image</code>/<code>tag</code> или образ не собран</td>
+<td>Проверить <code>docker images</code>, имя тега в <code>deployment.yaml</code>, пересобрать</td>
+</tr>
+<tr>
+<td><code>kubectl</code> показывает не ту версию</td>
+<td>Перехвачен путь другим <code>kubectl</code> (например Docker)</td>
+<td>Временно:<code>$env:Path = &quot;C:\\kubectl;&quot; + $env:Path</code>; проверить <code>kubectl version --client</code></td>
+</tr>
+<tr>
+<td>Приложение не открывается через <code>localhost:8080</code></td>
+<td>Не запущен <code>port-forward</code>/неверные порты</td>
+<td>Проверить <code>kubectl get svc</code>, <code>targetPort</code>, держать <code>port-forward</code> активным</td>
+</tr>
+<tr>
+<td>Поды не <code>Running</code></td>
+<td>Ошибка запуска контейнера</td>
+<td><code>kubectl describe pod ...</code> и <code>kubectl logs ...</code></td>
+</tr>
+</table>
+</div>
+<div class="section" id="11-чеклист">
+<h2>11. Чеклист</h2>
+<div class="checkbox-item"><input type="checkbox" id="chk-k8s-dd-0"><label for="chk-k8s-dd-0">Kubernetes в Docker Desktop запущен.</label></div>
+<div class="checkbox-item"><input type="checkbox" id="chk-k8s-dd-1"><label for="chk-k8s-dd-1"><code>kubectl get nodes</code> показывает <code>Ready</code>.</label></div>
+<div class="checkbox-item"><input type="checkbox" id="chk-k8s-dd-2"><label for="chk-k8s-dd-2">Образ приложения собран локально.</label></div>
+<div class="checkbox-item"><input type="checkbox" id="chk-k8s-dd-3"><label for="chk-k8s-dd-3">Deployment и Service применены.</label></div>
+<div class="checkbox-item"><input type="checkbox" id="chk-k8s-dd-4"><label for="chk-k8s-dd-4">Минимум 2 пода в <code>Running</code>.</label></div>
+<div class="checkbox-item"><input type="checkbox" id="chk-k8s-dd-5"><label for="chk-k8s-dd-5"><code>/</code> и <code>/health</code> открываются через <code>port-forward</code>.</label></div>
+<div class="checkbox-item"><input type="checkbox" id="chk-k8s-dd-6"><label for="chk-k8s-dd-6">Показаны логи и базовая диагностика.</label></div>
+</div>
+<div class="section" id="12-полезные-команды">
+<h2>12. Полезные команды</h2>
+<div class="code-block"><code class="language-powershell">kubectl config current-context
+# Показывает текущий активный контекст
+kubectl get all
+# Быстрый обзор основных ресурсов в namespace
+kubectl describe deployment lab1-api
+# Подробное состояние Deployment и его событий
+kubectl describe pod &lt;pod-name&gt;
+# Диагностика конкретного pod: события, причины ошибок, статус контейнеров
+kubectl logs &lt;pod-name&gt;
+# Логи конкретного pod для отладки запуска
+kubectl delete -f k8s/service.yaml
+# Удаляет Service
+kubectl delete -f k8s/deployment.yaml
+# Удаляет Deployment и его pod-реплики</code></div>
+</div>
+<div class="section" id="13-усложнение-зачем-реально-нужен-kubernetes">
+<h2>13. Усложнение: зачем реально нужен Kubernetes</h2>
+<p>Цель этого раздела - показать, что Kubernetes нужен не &quot;для запуска одного контейнера&quot;, а для управления сервисом в условиях изменений и сбоев.</p>
+<h3>13.1. Масштабирование под нагрузку</h3>
+<p>Увеличьте число реплик:</p>
+<div class="code-block"><code class="language-powershell">kubectl scale deployment lab1-api --replicas=3
+kubectl get pods -w</code></div>
+<p>Что увидеть:</p>
+<ul>
+<li>было 2 pod, стало 3;</li>
+<li>приложение продолжает работать без ручного запуска каждого контейнера.</li>
+</ul>
+<p>Почему это важно:</p>
+<ul>
+<li>в Docker без оркестратора вы масштабируете вручную;</li>
+<li>в Kubernetes желаемое состояние задается одной командой, а система сама приводит фактическое состояние к нему.</li>
+</ul>
+<h3>13.2. Самовосстановление после сбоя</h3>
+<p>Удалите один pod:</p>
+<div class="code-block"><code class="language-powershell">kubectl get pods
+kubectl delete pod &lt;pod-name&gt;
+kubectl get pods -w</code></div>
+<p>Что увидеть:</p>
+<ul>
+<li>удаленный pod исчезает;</li>
+<li>Kubernetes автоматически создает новый pod.</li>
+</ul>
+<p>Почему это важно:</p>
+<ul>
+<li>Kubernetes поддерживает доступность сервиса даже при падении отдельных экземпляров;</li>
+<li>оператор задает &quot;сколько должно быть&quot;, а не &quot;как запускать каждый процесс&quot;.</li>
+</ul>
+<h4>Вариант A (без изменения кода): удалить pod вручную</h4>
+<p>Это самый быстрый способ показать self-healing без доработки приложения.</p>
+<div class="code-block"><code class="language-powershell">kubectl get pods
+kubectl delete pod &lt;pod-name&gt;
+kubectl get pods -w</code></div>
+<p>Что наблюдаем:</p>
+<ul>
+<li>удаленный pod исчезает из списка;</li>
+<li>Kubernetes автоматически создает новый pod;</li>
+<li>сервис продолжает отвечать (особенно при 2 и более репликах).</li>
+</ul>
+<h4>Вариант B (через <code>/docs</code>): падение по endpoint <code>/crash</code></h4>
+<p>Если нужно инициировать сбой именно из Swagger UI (<code>http://127.0.0.1:8080/docs</code>), добавьте endpoint, который завершает процесс:</p>
+<div class="code-block"><code class="language-python">@app.post(&quot;/crash&quot;)
+def crash():
+    import os
+    os._exit(1)</code></div>
+<p>Далее:</p>
+<ol>
+<li>Пересоберите образ и обновите Deployment.</li>
+</ol>
+<p>Важно: используйте <strong>новый тег</strong> (<code>1.2</code>, <code>1.3</code>, ...), а не перезаписывайте старый. При <code>imagePullPolicy: IfNotPresent</code> Kubernetes может оставить локальный старый образ с тем же тегом.</p>
+<div class="code-block"><code class="language-powershell">docker build -t lab1-api:1.2 .
+kubectl set image deployment/lab1-api lab1-api=lab1-api:1.2
+kubectl rollout status deployment/lab1-api</code></div>
+<ol>
+<li>Откройте <code>/docs</code> и вызовите <code>POST /crash</code>.</li>
+<li>Наблюдайте восстановление:</li>
+</ol>
+<div class="code-block"><code class="language-powershell">kubectl get pods -w
+kubectl logs -l app=lab1-api --previous
+kubectl describe pod &lt;pod-name&gt;</code></div>
+<p>Что показать студентам:</p>
+<ul>
+<li>после вызова <code>/crash</code> контейнер в pod завершается;</li>
+<li>Kubernetes перезапускает/пересоздает pod, чтобы вернуть заданное число реплик;</li>
+<li><code>--previous</code> в логах показывает вывод завершившегося контейнера.</li>
+<li>если новый endpoint не появился в <code>/docs</code>, перезапустите <code>port-forward</code> и обновите страницу (<code>Ctrl+F5</code>).</li>
+</ul>
+<p>Почему после <code>/crash</code> может появиться ошибка <code>error: lost connection to pod</code>:</p>
+<ul>
+<li><code>kubectl port-forward</code> держит туннель к конкретному pod/контейнеру;</li>
+<li>при <code>POST /crash</code> процесс в контейнере завершается, pod перезапускается/заменяется;</li>
+<li>старый туннель теряет цель и разрывается - это ожидаемое поведение.</li>
+</ul>
+<p>Как восстановить доступ после crash:</p>
+<div class="code-block"><code class="language-powershell">kubectl get pods -w
+kubectl port-forward service/lab1-api 8080:80
+curl.exe http://127.0.0.1:8080/health</code></div>
+<p>Плавная демонстрация (меньше визуальных &quot;провалов&quot;):</p>
+<ul>
+<li>перед экспериментом выставьте 2-3 реплики;</li>
+<li>тогда при падении одного pod сервис чаще всего продолжит отвечать через оставшиеся реплики.</li>
+</ul>
+<div class="code-block"><code class="language-powershell">kubectl scale deployment lab1-api --replicas=3
+kubectl get pods</code></div>
+<h3>13.3. Сравнение &quot;без Kubernetes&quot; и &quot;с Kubernetes&quot; на падении <code>/crash</code></h3>
+<p>Цель: увидеть практическую разницу в восстановлении сервиса после сбоя.</p>
+<h4>Режим A: без Kubernetes (только Docker)</h4>
+<p>Запустите контейнер напрямую:</p>
+<div class="code-block"><code class="language-powershell">docker run --rm -p 18080:8000 --name no-k8s-lab lab1-api:1.2</code></div>
+<p>Далее:</p>
+<ol>
+<li>Откройте <code>http://127.0.0.1:18080/docs</code>.</li>
+<li>Вызовите <code>POST /crash</code>.</li>
+<li>Проверьте состояние:</li>
+</ol>
+<div class="code-block"><code class="language-powershell">docker ps -a --filter &quot;name=no-k8s-lab&quot;
+curl.exe http://127.0.0.1:18080/health</code></div>
+<p>Что увидеть:</p>
+<ul>
+<li>контейнер перейдет в <code>Exited</code> (или завершится и удалится при <code>--rm</code>);</li>
+<li>endpoint перестанет отвечать;</li>
+<li>сервис не поднимется сам, пока вы не запустите контейнер вручную.</li>
+</ul>
+<h4>Режим B: с Kubernetes (Deployment)</h4>
+<p>Убедитесь, что реплик &gt;= 2:</p>
+<div class="code-block"><code class="language-powershell">kubectl scale deployment lab1-api --replicas=2
+kubectl get pods</code></div>
+<p>Далее:</p>
+<ol>
+<li>Через <code>http://127.0.0.1:8080/docs</code> вызовите <code>POST /crash</code>.</li>
+<li>Наблюдайте восстановление:</li>
+</ol>
+<div class="code-block"><code class="language-powershell">kubectl get pods -w</code></div>
+<p>Что увидеть:</p>
+<ul>
+<li>один pod падает/перезапускается;</li>
+<li>Deployment автоматически возвращает заданное число реплик;</li>
+<li>сервис восстанавливается без ручного запуска.</li>
+</ul>
+<p>Краткий вывод:</p>
+<ul>
+<li>без Kubernetes после сбоя нужен ручной запуск контейнера;</li>
+<li>с Kubernetes система сама поддерживает &quot;желаемое состояние&quot; (self-healing).</li>
+</ul>
+<h3>13.4. Контролируемое обновление версии (rollout)</h3>
+<ol>
+<li>Измените ответ в <code>main.py</code> (например, <code>&quot;v1.1&quot;</code>),</li>
+<li>пересоберите образ и обновите тег:</li>
+</ol>
+<div class="code-block"><code class="language-powershell">docker build -t lab1-api:1.1 .</code></div>
+<ol>
+<li>В <code>k8s/deployment.yaml</code> замените <code>image: lab1-api:1.0</code> на <code>image: lab1-api:1.1</code>, затем:</li>
+</ol>
+<div class="code-block"><code class="language-powershell">kubectl apply -f k8s/deployment.yaml
+kubectl rollout status deployment/lab1-api
+kubectl get pods</code></div>
+<p>Что увидеть:</p>
+<ul>
+<li>pod обновляются по очереди, без полной остановки сервиса.</li>
+</ul>
+<p>Почему это важно:</p>
+<ul>
+<li>безопасные обновления без &quot;выключили все -&gt; включили все&quot;;</li>
+<li>есть контроль процесса обновления.</li>
+</ul>
+<h3>13.5. Кейс: что Kubernetes считает ошибкой</h3>
+<p>Задание:</p>
+<ol>
+<li>Добавьте endpoint с медленным ответом в <code>main.py</code>:</li>
+</ol>
+<div class="code-block"><code class="language-python">@app.get(&quot;/slow&quot;)
+def slow():
+    import time
+    time.sleep(20)
+    return {&quot;msg&quot;: &quot;slow response&quot;}</code></div>
+<ol>
+<li>В <code>k8s/deployment.yaml</code> добавьте (или измените) <code>livenessProbe</code> у контейнера:</li>
+</ol>
+<div class="code-block"><code class="language-yaml">livenessProbe:
+  httpGet:
+    path: /slow
+    port: 8000
+  timeoutSeconds: 2
+  periodSeconds: 5
+  failureThreshold: 3</code></div>
+<ol>
+<li>Пересоберите образ с новым тегом и обновите Deployment.</li>
+</ol>
+<p>Наблюдение:</p>
+<ul>
+<li>pod начнет периодически перезапускаться;</li>
+<li>в <code>kubectl describe pod &lt;pod-name&gt;</code> появятся события <code>Unhealthy</code> и перезапуски контейнера.</li>
+</ul>
+<p>Команды для наблюдения:</p>
+<div class="code-block"><code class="language-powershell">kubectl get pods -w
+kubectl describe pod &lt;pod-name&gt;
+kubectl logs &lt;pod-name&gt; --previous</code></div>
+<p>Вывод:</p>
+<p>Kubernetes не знает, что &quot;правильно&quot; для вашего бизнеса, он действует строго по заданному контракту проб (<code>Probe</code>).</p>
+<h3>13.6. Кейс: Readiness и Liveness probes</h3>
+<p>Задача:</p>
+<p>Показать разницу между &quot;процесс в контейнере запущен&quot; и &quot;приложение готово принимать пользовательский трафик&quot;.</p>
+<p>Добавьте в <code>k8s/deployment.yaml</code> (внутрь контейнера) такие пробы:</p>
+<div class="code-block"><code class="language-yaml">livenessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 10
+  periodSeconds: 5
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 5
+  periodSeconds: 3</code></div>
+<p>Что означают параметры:</p>
+<ul>
+<li><code>initialDelaySeconds</code> - задержка перед первой проверкой после старта контейнера;</li>
+<li><code>periodSeconds</code> - как часто выполнять проверку;</li>
+<li><code>livenessProbe</code> - если долго неуспешна, Kubernetes перезапускает контейнер;</li>
+<li><code>readinessProbe</code> - если неуспешна, pod исключается из Service endpoints (трафик на него не идет).</li>
+</ul>
+<p>Шаги эксперимента:</p>
+<ol>
+<li>Примените манифест с пробами.</li>
+<li>Искусственно &quot;сломайте&quot; <code>/health</code> (например, временно возвращайте HTTP 500).</li>
+</ol>
+<p>Пример кода для <code>main.py</code>:</p>
+<div class="code-block"><code class="language-python">from fastapi import HTTPException
+
+@app.get(&quot;/health&quot;)
+def health():
+    raise HTTPException(status_code=500, detail=&quot;принудительная ошибка health для демонстрации probes&quot;)</code></div>
+<p>После демонстрации верните рабочий вариант:</p>
+<div class="code-block"><code class="language-python">@app.get(&quot;/health&quot;)
+def health():
+    return {&quot;status&quot;: &quot;ok&quot;}</code></div>
+<ol>
+<li>Пересоберите образ с новым тегом, обновите Deployment и дождитесь rollout.</li>
+<li>Наблюдайте состояние:</li>
+</ol>
+<div class="code-block"><code class="language-powershell">kubectl get pods
+kubectl describe pod &lt;pod-name&gt;
+kubectl get endpoints lab1-api</code></div>
+<p>Что показать студентам:</p>
+<ul>
+<li>pod может быть в <code>Running</code>, но при этом <code>READY 0/1</code> (<code>NOT READY</code>);</li>
+<li>Service перестает направлять трафик в неготовый pod (он исчезает из endpoints);</li>
+<li>если падает только <code>readinessProbe</code>, Kubernetes не обязан &quot;убивать&quot; контейнер;</li>
+<li>если начинает падать <code>livenessProbe</code>, контейнер будет перезапускаться.</li>
+</ul>
+<p>Практический вывод:</p>
+<ul>
+<li><code>Liveness</code> отвечает на вопрос: &quot;жив ли процесс?&quot;;</li>
+<li><code>Readiness</code> отвечает на вопрос: &quot;можно ли пускать к нему пользователей прямо сейчас?&quot;.</li>
+</ul>
+<h3>13.7. Кейс: ограничения CPU и памяти</h3>
+<p>Задача:</p>
+<p>Показать, как Kubernetes ограничивает контейнеры по ресурсам и защищает узел от &quot;прожорливых&quot; приложений.</p>
+<p>Добавьте в контейнер <code>resources</code> (в <code>k8s/deployment.yaml</code>):</p>
+<div class="code-block"><code class="language-yaml">resources:
+  requests:
+    cpu: &quot;100m&quot;
+    memory: &quot;128Mi&quot;
+  limits:
+    cpu: &quot;200m&quot;
+    memory: &quot;256Mi&quot;</code></div>
+<p>Эксперимент:</p>
+<ol>
+<li>Добавьте endpoint <code>/memory</code>, который пытается занять около 300 МБ памяти:</li>
+</ol>
+<div class="code-block"><code class="language-python">@app.get(&quot;/memory&quot;)
+def memory():
+    chunk = &quot;x&quot; * (300 * 1024 * 1024)
+    return {&quot;allocated_bytes&quot;: len(chunk)}</code></div>
+<ol>
+<li>Пересоберите образ с новым тегом, обновите Deployment и дождитесь rollout.</li>
+<li>Вызовите endpoint <code>/memory</code> из <code>/docs</code> или <code>curl</code>.</li>
+<li>Наблюдайте:</li>
+</ol>
+<div class="code-block"><code class="language-powershell">kubectl get pods
+kubectl describe pod &lt;pod-name&gt;</code></div>
+<p>Что увидят студенты:</p>
+<ul>
+<li>pod будет перезапускаться после вызова;</li>
+<li>в описании pod появится причина завершения контейнера: <code>OOMKilled</code>.</li>
+</ul>
+<p>Практический вывод:</p>
+<p>Kubernetes принудительно защищает узел от &quot;плохих&quot; контейнеров, которые выходят за установленные лимиты памяти/CPU.</p>
+<h3>13.8. Откат, если новая версия плохая</h3>
+<p>Если после обновления приложение работает неправильно:</p>
+<div class="code-block"><code class="language-powershell">kubectl rollout undo deployment/lab1-api
+kubectl rollout status deployment/lab1-api</code></div>
+<p>Что увидеть:</p>
+<ul>
+<li>возврат на предыдущую стабильную версию.</li>
+</ul>
+<p>Почему это важно:</p>
+<ul>
+<li>быстрый rollback снижает риск простоев в проде.</li>
+</ul>
+<h3>13.9. Вывод для отчета (своими словами)</h3>
+<p>Kubernetes нужен не для &quot;запуска контейнера&quot;, а для:</p>
+<ul>
+<li>автоматического масштабирования под нагрузку;</li>
+<li>самовосстановления после сбоев;</li>
+<li>безопасных обновлений и быстрых откатов;</li>
+<li>управления сервисом как целевой системой, а не набором ручных команд.</li>
+</ul>
+</div>
+
+<div class="section" id="vyvody">
+<h2>📊 Выводы (для отчёта)</h2>
+<div class="form-group"><label>Что изучили:</label><textarea rows="3" id="ta0" style="width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px"></textarea></div>
+<div class="form-group"><label>Сложности:</label><textarea rows="3" id="ta1" style="width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px"></textarea></div>
+</div>
+
+<button class="save-btn" type="button" onclick="window.print()">💾 Сохранить в PDF (печать)</button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.code-block code').forEach(function(el){try{hljs.highlightElement(el)}catch(e){}});
+  ['student-name','group','date'].forEach(function(id){var el=document.getElementById(id);if(!el)return;el.value=localStorage.getItem(id)||'';el.addEventListener('input',function(){localStorage.setItem(id,el.value)})});
+  var dateEl=document.getElementById('date');if(dateEl)dateEl.value=dateEl.value||new Date().toISOString().split('T')[0];
+  document.querySelectorAll('input[type="checkbox"]').forEach(function(cb){if(localStorage.getItem(cb.id)==='true')cb.checked=true;cb.addEventListener('change',function(){localStorage.setItem(cb.id,cb.checked)})});
+  ['ta0','ta1'].forEach(function(id){var el=document.getElementById(id);if(!el)return;el.value=localStorage.getItem(id)||'';el.addEventListener('input',function(){localStorage.setItem(id,el.value)})});
+});
+</script>
+</body>
+</html>
