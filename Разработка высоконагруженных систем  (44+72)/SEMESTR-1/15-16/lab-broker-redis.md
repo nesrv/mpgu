@@ -170,7 +170,7 @@ ab -n 10000 -c 500 -p post_data.json -T "application/json" http://localhost:8000
 
 ```
 
-### 🔴 Что увидят студенты:
+### 🔴 Наблюдаем
 - Множество ошибок **500** (connection timeout, too many connections)
 - В логах FastAPI:  
   `asyncpg.exceptions.TooManyConnectionsError`

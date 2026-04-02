@@ -137,7 +137,7 @@ docker-compose up --build
 ab -n 1000 -c 50 http://localhost:8000/hit
 ```
 
-### 🔴 Что увидят студенты:
+### 🔴 Наблюдаем
 - Множество ошибок **500** (connection timeout, too many connections)
 - В логах FastAPI:  
   `asyncpg.exceptions.TooManyConnectionsError`

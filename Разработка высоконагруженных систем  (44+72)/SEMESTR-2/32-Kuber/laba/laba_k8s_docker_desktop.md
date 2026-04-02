@@ -401,7 +401,7 @@ kubectl logs -l app=lab1-api --previous
 kubectl describe pod <pod-name>
 ```
 
-Что показать студентам:
+Наблюдаем:
 
 - после вызова `/crash` контейнер в pod завершается;
 - Kubernetes перезапускает/пересоздает pod, чтобы вернуть заданное число реплик;
@@ -624,7 +624,7 @@ kubectl describe pod <pod-name>
 kubectl get endpoints lab1-api
 ```
 
-Что показать студентам:
+Наблюдаем:
 
 - pod может быть в `Running`, но при этом `READY 0/1` (`NOT READY`);
 - Service перестает направлять трафик в неготовый pod (он исчезает из endpoints);
@@ -674,7 +674,7 @@ kubectl get pods
 kubectl describe pod <pod-name>
 ```
 
-Что увидят студенты:
+Наблюдаем
 
 - pod будет перезапускаться после вызова;
 - в описании pod появится причина завершения контейнера: `OOMKilled`.

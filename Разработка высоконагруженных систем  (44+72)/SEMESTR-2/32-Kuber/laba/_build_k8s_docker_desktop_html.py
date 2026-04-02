@@ -1,19 +1,33 @@
 # -*- coding: utf-8 -*-
-"""One-off: laba_k8s_docker_desktop.md -> laba_k8s_docker_desktop.html (reference: laba-deploy-vps-2.html)."""
+"""
+Сборка веб-методички из Markdown (стиль как laba_k8s_docker_desktop.html / laba-deploy-vps-2.html).
+
+  python _build_k8s_docker_desktop_html.py
+      → laba_k8s_docker_desktop.md → laba_k8s_docker_desktop.html
+
+  python _build_k8s_docker_desktop_html.py laba_ci_cd_vps.md [laba_ci_cd_vps.html]
+      → указанный .md и (опционально) путь к .html в той же папке, что и скрипт, если имя без пути.
+"""
+import argparse
 import html
 import re
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-MD_PATH = HERE / "laba_k8s_docker_desktop.md"
-OUT_PATH = HERE / "laba_k8s_docker_desktop.html"
+DEFAULT_MD = HERE / "laba_k8s_docker_desktop.md"
+DEFAULT_HTML = HERE / "laba_k8s_docker_desktop.html"
 
 LANG_MAP = {
     "powershell": "powershell",
+    "bash": "bash",
+    "shell": "bash",
+    "sh": "bash",
     "python": "python",
     "yaml": "yaml",
     "dockerfile": "dockerfile",
     "text": "text",
+    "json": "json",
 }
 
 
@@ -23,10 +37,35 @@ def slug(s: str) -> str:
     return s[:80] or "sec"
 
 
+def autolink_plain_urls(s: str) -> str:
+    """Оборачивает голые https://… в <a>, не трогая текст внутри <code>...</code>."""
+    parts = re.split(r"(<code>[\s\S]*?</code>)", s)
+    url_re = re.compile(r"https?://[^\s<]+")
+
+    def one_url(m: re.Match) -> str:
+        u = m.group(0)
+        extra = ""
+        while len(u) > 1 and u[-1] in ".,;:!?)":
+            extra = u[-1] + extra
+            u = u[:-1]
+        return (
+            f'<a href="{html.escape(u, quote=True)}">{html.escape(u)}</a>{extra}'
+        )
+
+    out: list[str] = []
+    for part in parts:
+        if part.startswith("<code>"):
+            out.append(part)
+        else:
+            out.append(url_re.sub(one_url, part))
+    return "".join(out)
+
+
 def inline_fmt(s: str) -> str:
     s = html.escape(s)
     s = re.sub(r"`([^`]+)`", lambda m: "<code>" + m.group(1) + "</code>", s)
     s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
+    s = autolink_plain_urls(s)
     return s
 
 
@@ -196,8 +235,8 @@ def _body_with_sections(md: str) -> str:
 _LAST_TOC: list[tuple[str, str]] = []
 
 
-def checklist_to_checkbox_items(html: str) -> str:
-    """Секция 11: маркированный список → интерактивные чекбоксы (как в laba-deploy-vps-2)."""
+def checklist_to_checkbox_items(html: str, chk_prefix: str = "chk-k8s-dd") -> str:
+    """Секция «11. Чеклист»: маркированный список → интерактивные чекбоксы (если есть в документе)."""
     pattern = r'(<div class="section" id="11-чеклист">\s*<h2>11\. Чеклист</h2>)\s*<ul>(.*?)</ul>'
     m = re.search(pattern, html, flags=re.DOTALL)
     if not m:
@@ -206,7 +245,7 @@ def checklist_to_checkbox_items(html: str) -> str:
     items = re.findall(r"<li>(.*?)</li>", ul_inner, flags=re.DOTALL)
     boxes = [prefix]
     for i, text in enumerate(items):
-        tid = f"chk-k8s-dd-{i}"
+        tid = f"{chk_prefix}-{i}"
         boxes.append(
             f'<div class="checkbox-item"><input type="checkbox" id="{tid}">'
             f'<label for="{tid}">{text.strip()}</label></div>'
@@ -215,8 +254,58 @@ def checklist_to_checkbox_items(html: str) -> str:
     return html[: m.start()] + replacement + html[m.end() :]
 
 
-def main():
-    md = MD_PATH.read_text(encoding="utf-8")
+def parse_header_from_md(md_text: str) -> tuple[str, str, str]:
+    """Первый `# …` → заголовок страницы; первый ненумерованный `## …` до `## 1.` → подзаголовок."""
+    lines = md_text.splitlines()
+    doc_title = "Практическое занятие"
+    header_sub = ""
+    for ln in lines[:40]:
+        if ln.startswith("# ") and not ln.startswith("##"):
+            doc_title = ln[2:].strip()
+        elif ln.startswith("## ") and not re.match(r"^##\s+\d", ln):
+            header_sub = ln[3:].strip()
+            break
+    if header_sub and doc_title:
+        page_title = f"{doc_title}: {header_sub}"
+    elif header_sub:
+        page_title = header_sub
+    else:
+        page_title = doc_title
+    if len(page_title) > 72:
+        page_title = page_title[:69] + "…"
+    return page_title, doc_title, header_sub
+
+
+def resolve_path(base: Path, p: str) -> Path:
+    path = Path(p)
+    return path if path.is_absolute() else (base / path).resolve()
+
+
+def main(argv: list[str] | None = None) -> None:
+    argv = argv if argv is not None else sys.argv[1:]
+    parser = argparse.ArgumentParser(description="MD → HTML методичка (стиль laba_k8s_docker_desktop.html)")
+    parser.add_argument(
+        "input_md",
+        nargs="?",
+        default=str(DEFAULT_MD.name),
+        help="Входной .md (по умолчанию laba_k8s_docker_desktop.md в каталоге скрипта)",
+    )
+    parser.add_argument(
+        "output_html",
+        nargs="?",
+        default=None,
+        help="Выходной .html (по умолчанию: имя .md с расширением .html)",
+    )
+    args = parser.parse_args(argv)
+
+    md_path = resolve_path(HERE, args.input_md)
+    if not md_path.is_file():
+        print("Файл не найден:", md_path, file=sys.stderr)
+        sys.exit(1)
+    out_name = args.output_html or (md_path.stem + ".html")
+    out_path = resolve_path(HERE, out_name)
+
+    md = md_path.read_text(encoding="utf-8")
     # Drop first H1 lines - merge into header; body starts from ## 
     md_lines = md.splitlines()
     start = 0
@@ -233,8 +322,27 @@ def main():
     md_body = "\n".join(md_lines[start:])
 
     body = _body_with_sections(md_body)
-    body = checklist_to_checkbox_items(body)
+    chk_prefix = "chk-" + re.sub(r"[^\w\-]+", "-", md_path.stem.lower()).strip("-")[:40]
+    body = checklist_to_checkbox_items(body, chk_prefix=chk_prefix)
     toc = _LAST_TOC
+
+    page_title, header_h1, header_sub = parse_header_from_md(md)
+    if not header_sub:
+        header_sub = "Методическое указание"
+    stem_tags = {
+        "laba_k8s_docker_desktop": "Локальный кластер • kubectl • Deployment • Service • port-forward",
+        "laba_ci_cd_vps": "GitHub Actions • Docker Hub • k3s • kubectl • VPS",
+    }
+    header_tags = stem_tags.get(md_path.stem)
+    if not header_tags:
+        bits = []
+        if re.search(r"ci|cd|github", md_path.stem, re.I):
+            bits.append("GitHub Actions")
+        if "docker" in md_path.stem.lower():
+            bits.append("Docker")
+        if re.search(r"k8s|kuber|k3s", md_path.stem, re.I):
+            bits.append("Kubernetes")
+        header_tags = " • ".join(bits) if bits else "Лабораторная работа"
 
     toc_html = "<ol>\n"
     for title, aid in toc:
@@ -246,7 +354,7 @@ def main():
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Практическое занятие: Kubernetes в Docker Desktop (Windows)</title>
+<title>__PAGE_TITLE__</title>
 <style media="print">body{font-family:Arial,sans-serif;font-size:12px}.container{box-shadow:none;background:white}.header{background:white!important;color:black!important}.save-btn{display:none!important}.section{page-break-inside:avoid}</style>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;line-height:1.6;color:#333;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh}.container{max-width:1200px;margin:20px auto;padding:20px;background:white;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}.header{text-align:center;padding:30px;background:linear-gradient(135deg,#005EB8,#003D82);color:white;border-radius:10px;margin-bottom:30px}.header h1{font-size:2.2em;margin-bottom:10px}.header p{opacity:.95;margin-top:8px}.student-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:30px;padding:20px;background:#f8f9fa;border-radius:10px}.form-group{margin-bottom:20px}.form-group label{display:block;margin-bottom:5px;font-weight:bold;color:#003D82}.form-group input,.form-group textarea{width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px;font-size:16px}.section{margin-bottom:40px;padding:25px;background:#fff;border-left:5px solid #005EB8;border-radius:0 10px 10px 0;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.section h2{color:#003D82;margin-bottom:20px;font-size:1.65em}.section h3{color:#005EB8;margin:20px 0 10px;font-size:1.25em}.section h4{color:#1565c0;margin:16px 0 8px;font-size:1.1em}.code-block{background:#282c34;color:#e2e8f0;padding:20px;border-radius:8px;margin:15px 0;font-family:Consolas,'Courier New',monospace;overflow-x:auto;white-space:pre-wrap;font-size:13px;word-break:break-word}ul{list-style:none;padding-left:0}ul li{padding:8px 0 8px 30px;position:relative}ul li::before{content:'\\25b8';position:absolute;left:0;color:#005EB8;font-size:18px}ol{margin:10px 0 10px 24px}ol li{margin:8px 0;padding-left:6px}table{width:100%;border-collapse:collapse;margin:15px 0}table th,table td{border:1px solid #ddd;padding:12px;text-align:left;vertical-align:top}table th{background:#005EB8;color:white}table tr:nth-child(even){background:#f8f9fa}.checkbox-item{margin:15px 0;padding:15px 20px;background:linear-gradient(135deg,#005EB8,#003D82);border-radius:10px;display:flex;align-items:center}.checkbox-item input[type="checkbox"]{appearance:none;width:26px;height:26px;border:3px solid white;border-radius:6px;margin-right:15px;cursor:pointer;background:transparent;flex-shrink:0}.checkbox-item input[type="checkbox"]:checked{background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23005EB8"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>') center/18px no-repeat;border-color:#fff}.checkbox-item label{color:white;font-weight:500;cursor:pointer}.save-btn{background:linear-gradient(135deg,#005EB8,#003D82);color:white;border:none;padding:15px 30px;font-size:18px;border-radius:10px;cursor:pointer;display:block;margin:30px auto}code{background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:0.9em}.section .code-block code{background:transparent;padding:0}.note{background:#e3f2fd;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #2196f3}.toc{margin:20px 0;padding:20px;background:#f5f5f5;border-radius:8px}.toc a{color:#005EB8;text-decoration:none}.toc a:hover{text-decoration:underline}
@@ -260,13 +368,26 @@ def main():
   padding: 0 !important;
   border-radius: 0 !important;
 }
-/* Только PowerShell: все токены — синие, комментарии — отдельно (строка после # … снова видна) */
+/* PowerShell / Bash: светлый текст на тёмном фоне .code-block (#282c34) */
 .section .code-block code.language-powershell.hljs,
-.section .code-block code.language-powershell *:not(.hljs-comment) {
-  color: #005EB8 !important;
+.section .code-block code.language-powershell *:not(.hljs-comment),
+.section .code-block code.language-bash.hljs,
+.section .code-block code.language-bash *:not(.hljs-comment) {
+  color: #7eb8ff !important;
 }
-.section .code-block code.language-powershell .hljs-comment {
-  color: #5d6d7e !important;
+.section .code-block code.language-powershell .hljs-comment,
+.section .code-block code.language-bash .hljs-comment {
+  color: #9aa7b8 !important;
+}
+/* Чеклист: у label цвет белый — <code> наследует его на светлом фоне → «kubectl» не видно */
+.checkbox-item label code {
+  background: #ffffff !important;
+  color: #005EB8 !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 0.95em !important;
+  border: 1px solid rgba(255, 255, 255, 0.65);
 }
 @media print {
   .code-block {
@@ -275,12 +396,20 @@ def main():
     -webkit-print-color-adjust: exact;
   }
   .section .code-block code.language-powershell.hljs,
-  .section .code-block code.language-powershell * {
+  .section .code-block code.language-powershell *,
+  .section .code-block code.language-bash.hljs,
+  .section .code-block code.language-bash * {
     color: #003D82 !important;
     background: transparent !important;
   }
-  .section .code-block code.language-powershell .hljs-comment {
+  .section .code-block code.language-powershell .hljs-comment,
+  .section .code-block code.language-bash .hljs-comment {
     color: #004d40 !important;
+  }
+  .checkbox-item label code {
+    color: #003D82 !important;
+    background: #fff !important;
+    border: 1px solid #ccc !important;
   }
 }
 </style>
@@ -290,13 +419,14 @@ def main():
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/dockerfile.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
 </head>
 <body>
 <div class="container">
 <div class="header">
-<h1>🐳 Практическое занятие</h1>
-<p><strong>Kubernetes внутри Docker Desktop (Windows)</strong></p>
-<p>Локальный кластер • kubectl • Deployment • Service • port-forward</p>
+<h1>__HEADER_H1__</h1>
+<p><strong>__HEADER_SUB__</strong></p>
+<p>__HEADER_TAGS__</p>
 </div>
 <div class="student-info">
 <div class="form-group"><label>ФИО:</label><input type="text" id="student-name"></div>
@@ -334,10 +464,20 @@ document.addEventListener('DOMContentLoaded',function(){
 </body>
 </html>
 """
-    template = template.replace("__TOC__", toc_html).replace("__BODY__", body)
+    emoji = "🐳" if "docker" in md_path.stem.lower() and "desktop" in md_path.stem.lower() else "🚀"
+    header_h1_html = f"{emoji} {html.escape(header_h1)}"
 
-    OUT_PATH.write_text(template, encoding="utf-8")
-    print("Wrote", OUT_PATH)
+    template = (
+        template.replace("__PAGE_TITLE__", html.escape(page_title))
+        .replace("__HEADER_H1__", header_h1_html)
+        .replace("__HEADER_SUB__", html.escape(header_sub))
+        .replace("__HEADER_TAGS__", html.escape(header_tags))
+        .replace("__TOC__", toc_html)
+        .replace("__BODY__", body)
+    )
+
+    out_path.write_text(template, encoding="utf-8")
+    print("Wrote", out_path)
 
 
 if __name__ == "__main__":

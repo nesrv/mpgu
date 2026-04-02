@@ -68,7 +68,7 @@ project/
 
 #### Подготовка аккаунта и токена
 
-1. Зарегистрируйтесь на [hub.docker.com](https://hub.docker.com/). Запомните **логин** (Docker ID) — он участвует в имени образа.
+1. Зарегистрируйтесь на https://hub.docker.com/ (Docker Hub). Запомните **логин** (Docker ID) — он участвует в имени образа.
 2. Создайте **Access Token** (для входа из CLI и для GitHub Actions): *Account Settings → Security → New Access Token* — права **Read & Write** (или аналог для загрузки образов). **Пароль при `docker login` вводить не нужно** — вместо пароля вставляют этот токен.
 3. Имя образа на Docker Hub всегда в виде `**ВАШ_LOGIN/имя_репозитория:тег`** (например `ivanov/lab1-api:latest`). Репозиторий на сайте можно создать заранее (*Repositories → Create*), но чаще он **появляется автоматически** после первого успешного `docker push` с таким именем.
 
@@ -116,7 +116,7 @@ docker push ВАШ_LOGIN/lab1-api:v1
 
 ---
 
-**5.** Проверка: на [hub.docker.com](https://hub.docker.com/) откройте **Repositories** → ваш репозиторий → вкладка **Tags** — должен быть тег `v1`.
+**5.** Проверка: на https://hub.docker.com/ откройте **Repositories** → ваш репозиторий → вкладка **Tags** — должен быть тег `v1`.
 
 **6.** В `deployment.yaml` укажите образ из registry, например:
 
@@ -336,7 +336,7 @@ kubectl rollout history deployment/lab1-api
 2. `docker push ВАШ_LOGIN/lab1-api:ТЕГ`
 3. в `deployment.yaml`: `image: ВАШ_LOGIN/lab1-api:ТЕГ`
 
-Строка вида `docker push nesrv2026/lab1-api:tagname` в шпаргалках — **заглушка**: вместо **`tagname`** укажите реальный тег (**`latest`**, **`v1`** и т.д.). На [hub.docker.com](https://hub.docker.com/) в репозитории на вкладке **Tags** должен быть этот тег **до** того, как k3s сделает pull.
+Строка вида `docker push nesrv2026/lab1-api:tagname` в шпаргалках — **заглушка**: вместо **`tagname`** укажите реальный тег (**`latest`**, **`v1`** и т.д.). На https://hub.docker.com/ в репозитории на вкладке **Tags** должен быть этот тег **до** того, как k3s сделает pull.
 
 ---
 

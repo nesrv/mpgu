@@ -1,8 +1,10 @@
+Веб-методичка CI/CD: `32-Kuber/laba/laba_ci_cd_vps.html` (из `laba_ci_cd_vps.md`).
+Пересборка: `python _build_k8s_docker_desktop_html.py laba_ci_cd_vps.md` (каталог `laba/`), стиль как `laba_k8s_docker_desktop.html`.
 
-на основе этого файла
+на основе lect_k8s.md
 сделай креативную html-презентацию со всеми слайдами 
 
-референс laba_rq_celery.html
+референс lect-arch-mq.md
 
 на слайдах сделай анимации по возможности
 
@@ -91,11 +93,7 @@ lect_deploy_django.html
 
 убери такие же полосы на слайдах 10, 11, 14, 16, 19
 
-на основе laba_k8s_docker_desktop.md
-создай веб-методичку (нужно взять всю информацию из исходного md файла)
 
-референс
-laba-deploy-vps-2.html
 
 сделай из двух файлов одну общую методичку, контент объедини по смыслу:
 part_1_methodic.md
