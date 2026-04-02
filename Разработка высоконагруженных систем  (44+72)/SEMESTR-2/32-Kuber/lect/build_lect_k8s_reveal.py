@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-"""lect_k8s.md -> lect_k8s.html (Reveal.js, стиль по мотивам lect-arch-mq.html)."""
+"""lect_k8s.md -> lect_k8s.html (Reveal.js, стиль по мотивам lect-arch-mq.html).
+
+В блоке ```mermaid первая строка @large (отдельной строкой) даёт класс mermaid-wrap--large — крупнее шрифт на проекторе.
+Блок ```k8s-cluster-diagram вставляет HTML-схему слайда 12 (читаемые подписи без Mermaid).
+"""
 import html
 import re
 from pathlib import Path
@@ -11,6 +15,58 @@ REVEAL_BASE = "../../../SEMESTR-1/15-16"
 
 TRANSITIONS = ("slide", "fade", "convex", "zoom", "slide")
 BG_COLORS = ("#0d1117", "#111827", "#0f172a", "#1e1b4b", "#0c4a6e", "#134e4a")
+
+# Слайд 12: HTML вместо Mermaid — подписи не обрезаются в Reveal.
+K8S_SLIDE12_CLUSTER_DIAGRAM = """
+<div class="k8s-cluster-diagram" role="img" aria-label="Схема: Control Plane и рабочие ноды Kubernetes">
+  <div class="k8s-cluster-grid">
+    <div class="k8s-cluster-cp k8s-cluster-panel">
+      <div class="k8s-cluster-panel-title">Пульт: Control Plane</div>
+      <div class="k8s-cluster-vstack">
+        <div class="k8s-cluster-block">Планировщик + контроллеры<br><span class="k8s-cluster-sub">scheduler, controller-manager</span></div>
+        <div class="k8s-cluster-arr">↓</div>
+        <div class="k8s-cluster-block">kubectl / CI</div>
+        <div class="k8s-cluster-arr">↓</div>
+        <div class="k8s-cluster-block k8s-cluster-block-accent">API Server<br><span class="k8s-cluster-sub">kube-apiserver</span></div>
+        <div class="k8s-cluster-hrow">
+          <span class="k8s-cluster-arrh">↔</span>
+          <div class="k8s-cluster-block k8s-cluster-etcd">etcd<br><span class="k8s-cluster-sub">память кластера</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="k8s-cluster-bridge">
+      <div class="k8s-cluster-bridge-row">
+        <span class="k8s-cluster-bridge-arrows">⇄</span>
+        <div class="k8s-cluster-bridge-cap">watch,<br>команды</div>
+      </div>
+      <div class="k8s-cluster-bridge-row">
+        <span class="k8s-cluster-bridge-arrows">⇄</span>
+        <div class="k8s-cluster-bridge-cap">watch,<br>команды</div>
+      </div>
+    </div>
+    <div class="k8s-cluster-workers">
+      <div class="k8s-cluster-panel k8s-cluster-worker">
+        <div class="k8s-cluster-panel-title">Рабочая нода</div>
+        <div class="k8s-cluster-vstack">
+          <div class="k8s-cluster-block">kubelet</div>
+          <div class="k8s-cluster-arr">↓</div>
+          <div class="k8s-cluster-block">движок контейнеров</div>
+          <div class="k8s-cluster-arr">↓</div>
+          <div class="k8s-cluster-block">ваши Pod</div>
+        </div>
+      </div>
+      <div class="k8s-cluster-panel k8s-cluster-worker">
+        <div class="k8s-cluster-panel-title">Рабочая нода …</div>
+        <div class="k8s-cluster-vstack">
+          <div class="k8s-cluster-block">kubelet</div>
+          <div class="k8s-cluster-arr">↓</div>
+          <div class="k8s-cluster-block">Pod …</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+""".strip()
 
 
 def esc(s: str) -> str:
@@ -60,9 +116,18 @@ def slide_body_to_html(body: str) -> str:
             i += 1  # skip closing ```
             code = "\n".join(chunk)
             if lang == "mermaid":
+                code_st = code.strip()
+                lines_m = code_st.split("\n")
+                wrap_extra = ""
+                if lines_m and lines_m[0].strip() == "@large":
+                    lines_m = lines_m[1:]
+                    wrap_extra = " mermaid-wrap--large"
+                    code_st = "\n".join(lines_m)
                 out.append(
-                    f'<div class="mermaid-wrap fragment"><div class="mermaid">{esc_mermaid(code)}</div></div>'
+                    f'<div class="mermaid-wrap{wrap_extra} fragment"><div class="mermaid">{esc_mermaid(code_st)}</div></div>'
                 )
+            elif lang == "k8s-cluster-diagram":
+                out.append(f'<div class="k8s-cluster-wrap fragment">{K8S_SLIDE12_CLUSTER_DIAGRAM}</div>')
             else:
                 hl = "yaml" if lang == "yaml" else ("plaintext" if lang == "text" else lang)
                 out.append(
@@ -348,6 +413,10 @@ def main():
       max-width: 100%;
       margin: 8px auto;
     }}
+    .mermaid-wrap--large {{
+      max-width: 100%;
+      margin: 12px auto 4px;
+    }}
     .mermaid {{
       background: rgba(22,27,34,0.9) !important;
       border-radius: 10px !important;
@@ -355,6 +424,157 @@ def main():
       border: 1px solid rgba(0,212,170,0.35) !important;
       text-align: center !important;
       font-size: 0.55em !important;
+    }}
+    .mermaid-wrap--large .mermaid {{
+      font-size: 0.92em !important;
+      padding: 18px 14px !important;
+      min-height: 280px;
+    }}
+    .mermaid-wrap--large .mermaid svg {{
+      max-width: 100% !important;
+      height: auto !important;
+    }}
+    .k8s-cluster-wrap {{
+      max-width: 100%;
+      margin: 10px auto 6px;
+      overflow: visible !important;
+    }}
+    .k8s-cluster-diagram {{
+      font-size: clamp(15px, 2.5vmin, 20px) !important;
+      line-height: 1.35 !important;
+      color: #e6edf3 !important;
+      text-align: left !important;
+    }}
+    .k8s-cluster-grid {{
+      display: grid;
+      grid-template-columns: minmax(200px, 1.15fr) minmax(56px, 0.2fr) minmax(168px, 0.95fr);
+      grid-template-rows: 1fr 1fr;
+      gap: 10px 8px;
+      align-items: stretch;
+    }}
+    .k8s-cluster-cp {{
+      grid-column: 1;
+      grid-row: 1 / span 2;
+      align-self: center;
+    }}
+    .k8s-cluster-bridge {{
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      align-items: center;
+      padding: 6px 0;
+      min-width: 52px;
+    }}
+    .k8s-cluster-bridge-row {{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      color: #7ee0c5;
+    }}
+    .k8s-cluster-bridge-arrows {{
+      font-size: 1.35em;
+      line-height: 1;
+    }}
+    .k8s-cluster-bridge-cap {{
+      font-size: 0.72em !important;
+      text-align: center;
+      line-height: 1.25;
+      max-width: 4.5em;
+      color: #a8f5e0;
+    }}
+    .k8s-cluster-workers {{
+      grid-column: 3;
+      grid-row: 1 / span 2;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      justify-content: center;
+    }}
+    .k8s-cluster-panel {{
+      background: rgba(22,27,34,0.95) !important;
+      border: 2px solid rgba(0,212,170,0.45) !important;
+      border-radius: 12px !important;
+      padding: 12px 14px !important;
+    }}
+    .k8s-cluster-panel-title {{
+      font-size: 0.78em !important;
+      font-weight: 700 !important;
+      color: #00d4aa !important;
+      margin: 0 0 10px 0 !important;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }}
+    .k8s-cluster-vstack {{
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }}
+    .k8s-cluster-block {{
+      background: rgba(50,108,229,0.28) !important;
+      border: 1px solid rgba(50,108,229,0.55) !important;
+      border-radius: 8px !important;
+      padding: 10px 12px !important;
+      text-align: center !important;
+      word-break: break-word;
+      hyphens: auto;
+    }}
+    .k8s-cluster-block-accent {{
+      background: rgba(50,108,229,0.45) !important;
+      border-color: rgba(126,184,255,0.65) !important;
+      font-weight: 600;
+    }}
+    .k8s-cluster-etcd {{
+      border-style: dashed !important;
+      border-color: rgba(0,212,170,0.5) !important;
+    }}
+    .k8s-cluster-sub {{
+      display: block;
+      font-size: 0.82em !important;
+      font-weight: 400 !important;
+      color: #8b949e !important;
+      margin-top: 4px;
+    }}
+    .k8s-cluster-arr {{
+      text-align: center;
+      color: #7eb8ff;
+      font-size: 0.95em;
+      line-height: 1;
+      padding: 2px 0;
+    }}
+    .k8s-cluster-hrow {{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }}
+    .k8s-cluster-arrh {{
+      color: #7eb8ff;
+      font-size: 1.1em;
+      flex-shrink: 0;
+    }}
+    .k8s-cluster-hrow .k8s-cluster-block {{
+      flex: 1;
+    }}
+    .k8s-cluster-worker .k8s-cluster-vstack .k8s-cluster-block {{
+      padding: 8px 10px !important;
+    }}
+    @media (max-width: 900px) {{
+      .k8s-cluster-grid {{
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+      }}
+      .k8s-cluster-cp {{ grid-row: auto; grid-column: 1; }}
+      .k8s-cluster-bridge {{
+        grid-row: auto;
+        grid-column: 1;
+        flex-direction: row;
+        justify-content: center;
+        gap: 24px;
+      }}
+      .k8s-cluster-workers {{ grid-row: auto; grid-column: 1; }}
     }}
     .k8s-table {{
       font-size: 0.72em !important;

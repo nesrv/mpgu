@@ -142,39 +142,13 @@
 * **Control plane (пульт управления)** — решает *что где должно быть*, хранит настройки; **обычно** сюда не суют ваши бизнес-приложения как на проде
 * **Worker nodes (рабочие)** — здесь **реально крутятся** ваши поды: на каждой ноде свой агент **kubelet** и движок контейнеров
 
-**Схема «кто где живёт»**
+**Схема «кто где живёт»** (HTML в презентации — подписи не режутся, в отличие от Mermaid в Reveal)
 
-```mermaid
-flowchart TB
-  subgraph CP["Пульт: Control Plane"]
-    API[kube-apiserver]
-    SCH[kube-scheduler]
-    CM[kube-controller-manager]
-    ETCD[(etcd)]
-    API --- ETCD
-    SCH --> API
-    CM --> API
-  end
+```k8s-cluster-diagram
 
-  kubectl[kubectl / CI] --> API
-
-  subgraph W1["Рабочая нода"]
-    K1[kubelet]
-    RT1["движок контейнеров"]
-    PX1[kube-proxy]
-    K1 --> RT1
-    PODS1["ваши Pod"]
-    RT1 --> PODS1
-  end
-
-  subgraph W2["Рабочая нода ..."]
-    K2[kubelet]
-    PODS2["Pod ..."]
-  end
-
-  API <--> K1
-  API <--> K2
 ```
+
+**Упрощение для слайда:** **kube-proxy** на ноде не показан — он участвует в сети Service; здесь акцент на связи **API Server ↔ kubelet** и на цепочке **kubelet → движок → Pod**.
 
 ---
 
