@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Практическое занятие: Деплой и CI/CD на VPS (Kubernetes / k3s)</title>
+<style media="print">body{font-family:Arial,sans-serif;font-size:12px}.container{box-shadow:none;background:white}.header{background:white!important;color:black!important}.save-btn{display:none!important}.section{page-break-inside:avoid}</style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;line-height:1.6;color:#333;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh}.container{max-width:1200px;margin:20px auto;padding:20px;background:white;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}.header{text-align:center;padding:30px;background:linear-gradient(135deg,#005EB8,#003D82);color:white;border-radius:10px;margin-bottom:30px}.header h1{font-size:2.2em;margin-bottom:10px}.header p{opacity:.95;margin-top:8px}.student-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:30px;padding:20px;background:#f8f9fa;border-radius:10px}.form-group{margin-bottom:20px}.form-group label{display:block;margin-bottom:5px;font-weight:bold;color:#003D82}.form-group input,.form-group textarea{width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px;font-size:16px}.section{margin-bottom:40px;padding:25px;background:#fff;border-left:5px solid #005EB8;border-radius:0 10px 10px 0;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.section h2{color:#003D82;margin-bottom:20px;font-size:1.65em}.section h3{color:#005EB8;margin:20px 0 10px;font-size:1.25em}.section h4{color:#1565c0;margin:16px 0 8px;font-size:1.1em}.code-block{background:#282c34;color:#e2e8f0;padding:20px;border-radius:8px;margin:15px 0;font-family:Consolas,'Courier New',monospace;overflow-x:auto;white-space:pre-wrap;font-size:13px;word-break:break-word}ul{list-style:none;padding-left:0}ul li{padding:8px 0 8px 30px;position:relative}ul li::before{content:'\25b8';position:absolute;left:0;color:#005EB8;font-size:18px}ol{margin:10px 0 10px 24px}ol li{margin:8px 0;padding-left:6px}table{width:100%;border-collapse:collapse;margin:15px 0}table th,table td{border:1px solid #ddd;padding:12px;text-align:left;vertical-align:top}table th{background:#005EB8;color:white}table tr:nth-child(even){background:#f8f9fa}.checkbox-item{margin:15px 0;padding:15px 20px;background:linear-gradient(135deg,#005EB8,#003D82);border-radius:10px;display:flex;align-items:center}.checkbox-item input[type="checkbox"]{appearance:none;width:26px;height:26px;border:3px solid white;border-radius:6px;margin-right:15px;cursor:pointer;background:transparent;flex-shrink:0}.checkbox-item input[type="checkbox"]:checked{background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23005EB8"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>') center/18px no-repeat;border-color:#fff}.checkbox-item label{color:white;font-weight:500;cursor:pointer}.save-btn{background:linear-gradient(135deg,#005EB8,#003D82);color:white;border:none;padding:15px 30px;font-size:18px;border-radius:10px;cursor:pointer;display:block;margin:30px auto}code{background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:0.9em}.section .code-block code{background:transparent;padding:0}.note{background:#e3f2fd;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #2196f3}.toc{margin:20px 0;padding:20px;background:#f5f5f5;border-radius:8px}.toc a{color:#005EB8;text-decoration:none}.toc a:hover{text-decoration:underline}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<style>
+/* Глобальный `code { background:#f0f0f0 }` ломает hljs: светлый текст на светлом фоне */
+.section .code-block > code.hljs,
+.section .code-block > code {
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+/* PowerShell / Bash: светлый текст на тёмном фоне .code-block (#282c34) */
+.section .code-block code.language-powershell.hljs,
+.section .code-block code.language-powershell *:not(.hljs-comment),
+.section .code-block code.language-bash.hljs,
+.section .code-block code.language-bash *:not(.hljs-comment) {
+  color: #7eb8ff !important;
+}
+.section .code-block code.language-powershell .hljs-comment,
+.section .code-block code.language-bash .hljs-comment {
+  color: #9aa7b8 !important;
+}
+/* Чеклист: у label цвет белый — <code> наследует его на светлом фоне → «kubectl» не видно */
+.checkbox-item label code {
+  background: #ffffff !important;
+  color: #005EB8 !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 0.95em !important;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+}
+@media print {
+  .code-block {
+    background: #eef2f7 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .section .code-block code.language-powershell.hljs,
+  .section .code-block code.language-powershell *,
+  .section .code-block code.language-bash.hljs,
+  .section .code-block code.language-bash * {
+    color: #003D82 !important;
+    background: transparent !important;
+  }
+  .section .code-block code.language-powershell .hljs-comment,
+  .section .code-block code.language-bash .hljs-comment {
+    color: #004d40 !important;
+  }
+  .checkbox-item label code {
+    color: #003D82 !important;
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+  }
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/powershell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/dockerfile.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>🚀 Практическое занятие</h1>
+<p><strong>Деплой и CI/CD на VPS (Kubernetes / k3s)</strong></p>
+<p>GitHub Actions • Docker Hub • k3s • kubectl • VPS • GitOps (Argo CD, опционально)</p>
+</div>
+<div class="student-info">
+<div class="form-group"><label>ФИО:</label><input type="text" id="student-name"></div>
+<div class="form-group"><label>Группа:</label><input type="text" id="group"></div>
+<div class="form-group"><label>Дата:</label><input type="date" id="date"></div>
+</div>
+
+<div class="section" id="toc-top">
+<h2>📑 Содержание</h2>
+<div class="toc">
+<ol>
+  <li><a href="#1-цель-работы">1. Цель работы</a></li>
+  <li><a href="#2-что-получите-в-итоге">2. Что получите в итоге</a></li>
+  <li><a href="#3-архитектура-учебный-минимум">3. Архитектура (учебный минимум)</a></li>
+  <li><a href="#4-подготовка-репозитория">4. Подготовка репозитория</a></li>
+  <li><a href="#5-публикация-образов-в-docker-hub">5. Публикация образов в Docker Hub</a></li>
+  <li><a href="#gitops-опционально-argo-cd">GitOps (опционально): Argo CD</a></li>
+</ol>
+
+</div>
+</div>
+
+<div class="section" id="1-цель-работы">
+<h2>1. Цель работы</h2>
+<p>Научиться собирать и публиковать Docker-образ через CI, затем автоматически выкатывать приложение на VPS в кластер <strong>Kubernetes (k3s)</strong> через CD. <strong>Опционально:</strong> познакомиться с <strong>GitOps</strong> и <strong>Argo CD</strong> как наглядной pull-моделью выката (состояние кластера из Git).</p>
+</div>
+<div class="section" id="2-что-получите-в-итоге">
+<h2>2. Что получите в итоге</h2>
+<ul>
+<li>после <code>git push</code> запускается CI-пайплайн (в примере <strong><code>.github/workflows/ci-cd.yml</code></strong> — сборка и выкат, <strong>без</strong> отдельных шагов тестов/линтеров, их при желании добавьте сами);</li>
+<li>собирается Docker-образ и публикуется в registry;</li>
+<li>на VPS в k3s выполняется обновление Deployment (новый образ в кластере);</li>
+<li>при проблеме можно сделать rollback (<code>kubectl rollout undo</code>).</li>
+<li><strong>(дополнение)</strong> при прохождении блока GitOps: кластер подтягивает манифесты из репозитория, интерфейс Argo CD показывает синхронизацию и здоровье приложения.</li>
+</ul>
+</div>
+<div class="section" id="3-архитектура-учебный-минимум">
+<h2>3. Архитектура (учебный минимум)</h2>
+<ul>
+<li>GitHub-репозиторий;</li>
+<li>GitHub Actions (CI/CD);</li>
+<li>Docker Hub (или GHCR) как registry;</li>
+<li>VPS (Ubuntu) с SSH-доступом;</li>
+<li><strong><a href="https://k3s.io/">k3s</a></strong> — один узел, достаточно для учебы;</li>
+<li>приложение FastAPI в контейнере; деплой через манифесты <code>k8s/</code>.</li>
+</ul>
+<p><strong>CI:</strong> сборка и push образа.</p>
+<p><strong>CD в этой методичке:</strong> SSH на VPS и команды <code>kubectl</code> (<strong>push-модель</strong>: CI «толкает» изменения в кластер).</p>
+<p><strong>Дополнение (GitOps):</strong> на кластере работает <strong>Argo CD</strong>; он <strong>сам</strong> сверяет Git с кластером (<strong>pull-модель</strong>). Подробнее — раздел <strong>«GitOps (опционально): Argo CD»</strong> в конце методички.</p>
+<p><strong>Как читать документ дальше:</strong> блоки идут в <strong>рабочем порядке</strong> — сначала <strong>§5 Docker Hub</strong> (образ в registry), затем <strong>ручной деплой на VPS</strong> (нумерованные <strong>п. 1–10</strong>: k3s, <code>kubectl</code>, сеть, в т.ч. <strong>п. 8 — браузер</strong>), затем <strong>CD через GitHub Actions</strong>. После <strong>п. 11</strong> — <strong>типичные ошибки</strong>. <strong>GitOps (Argo CD)</strong> в конце — <strong>своя нумерация шагов 0–9</strong> (не путать с п. 8 ручного деплоя). Базовую лабу можно пройти без Actions и без Argo.</p>
+</div>
+<div class="section" id="4-подготовка-репозитория">
+<h2>4. Подготовка репозитория</h2>
+<p>Минимальная структура:</p>
+<div class="code-block"><code class="language-text">project/
+  main.py
+  requirements.txt
+  Dockerfile
+  k8s/
+    deployment.yaml
+    service.yaml
+  .github/
+    workflows/
+      ci-cd.yml</code></div>
+<p>Файл <strong><code>.github/workflows/ci-cd.yml</code></strong> лежит в репозитории (пример ниже). Подробная <strong>привязка GitHub → VPS</strong> (секреты, SSH, команды на сервере) — в разделе <strong>«CD через GitHub Actions»</strong> после ручного деплоя.</p>
+</div>
+<div class="section" id="5-публикация-образов-в-docker-hub">
+<h2>5. Публикация образов в Docker Hub</h2>
+<p>Образ должен лежать в <strong>публичном или приватном registry</strong>, иначе k3s на VPS не сможет выполнить <code>pull</code> с Docker Hub — только локальная сборка на вашем ПК недостаточна.</p>
+<p>В <strong>CI</strong> образ собирается и <strong>пушится</strong> в registry. В манифестах Kubernetes указывается полное имя:</p>
+<p><code>&lt;registry&gt;/&lt;пользователь или org&gt;/&lt;репозиторий&gt;:&lt;тег&gt;</code></p>
+<p>Ниже в примерах workflow используется <strong>Docker Hub</strong>. <strong>GHCR</strong> — равноценная альтернатива для репозитория на GitHub.</p>
+<h3>Docker Hub</h3>
+<h4>Подготовка аккаунта и токена</h4>
+<ol>
+<li>Зарегистрируйтесь на <a href="https://hub.docker.com/">hub.docker.com</a>. Запомните <strong>логин</strong> (Docker ID) — он участвует в имени образа.</li>
+<li>Создайте <strong>Access Token</strong> (для входа из CLI и для GitHub Actions): *Account Settings → Security → New Access Token* — права <strong>Read &amp; Write</strong> (или аналог для загрузки образов). <strong>Пароль при <code>docker login</code> вводить не нужно</strong> — вместо пароля вставляют этот токен.</li>
+<li>Имя образа на Docker Hub всегда в виде <strong>ВАШ_LOGIN/имя_репозитория:тег</strong> (например <code>ivanov/lab1-api:latest</code>). Репозиторий на сайте можно создать заранее (*Repositories → Create*), но чаще он <strong>появляется автоматически</strong> после первого успешного <code>docker push</code> с таким именем.</li>
+</ol>
+<h4>Заливка образ вручную</h4>
+<p><strong>1.</strong> Откройте терминал в каталоге проекта, где лежит <strong>Dockerfile</strong> (контекст сборки — эта папка).</p>
+<p>PowerShell (Windows), пример:</p>
+<div class="code-block"><code class="language-powershell">cd C:\path\to\your\project</code></div>
+<p><strong>2.</strong> Войдите в Docker Hub (вместо пароля — <strong>Access Token</strong>):</p>
+<div class="code-block"><code class="language-text">docker login -u ВАШ_LOGIN</code></div>
+<p>Система запросит <code>Password:</code> — вставьте токен (ввод может не отображаться).</p>
+<p><strong>3.</strong> Соберите образ, указав <strong>полное имя</strong> под ваш логин и выбранный тег:</p>
+<div class="code-block"><code class="language-text">docker build -t ВАШ_LOGIN/lab1-api:v1 .</code></div>
+<p>Точка в конце — «контекст = текущая папка».</p>
+<p><strong>4.</strong> Отправьте образ в registry:</p>
+<div class="code-block"><code class="language-text">docker push ВАШ_LOGIN/lab1-api:v1</code></div>
+<p>Дождитесь окончания загрузки слоёв без ошибки <code>denied</code> / <code>unauthorized</code>.</p>
+<p><strong>5.</strong> Проверка: на <a href="https://hub.docker.com/">hub.docker.com</a> откройте <strong>Repositories</strong> → ваш репозиторий → вкладка <strong>Tags</strong> — должен быть тег <code>v1</code>.</p>
+<p><strong>6.</strong> В <code>deployment.yaml</code> укажите образ из registry, например:</p>
+<div class="code-block"><code class="language-yaml">image: DOCKERHUB_USERNAME/lab1-api:latest</code></div>
+<p>При необходимости задайте <code>imagePullPolicy: Always</code>, чтобы при теге <code>latest</code> на узле подтягивалась свежая сборка.</p>
+<h3>Ручной деплой на VPS</h3>
+<p>Ниже — <strong>пошаговый выкат</strong> с SSH на сервер: клонирование репозитория, <code>kubectl apply</code>, проверки. Это основной <strong>CD-путь</strong> методички (без Argo CD). Образ к этому моменту уже должен быть <strong>в Docker Hub</strong> (как в разделе выше или через CI).</p>
+<h4>Подключение по SSH (с вашего ПК)</h4>
+<p><strong>Пример ниже — учебный</strong> (чужой VPS); подставьте <strong>своего</strong> пользователя Linux на сервере, <strong>IP</strong> или <strong>DNS</strong> из панели провайдера.</p>
+<div class="code-block"><code class="language-bash">ssh alekseeva@81.90.182.174</code></div>
+<p><strong>Имя хоста (DNS), пример:</strong> <code>alekseeva.h1n.ru</code> — при настроенной A-записи на IP VPS:</p>
+<div class="code-block"><code class="language-bash">ssh alekseeva@alekseeva.h1n.ru</code></div>
+<p>Дальнейшие шаги выполняются <strong>на VPS</strong> в SSH-сессии. Подставьте вместо <code>DOCKERHUB_USERNAME</code> свой логин Docker Hub.</p>
+<h4>1. Установите k3s</h4>
+<p>Один узел, Ubuntu. Если k3s уже установлен — шаг пропустите.</p>
+<div class="code-block"><code class="language-bash">curl -sfL https://get.k3s.io | sh -
+sudo systemctl status k3s</code></div>
+<p>Дождитесь активного состояния сервиса <code>k3s</code>.</p>
+<h4>2. Настройте <code>kubectl</code> для вашего пользователя (не root)</h4>
+<p>Файл <code>/etc/rancher/k3s/k3s.yaml</code> создаётся k3s и обычно <strong>читается только root</strong>; от обычного пользователя его не открывают — иначе <code>permission denied</code> и предупреждение про <code>--write-kubeconfig-mode</code>.</p>
+<p>Скопируйте конфиг в домашний каталог:</p>
+<div class="code-block"><code class="language-bash">mkdir -p ~/.kube
+sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+sudo chown &quot;$USER:$USER&quot; ~/.kube/config
+chmod 600 ~/.kube/config</code></div>
+<p><strong>Важно:</strong> после установки k3s команда <code>kubectl</code> часто является <strong>ссылкой на <code>k3s</code></strong> (<code>/usr/local/bin/kubectl</code> → <code>k3s</code>), а не отдельным бинарником.</p>
+<p>Такой <code>kubectl</code> <strong>не подхватывает</strong> <code>~/.kube/config</code>, если переменная <strong><code>KUBECONFIG</code> не задана</strong>, и снова пытается читать <code>/etc/rancher/k3s/k3s.yaml</code>. Задайте явно:</p>
+<div class="code-block"><code class="language-bash">export KUBECONFIG=&quot;$HOME/.kube/config&quot;</code></div>
+<p>Чтобы не вводить при каждом входе по SSH, добавьте эту строку в <code>~/.bashrc</code> (или <code>~/.profile</code>). Проверка: <code>echo &quot;$KUBECONFIG&quot;</code> должен показывать путь к вашему <code>config</code>.</p>
+<p><strong>Альтернатива без <code>export</code>:</strong> каждый раз указывать файл:</p>
+<div class="code-block"><code class="language-bash">k3s kubectl --kubeconfig &quot;$HOME/.kube/config&quot; get nodes</code></div>
+<p>(или <code>kubectl --kubeconfig &quot;$HOME/.kube/config&quot; …</code>, если <code>kubectl</code> — это k3s.)</p>
+<p>Если <code>kubectl</code> вызываете <strong>с другого компьютера</strong>, в копии <code>~/.kube/config</code> замените адрес API <code>127.0.0.1</code> на <strong>публичный IP VPS</strong> (например <code>81.90.182.174</code>). Если работаете только на самом VPS, менять не обязательно.</p>
+<h4>3. Проверьте, что кластер отвечает</h4>
+<div class="code-block"><code class="language-bash">kubectl get nodes</code></div>
+<p>У узла в колонке <code>STATUS</code> должно быть <code>Ready</code>.</p>
+<h4>4. Получите на VPS каталог <code>k8s/</code> с манифестами</h4>
+<p>Склонируйте <strong>свой</strong> репозиторий (URL из GitHub, кнопка <strong>Code</strong>):</p>
+<div class="code-block"><code class="language-bash">cd ~
+git clone https://github.com/ВАШ_АККАУНТ/ИМЯ_РЕПО.git
+cd ИМЯ_РЕПО/k8s
+ls -la</code></div>
+<p>Должны быть <code>deployment.yaml</code> и <code>service.yaml</code>.</p>
+<ul>
+<li><strong>Публичный</strong> репозиторий — достаточно HTTPS, как выше.</li>
+<li><strong>Приватный</strong> — удобнее SSH: <code>git clone git@github.com:ВАШ_АККАУНТ/ИМЯ_РЕПО.git</code> (ключ на VPS добавлен в GitHub), либо HTTPS с <a href="https://github.com/settings/tokens">Personal Access Token</a> вместо пароля.</li>
+</ul>
+<p>Проверьте в <code>deployment.yaml</code> поле <strong><code>image:</code></strong> — образ в Docker Hub, например <code>DOCKERHUB_USERNAME/lab1-api:latest</code> (<code>nano deployment.yaml</code> при необходимости).</p>
+<p>Для доступа из браузера в <code>service.yaml</code> нужны тип <strong><code>NodePort</code></strong> и поле <strong><code>nodePort</code></strong> (например <strong><code>30080</code></strong>). Если у сервиса указан <strong><code>ClusterIP</code></strong>, замените <code>spec</code> на вариант с <strong><code>type: NodePort</code></strong> и <strong><code>nodePort: 30080</code></strong> (как в актуальном <code>service.yaml</code> репозитория).</p>
+<h4>5. Примените манифесты</h4>
+<p>Рабочий каталог — <code>k8s/</code>: после клона это <code>~/ИМЯ_РЕПО/k8s</code>.</p>
+<div class="code-block"><code class="language-bash">sudo kubectl apply -f deployment.yaml
+sudo kubectl apply -f service.yaml</code></div>
+<h4>6. Проверьте поды и сервисы</h4>
+<div class="code-block"><code class="language-bash">kubectl get pods -l app=lab1-api
+kubectl get svc lab1-api</code></div>
+<p>У подов в колонке <code>STATUS</code> должно быть <strong><code>Running</code></strong>, в <strong><code>READY</code></strong> — <strong><code>1/1</code></strong>. Если не настроили <code>KUBECONFIG</code> и копию <code>~/.kube/config</code> (п. 2), используйте <strong><code>sudo kubectl</code></strong> вместо <code>kubectl</code>.</p>
+<p>Для сервиса типа <strong>NodePort</strong> в <code>PORT(S)</code> должен быть вид <strong><code>80:30080/TCP</code></strong> (внешний порт узла <strong>30080</strong> совпадает с <code>nodePort</code> в <code>service.yaml</code>).</p>
+<p>Проверка с самого VPS (когда поды уже <code>Running</code>):</p>
+<div class="code-block"><code class="language-bash">curl -sS -o /dev/null -w &quot;%{http_code}\n&quot; http://127.0.0.1:30080/docs</code></div>
+<p>Ожидается код <strong>200</strong> (или редирект <strong>3xx</strong>). Если <strong><code>000</code></strong> / «Couldn&#x27;t connect» при живых подах — смотрите файрвол (п. 7); если поды не в <code>Running</code> — сначала устраните <strong>ImagePullBackOff</strong> (п. 11).</p>
+<h4>7. Разрешите вход с интернета</h4>
+<p>В <strong>панели провайдера</strong> (Hostiman и т.п.) откройте inbound <strong>TCP 30080</strong> и <strong>TCP 22</strong> (SSH) — это отдельно от UFW на машине.</p>
+<p>На VPS с <strong>ufw</strong>:</p>
+<div class="code-block"><code class="language-bash">sudo ufw allow 22/tcp
+sudo ufw allow 30080/tcp
+sudo ufw status</code></div>
+<p>Если в выводе <strong><code>Status: inactive</code></strong>, правила только сохранены, <strong>трафик пока не фильтруется</strong> UFW. Чтобы включить файрвол:</p>
+<div class="code-block"><code class="language-bash">sudo ufw enable
+sudo ufw status verbose</code></div>
+<p>Должно быть <strong><code>Status: active</code></strong> и в списке разрешения для <strong>22</strong> и <strong>30080</strong>. Перед <code>enable</code> убедитесь, что <strong>22/tcp</strong> уже разрешён, чтобы не потерять SSH.</p>
+<h4>8. Откройте приложение в браузере (Swagger)</h4>
+<ul>
+<li><code>http://81.90.182.174:30080/docs</code></li>
+<li>или <code>http://alekseeva.h1n.ru:30080/docs</code></li>
+</ul>
+<p>Порт должен совпадать с <code>nodePort</code> в <code>service.yaml</code>. Домен должен иметь <strong>A-запись</strong> на тот же IP, что у VPS.</p>
+<p><strong>Если страница не открывается:</strong> сервис не должен быть <strong><code>ClusterIP</code></strong> — для доступа из браузера нужен <strong>NodePort</strong> и поле <strong><code>nodePort: 30080</code></strong> (см. п. 4). Дополнительно проверьте поды (п. 6), UFW и файрвол провайдера (п. 7).</p>
+<h4>9. Обновите образ после новой сборки</h4>
+<p>После <code>docker build</code> и <code>docker push</code>:</p>
+<div class="code-block"><code class="language-bash">export IMG=&quot;DOCKERHUB_USERNAME/lab1-api:latest&quot;
+kubectl set image deployment/lab1-api lab1-api=$IMG
+kubectl rollout status deployment/lab1-api</code></div>
+<p>Если в п. 5 вы применяли манифесты через <strong><code>sudo kubectl</code></strong>, здесь тоже используйте <strong><code>sudo kubectl set image</code></strong> и <strong><code>sudo kubectl rollout status</code></strong>.</p>
+<p>Имена <code>deployment/lab1-api</code> и контейнера <code>lab1-api</code> должны совпадать с <code>metadata.name</code> в <code>deployment.yaml</code> и <code>containers[].name</code>.</p>
+<h4>10. Откат при неудачном выкате</h4>
+<div class="code-block"><code class="language-bash">kubectl rollout undo deployment/lab1-api
+kubectl rollout status deployment/lab1-api</code></div>
+<p>История ревизий:</p>
+<div class="code-block"><code class="language-bash">kubectl rollout history deployment/lab1-api</code></div>
+<h4>11. Частые проблемы и диагностика</h4>
+<p>Этот пункт — <strong>справочник</strong>: возвращайтесь к нему при ошибках на любом из шагов 5–10 и при отладке <strong>CD через GitHub Actions</strong> (следующий раздел).</p>
+<p><strong><code>kubectl</code>: <code>permission denied</code> для <code>/etc/rancher/k3s/k3s.yaml</code></strong> Пока не скопировали kubeconfig в <code>~/.kube/config</code> и не задали <code>KUBECONFIG</code> (п. 2), вызывайте <strong><code>sudo kubectl …</code></strong>.</p>
+<p><strong>GitHub Actions: deploy падает по SSH</strong></p>
+<p>См. раздел <strong>«CD через GitHub Actions»</strong>: ключ в <strong><code>authorized_keys</code></strong>, секрет <strong><code>VPS_K8S_DIR</code></strong> = <strong>абсолютный</strong> путь к каталогу с <code>deployment.yaml</code> (как после <code>cd ~/ИМЯ_РЕПО/k8s</code> на VPS — выполните <code>pwd</code> и скопируйте), для <strong><code>sudo kubectl</code></strong> без пароля — отдельная строка в <strong><code>sudoers</code></strong> для пользователя <strong><code>VPS_USER</code></strong> (учебный вариант).</p>
+<p><strong>Поды <code>Running</code>, но сразу <code>CrashLoopBackOff</code> / много рестартов</strong></p>
+<p>Частая причина — <strong><code>livenessProbe</code></strong> / <strong><code>readinessProbe</code></strong>: путь HTTP в манифесте должен существовать в приложении и отвечать <strong>2xx</strong> быстрее <strong><code>timeoutSeconds</code></strong>. В этом репозитории FastAPI отдаёт <strong><code>GET /health</code></strong> — в <strong><code>deployment.yaml</code></strong> для пробы указан <strong><code>/health</code></strong>. Если поменяете путь в коде или в YAML несогласованно, kubelet будет перезапускать контейнер.</p>
+<p><strong>Образ в Docker Hub и тег</strong></p>
+<p>Имя и тег в трёх местах должны <strong>совпадать</strong>:</p>
+<ol>
+<li><code>docker build -t ВАШ_LOGIN/lab1-api:ТЕГ .</code></li>
+<li><code>docker push ВАШ_LOGIN/lab1-api:ТЕГ</code></li>
+<li>в <code>deployment.yaml</code>: <code>image: ВАШ_LOGIN/lab1-api:ТЕГ</code></li>
+</ol>
+<p>Строка вида <code>docker push nesrv2026/lab1-api:tagname</code> в шпаргалках — <strong>заглушка</strong>: вместо <strong><code>tagname</code></strong> укажите реальный тег (<strong><code>latest</code></strong>, <strong><code>v1</code></strong> и т.д.). На <a href="https://hub.docker.com/">hub.docker.com</a> в репозитории на вкладке <strong>Tags</strong> должен быть этот тег <strong>до</strong> того, как k3s сделает pull.</p>
+<p><strong><code>ImagePullBackOff</code> / <code>ErrImagePull</code></strong></p>
+<p>Посмотреть причину:</p>
+<div class="code-block"><code class="language-bash">kubectl describe pod -l app=lab1-api | sed -n &#x27;/Events:/,$p&#x27;</code></div>
+<p>(или <code>sudo kubectl</code>, если без <code>KUBECONFIG</code>.)</p>
+<table>
+<tr>
+<th>Сообщение в Events</th>
+<th>Что делать</th>
+</tr>
+<tr>
+<td><strong><code>not found</code></strong> / <code>failed to resolve reference</code></td>
+<td>Образа с таким именем/тегом <strong>нет</strong> в registry. Соберите, запушьте, проверьте теги на Docker Hub; в <code>deployment.yaml</code> то же <code>image:</code>.</td>
+</tr>
+<tr>
+<td><strong><code>unauthorized</code></strong> / <strong><code>pull access denied</code></strong></td>
+<td>Часто <strong>приватный</strong> репозиторий. Создайте секрет: <code>kubectl create secret docker-registry regcred --docker-server=https://index.docker.io/v1/ --docker-username=… --docker-password=… --docker-email=…</code> и в <code>deployment.yaml</code> в <code>spec.template.spec</code> добавьте <code>imagePullSecrets: [{ name: regcred }]</code>, затем <code>kubectl apply -f deployment.yaml</code>.</td>
+</tr>
+<tr>
+<td><strong><code>toomanyrequests</code></strong></td>
+<td>Лимит анонимных pull с Docker Hub; войдите в Hub через <strong><code>imagePullSecrets</code></strong> (как выше).</td>
+</tr>
+</table>
+<p>Проверка pull с узла (диагностика):</p>
+<div class="code-block"><code class="language-bash">sudo crictl pull ВАШ_LOGIN/lab1-api:latest</code></div>
+<p><strong>Сайт / <code>curl</code> на <code>:30080</code> не отвечает</strong></p>
+<ol>
+<li>Поды <strong><code>Running</code></strong>, <strong><code>1/1</code></strong> — иначе NodePort некому обслуживать.</li>
+<li>Сервис — <strong>NodePort</strong>, в <code>get svc</code> вид <strong><code>80:30080/TCP</code></strong>.</li>
+<li><strong>UFW</strong> активен и разрешён <strong>30080</strong>; в панели провайдера открыт <strong>TCP 30080</strong>.</li>
+</ol>
+<p><strong><code>kubectl get pods … -w</code> после выката</strong></p>
+<p>Видны <strong>старые</strong> поды в <strong><code>Terminating</code></strong> / <strong><code>Completed</code></strong> и <strong>новые</strong> в <strong><code>Running 1/1</code></strong> — это <strong>нормально</strong> при rolling update. Остановите поток (<strong>Ctrl+C</strong>), финальное состояние:</p>
+<div class="code-block"><code class="language-bash">kubectl get pods -l app=lab1-api</code></div>
+<p>Должны остаться только поды в <strong><code>Running</code></strong>.</p>
+<h3>CD через GitHub Actions: привязка репозитория к VPS</h3>
+<p>После того как <strong>вручную</strong> проверены k3s, <code>kubectl</code> и первый деплой (шаги выше), имеет смысл автоматизировать: при <strong><code>git push</code></strong> в GitHub <strong>собирается образ</strong>, пушится в <strong>Docker Hub</strong>, по <strong>SSH</strong> на VPS выполняется <strong><code>kubectl set image</code></strong> (или <code>apply</code>).</p>
+<p><strong>Цепочка:</strong> GitHub (runner) → registry (Docker Hub) → SSH → ваш пользователь на VPS → <code>sudo kubectl</code> → k3s.</p>
+<h4>Предпосылки на VPS</h4>
+<ol>
+<li>Уже выполнены <strong>п. 1–5</strong> ручного деплоя: k3s, <code>~/.kube/config</code>, <strong><code>KUBECONFIG</code></strong> в <code>~/.bashrc</code> (или готовность вызывать <code>sudo kubectl --kubeconfig &quot;$HOME/.kube/config&quot;</code>).</li>
+<li>Известен <strong>абсолютный путь</strong> к каталогу с <strong><code>deployment.yaml</code></strong> на VPS: зайдите по SSH, выполните <code>cd ~/ИМЯ_РЕПО/k8s</code> (как в <strong>п. 4</strong> ручного деплоя), затем <strong><code>pwd</code></strong> — эту строку укажите в секрете <strong><code>VPS_K8S_DIR</code></strong>. Пример: репозиторий клонировали в <strong><code>~/my-lab</code></strong> → путь <strong><code>/home/ВАШ_USER/my-lab/k8s</code></strong> (не путать с именем репозитория на GitHub).</li>
+<li>Пользователь VPS, под которым заходит <strong>GitHub Actions по SSH</strong>, может выполнять <strong><code>sudo kubectl</code></strong> <strong>без интерактивного пароля</strong> (настроить <strong><code>/etc/sudoers.d/…</code></strong> для этого пользователя и команды kubectl — учебный вариант; в проде лучше отдельный ключ и минимальные права).</li>
+</ol>
+<h4>Ключ SSH для GitHub</h4>
+<ol>
+<li>На <strong>своём ПК</strong> (или на VPS) сгенерируйте пару ключей <strong>только для CI</strong>, без passphrase (удобно для runner):</li>
+</ol>
+<div class="code-block"><code class="language-bash">ssh-keygen -t ed25519 -C &quot;github-actions-deploy&quot; -f ./gha_k3s_deploy -N &quot;&quot;</code></div>
+<ol>
+<li><strong>Публичный</strong> ключ <code>gha_k3s_deploy.pub</code> добавьте на VPS в <strong><code>~/.ssh/authorized_keys</code></strong> того пользователя, от имени которого пойдёт деплой (тот же, что в секрете <strong><code>VPS_USER</code></strong>).</li>
+</ol>
+<ol>
+<li><strong>Приватный</strong> ключ <code>gha_k3s_deploy</code> целиком (включая строки <code>BEGIN</code> / <code>END</code>) сохраните в GitHub: репозиторий → <strong>Settings → Secrets and variables → Actions → New repository secret</strong> → имя <strong><code>VPS_SSH_KEY</code></strong>, значение — содержимое файла.</li>
+</ol>
+<p><strong>Не коммитьте</strong> приватный ключ в Git.</p>
+<h4>Секреты GitHub Actions (репозиторий)</h4>
+<table>
+<tr>
+<th>Имя секрета</th>
+<th>Назначение</th>
+</tr>
+<tr>
+<td><strong><code>DOCKERHUB_USERNAME</code></strong></td>
+<td>Логин Docker Hub (как в имени образа).</td>
+</tr>
+<tr>
+<td><strong><code>DOCKERHUB_TOKEN</code></strong></td>
+<td><a href="https://hub.docker.com/settings/security">Access Token</a> Docker Hub (<strong>Read &amp; Write</strong> для push).</td>
+</tr>
+<tr>
+<td><strong><code>VPS_HOST</code></strong></td>
+<td>IP или DNS VPS, например <code>81.90.182.174</code> или <code>alekseeva.h1n.ru</code>.</td>
+</tr>
+<tr>
+<td><strong><code>VPS_USER</code></strong></td>
+<td>SSH-пользователь на VPS (тот, у кого в <code>authorized_keys</code> ключ CI).</td>
+</tr>
+<tr>
+<td><strong><code>VPS_SSH_KEY</code></strong></td>
+<td>Приватный ключ (см. выше).</td>
+</tr>
+<tr>
+<td><strong><code>VPS_K8S_DIR</code></strong></td>
+<td>Абсолютный путь к каталогу с <code>deployment.yaml</code> (результат <strong><code>pwd</code></strong> в <code>~/ИМЯ_РЕПО/k8s</code> на VPS).</td>
+</tr>
+</table>
+<p>При необходимости нестандартного SSH-порта добавьте в workflow параметр <code>port</code> у шага SSH (см. <a href="https://github.com/appleboy/ssh-action">appleboy/ssh-action</a>).</p>
+<h4>Что делает пример <code>ci-cd.yml</code></h4>
+<ol>
+<li><strong>Триггер:</strong> push в ветки <strong><code>main</code></strong> или <strong><code>master</code></strong> (при необходимости измените в YAML).</li>
+<li><strong>Сборка:</strong> <code>docker build</code> из корня репозитория (где <strong>Dockerfile</strong>), теги образа: <strong><code>GITHUB_SHA</code></strong> (уникально на коммит) и <strong><code>latest</code></strong>.</li>
+<li><strong>Публикация:</strong> <code>docker login</code> + <code>docker push</code> в Docker Hub.</li>
+<li><strong>Деплой:</strong> по SSH одна команда вида <strong><code>kubectl set image deployment/lab1-api lab1-api=$DOCKERHUB_USERNAME/lab1-api:$GITHUB_SHA</code></strong>, затем <strong><code>kubectl rollout status</code></strong>. Имя деплоймента и контейнера должны совпадать с вашим <strong><code>deployment.yaml</code></strong>.</li>
+</ol>
+<p>Так k3s <strong>подтягивает новый слой</strong> по смене тега (не полагается только на <code>latest</code> с <strong><code>imagePullPolicy: IfNotPresent</code></strong>).</p>
+<p><strong>Совместимость с GitOps (Argo CD):</strong> этот workflow — <strong>push-CD</strong> (SSH + <code>kubectl</code>), он <strong>не обновляет</strong> манифесты в Git. Если на кластере <strong>Argo CD</strong> уже ведёт те же ресурсы, не запускайте оба сценария без понимания (см. предупреждение в разделе Argo CD). Для <strong>только GitOps</strong> отключите job <strong><code>deploy</code></strong> в <strong><code>ci-cd.yml</code></strong> или замените его на шаг «commit нового <code>image:</code> в репозиторий».</p>
+<h4>Проверка пайплайна</h4>
+<ol>
+<li>Закоммитьте изменение, убедитесь, что секреты заданы: <strong>Settings → Secrets and variables → Actions</strong>.</li>
+<li>Вкладка <strong>Actions</strong> → выберите последний workflow → шаги <strong>build</strong> и <strong>deploy</strong> должны быть зелёными.</li>
+<li>На VPS: <code>kubectl get pods -l app=lab1-api</code> — новые поды после выката.</li>
+</ol>
+<p>Типичные ошибки: <strong>Permission denied (publickey)</strong> — ключ не в <code>authorized_keys</code> или неверный <strong><code>VPS_USER</code></strong>; <strong><code>sudo: a password is required</code></strong> — не настроен passwordless sudo для <code>kubectl</code>; <strong><code>unable to resolve</code></strong> — неверный <strong><code>VPS_HOST</code></strong>.</p>
+<p>Файл в репозитории: <strong><code>.github/workflows/ci-cd.yml</code></strong>.</p>
+</div>
+<div class="section" id="gitops-опционально-argo-cd">
+<h2>GitOps (опционально): Argo CD</h2>
+<p><strong>Когда читать:</strong> после того, как <strong>лабораторное приложение уже работает</strong> (поды <code>Running</code>, при необходимости открыт <strong>NodePort</strong>), и понятен <strong>ручной выкат</strong> через <code>kubectl</code>. Раздел <strong>не заменяет</strong> шаги выше: это <strong>другой способ CD</strong> (pull из Git).</p>
+<p><strong>Где выполнять команды:</strong> на <strong>VPS в SSH</strong> (как в основной части) или на <strong>своём ПК</strong>, если <code>kubectl</code> настроен на тот же кластер (<code>KUBECONFIG</code>). Вывод в шагах может немного отличаться по времени и именам подов.</p>
+<p><strong>Пример манифеста <code>Application</code>:</strong> файл <strong><code>k8s/argocd-application.yaml</code></strong> в репозитории — подставьте свой <strong><code>repoURL</code></strong> и ветку (<strong><code>targetRevision</code></strong>).</p>
+<p>Если включили Argo CD для тех же манифестов, <strong>не смешивайте</strong> постоянно <strong>ручной <code>kubectl apply</code></strong> и <strong>синхронизацию из Argo CD</strong> для одного и того же Deployment без договорённости — возможны «откаты» при следующем Sync.</p>
+<h3>Зачем это в курсе</h3>
+<p>В базовой части методички CD строится так: <strong>GitHub Actions</strong> по SSH вызывает <strong><code>kubectl</code></strong> на VPS (<strong>push</strong>). В <strong>GitOps</strong> наоборот: <strong>желаемое состояние</strong> описано в Git, а контроллер в кластере <strong>периодически подтягивает</strong> репозиторий и применяет манифесты (<strong>pull</strong>). Источник правды — <strong>Git</strong>, а не последняя команда из пайплайна.</p>
+<p>Среди инструментов (<strong>Flux</strong>, <strong>Argo CD</strong> и др.) для занятия удобнее <strong>Argo CD</strong>:</p>
+<ul>
+<li><strong>наглядно:</strong> веб-интерфейс — статус приложения, синхронизация с репозиторием, отклонения (drift);</li>
+<li><strong>проще донести идею:</strong> после <code>git push</code> студент <strong>видит</strong> в UI, как кластер «догоняет» репозиторий;</li>
+<li><strong>установка на k3s:</strong> один манифест из официальной документации, без отдельного «бутстрапа» как у Flux.</li>
+</ul>
+<p><strong>Flux</strong> имеет смысл, если важнее минимум сервисов и всё в YAML/CLI; для демонстрации на паре чаще выигрывает <strong>Argo CD</strong>.</p>
+<h3>Шаг 0. Предпосылки</h3>
+<ol>
+<li><strong>k3s</strong> (или другой Kubernetes) работает, <code>kubectl get nodes</code> показывает <strong>Ready</strong>.</li>
+<li><strong>Ресурсы:</strong> Argo CD — набор подов в namespace <strong><code>argocd</code></strong>. На VPS с <strong>nginx</strong> на 80/443 держите <strong>Traefik в k3s отключённым</strong> (<code>disable: traefik</code> в <code>/etc/rancher/k3s/config.yaml</code>), иначе см. <strong><code>k3s_traefik_nginx_conflict.md</code></strong>.</li>
+<li>Репозиторий с манифестами в <strong><code>k8s/</code></strong> доступен с GitHub: для <strong>публичного</strong> репо достаточно HTTPS; для <strong>приватного</strong> позже добавьте учётные данные в Argo CD → <strong>Settings → Repositories</strong>.</li>
+</ol>
+<h3>Шаг 1. Namespace для Argo CD</h3>
+<p><strong>Зачем:</strong> компоненты Argo CD изолированы в своём namespace.</p>
+<div class="code-block"><code class="language-bash">kubectl create namespace argocd</code></div>
+<p>Ожидаемо: <code>namespace/argocd created</code>. Если namespace уже есть — сообщение об ошибке можно игнорировать.</p>
+<h3>Шаг 2. Установка (официальный манифест)</h3>
+<p><strong>Зачем:</strong> CRD <strong><code>Application</code></strong>, деплойменты <strong><code>argocd-server</code></strong>, <strong><code>argocd-repo-server</code></strong>, Redis, контроллеры.</p>
+<div class="code-block"><code class="language-bash">kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml</code></div>
+<p><strong>Возможная ошибка</strong> (иногда на Docker Desktop и отдельных версиях Kubernetes): для CRD <strong>ApplicationSet</strong> — <code>metadata.annotations: Too long</code>. Остальные ресурсы часто уже созданы; проверьте поды (шаг 3). Подробности — <a href="https://github.com/argoproj/argo-cd/issues">issues Argo CD</a> или фиксированная версия манифеста.</p>
+<h3>Шаг 3. Дождаться готовности подов</h3>
+<p><strong>Зачем:</strong> пока <strong><code>argocd-server</code></strong> и <strong><code>argocd-repo-server</code></strong> не в <strong>Running</strong>, UI и клон Git не работают.</p>
+<div class="code-block"><code class="language-bash">kubectl get pods -n argocd -w</code></div>
+<p>Остановите просмотр (<strong>Ctrl+C</strong>), когда у основных подов <strong>READY 1/1</strong>. Снимок:</p>
+<div class="code-block"><code class="language-bash">kubectl get pods -n argocd</code></div>
+<h3>Шаг 4. Пароль пользователя <code>admin</code></h3>
+<p><strong>Зачем:</strong> первый вход в веб-UI. Сохраните пароль <strong>вне Git</strong>.</p>
+<p><strong>Linux / macOS / Git Bash:</strong></p>
+<div class="code-block"><code class="language-bash">kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath=&quot;{.data.password}&quot; | base64 -d &amp;&amp; echo</code></div>
+<p><strong>PowerShell:</strong></p>
+<div class="code-block"><code class="language-powershell">$p = kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath=&#x27;{.data.password}&#x27;
+[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($p))</code></div>
+<p>После занятия смените пароль или настройте SSO по <a href="https://argo-cd.readthedocs.io/">документации Argo CD</a>.</p>
+<h3>Шаг 5. Веб-интерфейс (<code>port-forward</code>)</h3>
+<p><strong>Зачем:</strong> не занимать 80/443 на хосте; для учебы безопаснее, чем сразу выставлять NodePort в интернет.</p>
+<p>В <strong>отдельном</strong> терминале (процесс должен оставаться запущенным):</p>
+<div class="code-block"><code class="language-bash">kubectl port-forward svc/argocd-server -n argocd 8443:443 --address 127.0.0.1</code></div>
+<ul>
+<li>Браузер: <strong><code>https://127.0.0.1:8443</code></strong></li>
+<li>Логин: <strong><code>admin</code></strong>, пароль — из шага 4.</li>
+<li>Предупреждение о сертификате в учебных целях можно принять.</li>
+</ul>
+<p><strong>Доступ с ПК к UI на VPS:</strong> туннель SSH, например:</p>
+<div class="code-block"><code class="language-bash">ssh -L 8443:127.0.0.1:8443 пользователь@IP_VPS</code></div>
+<p>На VPS в другом сеансе выполните тот же <strong><code>port-forward</code></strong>; браузер на ПК — снова <strong><code>https://127.0.0.1:8443</code></strong>.</p>
+<p><strong>Альтернатива:</strong> тип сервиса <strong><code>argocd-server</code></strong> → <strong>NodePort</strong>, порт открыть в UFW и у провайдера — удобно с другой машины, но больше настроек и вопросов безопасности.</p>
+<h3>Шаг 6. Объявить <code>Application</code> (Git → кластер)</h3>
+<p><strong>Зачем:</strong> указать репозиторий, ветку, каталог с YAML и целевой namespace в кластере.</p>
+<h4>Вариант A — через UI</h4>
+<ol>
+<li><strong>Applications → New App</strong> (или <strong>Edit as YAML</strong>).</li>
+<li><strong>Application name:</strong> например <code>lab1-k8s</code>.</li>
+<li><strong>Project:</strong> <code>default</code>.</li>
+<li><strong>Sync policy:</strong> для начала <strong>Manual</strong>; <strong>AUTO-SYNC</strong> — осторожно в проде.</li>
+<li><strong>Repository URL:</strong> <code>https://github.com/ВАШ_АККАУНТ/ВАШ_РЕПО.git</code></li>
+<li><strong>Revision:</strong> <code>main</code> или <code>master</code>.</li>
+<li><strong>Path:</strong> <code>k8s</code> (каталог с <code>deployment.yaml</code> и <code>service.yaml</code>).</li>
+<li><strong>Cluster URL:</strong> <code>https://kubernetes.default.svc</code></li>
+<li><strong>Namespace:</strong> <code>default</code> (или ваш).</li>
+</ol>
+<p><strong>Create</strong> → <strong>Sync</strong> / <strong>Synchronize</strong>. Дальнейшие изменения в Git и повторный выкат — <strong>GitOps, шаг 8</strong> (не путать с <strong>ручным п. 8 «браузер»</strong> выше).</p>
+<h4>Вариант B — манифест в репозитории</h4>
+<p>Подставьте <strong><code>repoURL</code></strong> и <strong><code>targetRevision</code></strong> в <strong><code>k8s/argocd-application.yaml</code></strong>, затем:</p>
+<div class="code-block"><code class="language-bash">kubectl apply -f k8s/argocd-application.yaml</code></div>
+<p>В примере по умолчанию <strong>без</strong> блока <strong><code>automated</code></strong> в <code>syncPolicy</code> — после создания нажмите <strong>Sync</strong> в UI (или CLI: <code>argocd app sync lab1-k8s</code>, если установлен <strong>argocd</strong> CLI). Раскомментировав <strong><code>automated</code></strong> в YAML, синхронизация пойдёт по расписанию сама.</p>
+<p>Для <strong>приватного</strong> репозитория сначала настройте доступ в <strong>Settings → Repositories</strong>.</p>
+<h3>Шаг 7. Проверка</h3>
+<div class="code-block"><code class="language-bash">kubectl get application -n argocd
+kubectl get pods -n default -l app=lab1-api</code></div>
+<p>В UI ожидаются статусы <strong>Synced</strong> и <strong>Healthy</strong> (после успешного pull образов из registry).</p>
+<h3>Шаг 8 (GitOps). Деплой через Argo CD после правок в Git</h3>
+<p>Это <strong>основной учебный цикл GitOps</strong> (номер <strong>8</strong> относится только к разделу Argo CD, не к <strong>ручному п. 8</strong> про браузер): кластер приводится к состоянию <strong>последнего коммита</strong> в отслеживаемой ветке; <strong>SSH на VPS для <code>kubectl apply</code> не нужен</strong> (в отличие от раздела «CD через GitHub Actions»).</p>
+<h4>8.1. Убедитесь, что приложение уже синхронизировано один раз</h4>
+<p>В UI у <strong>Application</strong> статусы <strong>Synced</strong> и <strong>Healthy</strong> (как в шаге 7). Если включён только ручной sync — после первого создания приложения вы уже нажимали <strong>Sync</strong>.</p>
+<h4>8.2. Внесите изменение в манифесты в Git</h4>
+<p>На <strong>своём ПК</strong> (или в веб-редакторе GitHub) измените файлы в каталоге <strong><code>k8s/</code></strong>, например:</p>
+<ul>
+<li><strong><code>deployment.yaml</code>:</strong> другое значение <strong><code>replicas</code></strong>, другой тег в <strong><code>image:</code></strong> (образ должен уже существовать в registry), правка <strong><code>livenessProbe</code></strong> и т.д.;</li>
+<li>или <strong><code>service.yaml</code></strong> (осторожно с <strong><code>nodePort</code></strong> — не занимайте чужой порт).</li>
+</ul>
+<p>Сохраните коммит и отправьте в <strong>ту же ветку</strong>, которую указали в <strong>Application</strong> (<strong><code>targetRevision</code></strong> / <strong>Revision</strong>):</p>
+<div class="code-block"><code class="language-bash">git add k8s/deployment.yaml
+git commit -m &quot;chore(k8s): обновление манифеста для Argo CD&quot;
+git push origin main</code></div>
+<p>(Вместо <strong><code>main</code></strong> укажите <strong><code>master</code></strong>, если так настроено в Argo CD.)</p>
+<h4>8.3. Подтянуть изменения в кластер</h4>
+<ul>
+<li><strong>Ручная синхронизация:</strong> в UI Argo CD откройте приложение → <strong>Refresh</strong> (подтянуть коммиты с GitHub) → при статусе <strong>OutOfSync</strong> нажмите <strong>Sync</strong> / <strong>Synchronize</strong>.</li>
+<li><strong>Автоматическая:</strong> если в <strong><code>Application</code></strong> включён <strong><code>syncPolicy.automated</code></strong>, Argo CD сам периодически опрашивает репозиторий и применит изменения без кнопки (задержка до ~3 минут по умолчанию или настройте <a href="https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#argocd-server-and-ui-ingress-certificate">webhook</a>).</li>
+</ul>
+<h4>8.4. Проверка</h4>
+<p>В UI: снова <strong>Synced</strong> / <strong>Healthy</strong>, в <strong>History</strong> видна новая ревизия (коммит).</p>
+<p>В терминале (на VPS или с <code>kubectl</code> к кластеру):</p>
+<div class="code-block"><code class="language-bash">kubectl get pods -l app=lab1-api
+kubectl describe deployment lab1-api | sed -n &#x27;1,40p&#x27;</code></div>
+<p>Должны отражаться ваши правки (число подов, образ и т.д.). Если меняли только <strong><code>image:</code></strong>, убедитесь, что тег <strong>уже запушен</strong> в Docker Hub, иначе поды уйдут в <strong>ImagePullBackOff</strong> (см. п. 11 основной части).</p>
+<h4>8.5. Связь с CI</h4>
+<p>Сборка образа по-прежнему делается <strong>локально</strong> или <strong>GitHub Actions</strong> (без шага SSH <code>kubectl</code>, если вы на <strong>чистом GitOps</strong>). После <strong><code>docker push</code></strong> обновите <strong><code>image:</code></strong> в <strong><code>deployment.yaml</code></strong>, сделайте <strong>commit + push</strong> — затем снова шаги <strong>8.3–8.4</strong>. Подробнее — шаг 9.</p>
+<h3>Шаг 9. Связка с CI (образ + GitOps)</h3>
+<ol>
+<li><strong>CI</strong> собирает образ и делает <strong><code>docker push</code></strong> в registry.</li>
+<li>В <strong><code>deployment.yaml</code></strong> в Git обновляют поле <strong><code>image:</code></strong> (новый тег) — вручную, коммитом или шагом GitHub Actions с <strong><code>GITHUB_TOKEN</code></strong>.</li>
+<li><strong>Argo CD</strong> обнаруживает новый коммит (опрос / webhook) и при включённой политике sync обновляет Deployment — поды пересоздаются при <strong><code>imagePullPolicy: Always</code></strong> или смене тега.</li>
+</ol>
+<p><strong>Сборка</strong> остаётся в CI, <strong>выкат манифестов</strong> — в зоне GitOps. <strong>Не смешивайте</strong> без договорённости постоянный <strong><code>kubectl apply</code></strong> тех же файлов и <strong>Argo CD Sync</strong>.</p>
+<h3>Удаление Argo CD с кластера (по желанию)</h3>
+<div class="code-block"><code class="language-bash">kubectl delete -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl delete namespace argocd</code></div>
+<p>Остаточные CRD и порядок действий — в <a href="https://argo-cd.readthedocs.io/en/stable/operator-manual/installation/#uninstall">документации по uninstall</a>.</p>
+<h3>Что не входит в минимум методички</h3>
+<ul>
+<li><strong>Argo CD Image Updater</strong> и автообновление тегов из registry — отдельная тема.</li>
+<li><strong>Отдельный репозиторий</strong> только под <code>k8s/</code> — продвинутый вариант; для учебы достаточно папки <strong><code>k8s/</code></strong> в том же репо, что и приложение.</li>
+</ul>
+<h3>Кратко</h3>
+<table>
+<tr>
+<th></th>
+<th>Push-CD (основа методички)</th>
+<th>GitOps (Argo CD)</th>
+</tr>
+<tr>
+<td>Кто применяет манифесты</td>
+<td>CI по SSH + <code>kubectl</code></td>
+<td>Argo CD из кластера</td>
+</tr>
+<tr>
+<td>Источник правды на практике</td>
+<td>последний успешный пайплайн + Git</td>
+<td><strong>Git</strong> (репозиторий)</td>
+</tr>
+<tr>
+<td>Наглядность</td>
+<td>логи Actions</td>
+<td><strong>UI</strong> Argo CD</td>
+</tr>
+</table>
+</div>
+
+<div class="section" id="vyvody">
+<h2>📊 Выводы (для отчёта)</h2>
+<div class="form-group"><label>Что изучили:</label><textarea rows="3" id="ta0" style="width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px"></textarea></div>
+<div class="form-group"><label>Сложности:</label><textarea rows="3" id="ta1" style="width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px"></textarea></div>
+</div>
+
+<button class="save-btn" type="button" onclick="window.print()">💾 Сохранить в PDF (печать)</button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.code-block code').forEach(function(el){try{hljs.highlightElement(el)}catch(e){}});
+  ['student-name','group','date'].forEach(function(id){var el=document.getElementById(id);if(!el)return;el.value=localStorage.getItem(id)||'';el.addEventListener('input',function(){localStorage.setItem(id,el.value)})});
+  var dateEl=document.getElementById('date');if(dateEl)dateEl.value=dateEl.value||new Date().toISOString().split('T')[0];
+  document.querySelectorAll('input[type="checkbox"]').forEach(function(cb){if(localStorage.getItem(cb.id)==='true')cb.checked=true;cb.addEventListener('change',function(){localStorage.setItem(cb.id,cb.checked)})});
+  ['ta0','ta1'].forEach(function(id){var el=document.getElementById(id);if(!el)return;el.value=localStorage.getItem(id)||'';el.addEventListener('input',function(){localStorage.setItem(id,el.value)})});
+});
+</script>
+</body>
+</html>

@@ -3,7 +3,12 @@
 
 В блоке ```mermaid первая строка @large (отдельной строкой) даёт класс mermaid-wrap--large — крупнее шрифт на проекторе.
 Блок ```k8s-cluster-diagram вставляет HTML-схему слайда 12 (читаемые подписи без Mermaid).
+
+Сборка другой лекции (тот же движок):
+  python build_lect_k8s_reveal.py lect_gitops_orchestration_k8s.md lect_gitops_orchestration_k8s.html --gitops
+Флаг --gitops задаёт зелёно-серую «креативную» тему (GitOps); без флага — классическая сине-кибернетическая как lect_k8s.html.
 """
+import argparse
 import html
 import re
 from pathlib import Path
@@ -200,13 +205,13 @@ def slide_body_to_html(body: str) -> str:
 
 def split_slides(md: str) -> list[tuple[str, str]]:
     md = re.split(r"\n## Примечание для оформления", md, maxsplit=1)[0]
-    parts = re.split(r"(?m)^(# Слайд \d+\.\s*.+)$", md)
+    parts = re.split(r"(?m)^(# Слайд \d+[a-z]?\.\s*.+)$", md)
     slides: list[tuple[str, str]] = []
     if not parts:
         return slides
     i = 0
     while i < len(parts):
-        if re.match(r"^# Слайд \d+\.", parts[i].strip()):
+        if re.match(r"^# Слайд \d+[a-z]?\.", parts[i].strip()):
             title_line = parts[i].strip()
             body = parts[i + 1] if i + 1 < len(parts) else ""
             slides.append((title_line, body))
@@ -216,19 +221,95 @@ def split_slides(md: str) -> list[tuple[str, str]]:
     return slides
 
 
+GITOPS_BG = ("#0d1117", "#111821", "#0f1f17", "#132a1e", "#0c2e24", "#14532d")
+GITOPS_EXTRA_CSS = """
+    @keyframes gitops-glow {
+      0%, 100% { text-shadow: 0 0 22px rgba(34,197,94,0.45), 0 0 48px rgba(16,185,129,0.2); }
+      50% { text-shadow: 0 0 34px rgba(52,211,153,0.75), 0 0 64px rgba(34,197,94,0.28); }
+    }
+    .theme-gitops .reveal h2 {
+      color: #86efac !important;
+      border-bottom-color: rgba(34,197,94,0.55) !important;
+    }
+    .theme-gitops .k8s-ul li::before { color: #34d399 !important; }
+    .theme-gitops .k8s-table th {
+      background: rgba(34,197,94,0.22) !important;
+      color: #bbf7d0 !important;
+    }
+    .theme-gitops .k8s-pre {
+      border-color: rgba(52,211,153,0.5) !important;
+      box-shadow: 0 6px 28px rgba(0,0,0,0.4), 0 0 0 1px rgba(34,197,94,0.12) inset !important;
+    }
+    .theme-gitops .k8s-quote {
+      border-left-color: #22c55e !important;
+      background: linear-gradient(90deg, rgba(34,197,94,0.12), transparent) !important;
+    }
+    .theme-gitops .k8s-lead { color: #4ade80 !important; }
+    .theme-gitops .k8s-title-card {
+      border-color: rgba(52,211,153,0.55) !important;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.5), 0 0 40px rgba(34,197,94,0.08), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+    }
+    .theme-gitops .k8s-title-h1 {
+      background: linear-gradient(92deg, #ecfdf5, #86efac, #22c55e) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      color: transparent !important;
+      animation: gitops-glow 3.2s ease-in-out infinite !important;
+    }
+    .theme-gitops .k8s-helm {
+      filter: drop-shadow(0 0 14px rgba(52,211,153,0.65)) !important;
+    }
+    .theme-gitops .mermaid {
+      border-color: rgba(52,211,153,0.4) !important;
+    }
+"""
+
+
 def main():
-    raw = MD.read_text(encoding="utf-8")
+    ap = argparse.ArgumentParser(description="MD слайды (# Слайд N.) → Reveal HTML")
+    ap.add_argument(
+        "md_path",
+        nargs="?",
+        default=None,
+        help="Входной .md (по умолчанию lect_k8s.md в каталоге скрипта)",
+    )
+    ap.add_argument(
+        "out_path",
+        nargs="?",
+        default=None,
+        help="Выходной .html (по умолчанию lect_k8s.html)",
+    )
+    ap.add_argument(
+        "--gitops",
+        action="store_true",
+        help="Тема GitOps: тёмно-серый фон слайдов + зелёные акценты и титульный экран",
+    )
+    args = ap.parse_args()
+
+    md_file = Path(args.md_path) if args.md_path else MD
+    out_file = Path(args.out_path) if args.out_path else OUT
+    if not md_file.is_absolute():
+        md_file = HERE / md_file
+    if not out_file.is_absolute():
+        out_file = HERE / out_file
+
+    gitops_theme = args.gitops or ("gitops" in out_file.name.lower())
+    body_class = "theme-gitops" if gitops_theme else ""
+    bg_palette = GITOPS_BG if gitops_theme else BG_COLORS
+    extra_css = GITOPS_EXTRA_CSS if gitops_theme else ""
+
+    raw = md_file.read_text(encoding="utf-8")
     slides = split_slides(raw)
     sections: list[str] = []
 
     for idx, (title_line, body) in enumerate(slides):
-        m = re.match(r"^# (Слайд \d+)\.\s*(.+)$", title_line.strip())
+        m = re.match(r"^# (Слайд \d+[a-z]?)\.\s*(.+)$", title_line.strip())
         if not m:
             continue
         num, title = m.group(1), m.group(2).strip()
         h2 = f"{num}. {title}"
         trans = TRANSITIONS[idx % len(TRANSITIONS)]
-        bg = BG_COLORS[idx % len(BG_COLORS)]
+        bg = bg_palette[idx % len(bg_palette)]
         body_lines = body.rstrip().split("\n")
         while body_lines and body_lines[-1].strip() == "---":
             body_lines.pop()
@@ -242,23 +323,37 @@ def main():
 </section>"""
         )
 
-    title_slide = f"""<section data-transition="zoom" data-background-gradient="linear-gradient(135deg,#0d1117 0%,#1e3a5f 40%,#326CE5 100%)" class="k8s-title-slide">
+    if gitops_theme:
+        title_bg = "linear-gradient(135deg,#0b0f14 0%,#0f2418 38%,#166534 72%,#22c55e 100%)"
+        title_icon = "🔀"
+        title_h1 = "GitOps · оркестрация · прод"
+        title_sub = "От Compose до Kubernetes"
+        title_meta = f"Лекция · {len(sections)} слайдов · высоконагруженные системы"
+    else:
+        title_bg = "linear-gradient(135deg,#0d1117 0%,#1e3a5f 40%,#326CE5 100%)"
+        title_icon = "☸"
+        title_h1 = "Kubernetes"
+        title_sub = "Зачем и как он работает — на пальцах"
+        title_meta = f"Лекция · {len(sections)} слайдов · оркестрация контейнеров"
+
+    title_slide = f"""<section data-transition="zoom" data-background-gradient="{title_bg}" class="k8s-title-slide">
   <div class="k8s-title-card">
-    <div class="k8s-helm">☸</div>
-    <h1 class="k8s-title-h1">Kubernetes</h1>
-    <p class="k8s-title-sub">Зачем и как он работает — на пальцах</p>
-    <p class="k8s-title-meta fragment">Лекция · {len(sections)} слайдов · оркестрация контейнеров</p>
+    <div class="k8s-helm">{title_icon}</div>
+    <h1 class="k8s-title-h1">{esc(title_h1)}</h1>
+    <p class="k8s-title-sub">{esc(title_sub)}</p>
+    <p class="k8s-title-meta fragment">{esc(title_meta)}</p>
   </div>
 </section>"""
 
     sections_html = "\n\n".join([title_slide] + sections)
+    doc_title = title_h1 if not gitops_theme else "GitOps, оркестрация и прод"
 
     html_doc = f"""<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kubernetes: зачем и как он работает</title>
+  <title>{esc(doc_title)}</title>
   <link rel="stylesheet" href="{REVEAL_BASE}/css/reveal.min.css">
   <link rel="stylesheet" href="{REVEAL_BASE}/css/black.min.css">
   <link rel="stylesheet" href="{REVEAL_BASE}/css/monokai.min.css">
@@ -608,9 +703,10 @@ def main():
       from {{ opacity: 0; transform: translateY(10px); }}
       to {{ opacity: 1; transform: translateY(0); }}
     }}
+{extra_css}
   </style>
 </head>
-<body>
+<body class="{body_class}">
 <div class="reveal"><div class="slides">
 
 {sections_html}
@@ -664,8 +760,8 @@ def main():
 </body>
 </html>"""
 
-    OUT.write_text(html_doc, encoding="utf-8")
-    print("Wrote", OUT, "slides:", len(sections) + 1)
+    out_file.write_text(html_doc, encoding="utf-8")
+    print("Wrote", out_file, "slides:", len(sections) + 1)
 
 
 if __name__ == "__main__":

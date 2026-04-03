@@ -7,6 +7,9 @@
 
   python _build_k8s_docker_desktop_html.py laba_ci_cd_vps.md [laba_ci_cd_vps.html]
       → указанный .md и (опционально) путь к .html в той же папке, что и скрипт, если имя без пути.
+
+  python _build_k8s_docker_desktop_html.py ../laba-2/laba_ci_cd_gitops.md ../laba-2/laba_ci_cd_gitops.html
+      → методичка CI/CD + GitOps (каталог запуска — laba/).
 """
 import argparse
 import html
@@ -38,9 +41,10 @@ def slug(s: str) -> str:
 
 
 def autolink_plain_urls(s: str) -> str:
-    """Оборачивает голые https://… в <a>, не трогая текст внутри <code>...</code>."""
+    """Оборачивает голые https://… в <a>, не трогая текст внутри <code>...</code> и не дублируя URL в href=."""
     parts = re.split(r"(<code>[\s\S]*?</code>)", s)
-    url_re = re.compile(r"https?://[^\s<]+")
+    # Не трогать «https» сразу после " или = (уже в href= или похожем атрибуте)
+    url_re = re.compile(r"(?<![=\"])https?://[^\s<]+")
 
     def one_url(m: re.Match) -> str:
         u = m.group(0)
@@ -64,6 +68,16 @@ def autolink_plain_urls(s: str) -> str:
 def inline_fmt(s: str) -> str:
     s = html.escape(s)
     s = re.sub(r"`([^`]+)`", lambda m: "<code>" + m.group(1) + "</code>", s)
+    # Сначала [текст](url), потом **…** — так работает **[k3s](url)**
+    s = re.sub(
+        r"\[([^\]]+)\]\((https?://[^)\s]+)\)",
+        lambda m: '<a href="'
+        + html.escape(m.group(2), quote=True)
+        + '">'
+        + m.group(1)
+        + "</a>",
+        s,
+    )
     s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
     s = autolink_plain_urls(s)
     return s
@@ -332,6 +346,7 @@ def main(argv: list[str] | None = None) -> None:
     stem_tags = {
         "laba_k8s_docker_desktop": "Локальный кластер • kubectl • Deployment • Service • port-forward",
         "laba_ci_cd_vps": "GitHub Actions • Docker Hub • k3s • kubectl • VPS",
+        "laba_ci_cd_gitops": "GitHub Actions • Docker Hub • k3s • kubectl • VPS • GitOps (Argo CD, опционально)",
     }
     header_tags = stem_tags.get(md_path.stem)
     if not header_tags:

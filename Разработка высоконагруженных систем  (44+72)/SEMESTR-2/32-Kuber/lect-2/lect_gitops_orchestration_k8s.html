@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitOps, оркестрация и прод</title>
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/reveal.min.css">
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/black.min.css">
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/monokai.min.css">
+  <style>
+    @keyframes k8s-glow {
+      0%, 100% { text-shadow: 0 0 20px rgba(50,108,229,0.5), 0 0 40px rgba(50,108,229,0.2); }
+      50% { text-shadow: 0 0 30px rgba(50,108,229,0.8), 0 0 60px rgba(0,212,170,0.25); }
+    }
+    @keyframes k8s-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    html, body, .reveal-viewport, .reveal, .reveal .slides, .reveal .slide-background-content {
+      overflow: hidden !important;
+      scrollbar-width: none !important;
+    }
+    /* Reveal по умолчанию центрирует .slides через translate(-50%, -50%); не убирать Y — иначе контент «падает» вниз */
+    .reveal .slides section.k8s-slide {
+      overflow-y: auto !important;
+      justify-content: center !important;
+      padding-top: 12px !important;
+      padding-bottom: 12px !important;
+    }
+    .reveal .slides {
+      width: 82% !important;
+      height: 92% !important;
+      left: 50% !important;
+      top: 50% !important;
+      transform: translate(-50%, -50%) scale(1.12) !important;
+      transform-origin: center center !important;
+    }
+    .reveal .slides section {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 20px 28px !important;
+      font-size: 0.88em !important;
+      max-width: 100% !important;
+      text-align: center !important;
+      line-height: 1.48 !important;
+    }
+    .reveal h1 {
+      font-size: 1.85em !important;
+      color: #fff !important;
+      animation: k8s-glow 4s ease-in-out infinite !important;
+    }
+    .reveal h2 {
+      font-size: 1.05em !important;
+      color: #7eb8ff !important;
+      border-bottom: 2px solid rgba(50,108,229,0.55) !important;
+      padding-bottom: 0.35em !important;
+      margin-bottom: 0.45em !important;
+      width: 100% !important;
+      text-transform: none !important;
+    }
+    .k8s-title-slide .k8s-title-h1 {
+      font-size: 2.2em !important;
+      background: linear-gradient(90deg, #fff, #7eb8ff, #00d4aa);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent !important;
+      animation: k8s-glow 3s ease-in-out infinite !important;
+    }
+    .k8s-title-card {
+      background: rgba(13,17,23,0.75);
+      border: 2px solid rgba(50,108,229,0.6);
+      border-radius: 16px;
+      padding: 36px 48px;
+      max-width: 92%;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .k8s-helm {
+      font-size: 3.5rem;
+      line-height: 1;
+      margin-bottom: 0.2em;
+      animation: k8s-float 3.5s ease-in-out infinite;
+      filter: drop-shadow(0 0 12px rgba(50,108,229,0.7));
+    }
+    .k8s-title-sub {
+      font-size: 1.15em !important;
+      color: #c9d1d9 !important;
+      margin-top: 0.5em !important;
+    }
+    .k8s-title-meta {
+      color: #8b949e !important;
+      font-size: 0.9em !important;
+      margin-top: 1em !important;
+    }
+    .k8s-slide-inner {
+      width: 100%;
+      max-width: 100%;
+      text-align: left;
+    }
+    .k8s-slide-inner p {
+      margin: 0.35em 0;
+      text-align: left;
+    }
+    .k8s-ul, .k8s-ol {
+      margin: 0.4em auto !important;
+      max-width: 95%;
+      text-align: left !important;
+    }
+    .k8s-ul li {
+      margin-bottom: 0.45em !important;
+      list-style: none !important;
+      position: relative !important;
+      padding-left: 1.1em !important;
+    }
+    .k8s-ul li::before {
+      content: "▸";
+      position: absolute;
+      left: 0;
+      color: #326CE5;
+      font-weight: bold;
+    }
+    .k8s-ol {
+      list-style: decimal !important;
+      padding-left: 1.6em !important;
+      margin-left: 0.5em !important;
+    }
+    .k8s-ol li {
+      margin-bottom: 0.45em !important;
+      padding-left: 0.15em !important;
+    }
+    .k8s-code {
+      color: #79c0ff !important;
+      background: rgba(110,118,129,0.2) !important;
+      padding: 0.12em 0.35em !important;
+      border-radius: 4px !important;
+      font-size: 0.92em !important;
+    }
+    .k8s-pre {
+      max-width: 100% !important;
+      margin: 10px auto !important;
+      border-radius: 10px !important;
+      border: 1px solid rgba(50,108,229,0.45) !important;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.35) !important;
+      text-align: left !important;
+      font-size: 0.62em !important;
+    }
+    .k8s-pre code {
+      padding: 12px 14px !important;
+      line-height: 1.35 !important;
+      white-space: pre-wrap !important;
+      word-break: break-word !important;
+      max-height: 52vh;
+      overflow-y: auto;
+      display: block;
+    }
+    .mermaid-wrap {
+      max-width: 100%;
+      margin: 8px auto;
+    }
+    .mermaid-wrap--large {
+      max-width: 100%;
+      margin: 12px auto 4px;
+    }
+    .mermaid {
+      background: rgba(22,27,34,0.9) !important;
+      border-radius: 10px !important;
+      padding: 12px !important;
+      border: 1px solid rgba(0,212,170,0.35) !important;
+      text-align: center !important;
+      font-size: 0.55em !important;
+    }
+    .mermaid-wrap--large .mermaid {
+      font-size: 0.92em !important;
+      padding: 18px 14px !important;
+      min-height: 280px;
+    }
+    .mermaid-wrap--large .mermaid svg {
+      max-width: 100% !important;
+      height: auto !important;
+    }
+    .k8s-cluster-wrap {
+      max-width: 100%;
+      margin: 10px auto 6px;
+      overflow: visible !important;
+    }
+    .k8s-cluster-diagram {
+      font-size: clamp(15px, 2.5vmin, 20px) !important;
+      line-height: 1.35 !important;
+      color: #e6edf3 !important;
+      text-align: left !important;
+    }
+    .k8s-cluster-grid {
+      display: grid;
+      grid-template-columns: minmax(200px, 1.15fr) minmax(56px, 0.2fr) minmax(168px, 0.95fr);
+      grid-template-rows: 1fr 1fr;
+      gap: 10px 8px;
+      align-items: stretch;
+    }
+    .k8s-cluster-cp {
+      grid-column: 1;
+      grid-row: 1 / span 2;
+      align-self: center;
+    }
+    .k8s-cluster-bridge {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      align-items: center;
+      padding: 6px 0;
+      min-width: 52px;
+    }
+    .k8s-cluster-bridge-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      color: #7ee0c5;
+    }
+    .k8s-cluster-bridge-arrows {
+      font-size: 1.35em;
+      line-height: 1;
+    }
+    .k8s-cluster-bridge-cap {
+      font-size: 0.72em !important;
+      text-align: center;
+      line-height: 1.25;
+      max-width: 4.5em;
+      color: #a8f5e0;
+    }
+    .k8s-cluster-workers {
+      grid-column: 3;
+      grid-row: 1 / span 2;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      justify-content: center;
+    }
+    .k8s-cluster-panel {
+      background: rgba(22,27,34,0.95) !important;
+      border: 2px solid rgba(0,212,170,0.45) !important;
+      border-radius: 12px !important;
+      padding: 12px 14px !important;
+    }
+    .k8s-cluster-panel-title {
+      font-size: 0.78em !important;
+      font-weight: 700 !important;
+      color: #00d4aa !important;
+      margin: 0 0 10px 0 !important;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+    .k8s-cluster-vstack {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .k8s-cluster-block {
+      background: rgba(50,108,229,0.28) !important;
+      border: 1px solid rgba(50,108,229,0.55) !important;
+      border-radius: 8px !important;
+      padding: 10px 12px !important;
+      text-align: center !important;
+      word-break: break-word;
+      hyphens: auto;
+    }
+    .k8s-cluster-block-accent {
+      background: rgba(50,108,229,0.45) !important;
+      border-color: rgba(126,184,255,0.65) !important;
+      font-weight: 600;
+    }
+    .k8s-cluster-etcd {
+      border-style: dashed !important;
+      border-color: rgba(0,212,170,0.5) !important;
+    }
+    .k8s-cluster-sub {
+      display: block;
+      font-size: 0.82em !important;
+      font-weight: 400 !important;
+      color: #8b949e !important;
+      margin-top: 4px;
+    }
+    .k8s-cluster-arr {
+      text-align: center;
+      color: #7eb8ff;
+      font-size: 0.95em;
+      line-height: 1;
+      padding: 2px 0;
+    }
+    .k8s-cluster-hrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .k8s-cluster-arrh {
+      color: #7eb8ff;
+      font-size: 1.1em;
+      flex-shrink: 0;
+    }
+    .k8s-cluster-hrow .k8s-cluster-block {
+      flex: 1;
+    }
+    .k8s-cluster-worker .k8s-cluster-vstack .k8s-cluster-block {
+      padding: 8px 10px !important;
+    }
+    @media (max-width: 900px) {
+      .k8s-cluster-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+      }
+      .k8s-cluster-cp { grid-row: auto; grid-column: 1; }
+      .k8s-cluster-bridge {
+        grid-row: auto;
+        grid-column: 1;
+        flex-direction: row;
+        justify-content: center;
+        gap: 24px;
+      }
+      .k8s-cluster-workers { grid-row: auto; grid-column: 1; }
+    }
+    .k8s-table {
+      font-size: 0.72em !important;
+      margin: 10px auto !important;
+      border-collapse: collapse !important;
+      max-width: 98% !important;
+    }
+    .k8s-table th, .k8s-table td {
+      border: 1px solid rgba(255,255,255,0.2) !important;
+      padding: 8px 10px !important;
+    }
+    .k8s-table th {
+      background: rgba(50,108,229,0.25) !important;
+      color: #7eb8ff !important;
+    }
+    .k8s-quote {
+      background: linear-gradient(90deg, rgba(50,108,229,0.15), transparent);
+      border-left: 4px solid #326CE5;
+      padding: 10px 16px;
+      margin: 8px 0;
+      border-radius: 0 8px 8px 0;
+      text-align: left !important;
+      font-style: italic;
+      color: #e6edf3 !important;
+    }
+    .k8s-lead { color: #00d4aa !important; }
+    .fragment.visible {
+      animation: fragmentFadeIn 0.55s ease-out;
+    }
+    @keyframes fragmentFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes gitops-glow {
+      0%, 100% { text-shadow: 0 0 22px rgba(34,197,94,0.45), 0 0 48px rgba(16,185,129,0.2); }
+      50% { text-shadow: 0 0 34px rgba(52,211,153,0.75), 0 0 64px rgba(34,197,94,0.28); }
+    }
+    .theme-gitops .reveal h2 {
+      color: #86efac !important;
+      border-bottom-color: rgba(34,197,94,0.55) !important;
+    }
+    .theme-gitops .k8s-ul li::before { color: #34d399 !important; }
+    .theme-gitops .k8s-table th {
+      background: rgba(34,197,94,0.22) !important;
+      color: #bbf7d0 !important;
+    }
+    .theme-gitops .k8s-pre {
+      border-color: rgba(52,211,153,0.5) !important;
+      box-shadow: 0 6px 28px rgba(0,0,0,0.4), 0 0 0 1px rgba(34,197,94,0.12) inset !important;
+    }
+    .theme-gitops .k8s-quote {
+      border-left-color: #22c55e !important;
+      background: linear-gradient(90deg, rgba(34,197,94,0.12), transparent) !important;
+    }
+    .theme-gitops .k8s-lead { color: #4ade80 !important; }
+    .theme-gitops .k8s-title-card {
+      border-color: rgba(52,211,153,0.55) !important;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.5), 0 0 40px rgba(34,197,94,0.08), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+    }
+    .theme-gitops .k8s-title-h1 {
+      background: linear-gradient(92deg, #ecfdf5, #86efac, #22c55e) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      color: transparent !important;
+      animation: gitops-glow 3.2s ease-in-out infinite !important;
+    }
+    .theme-gitops .k8s-helm {
+      filter: drop-shadow(0 0 14px rgba(52,211,153,0.65)) !important;
+    }
+    .theme-gitops .mermaid {
+      border-color: rgba(52,211,153,0.4) !important;
+    }
+
+  </style>
+</head>
+<body class="theme-gitops">
+<div class="reveal"><div class="slides">
+
+<section data-transition="zoom" data-background-gradient="linear-gradient(135deg,#0b0f14 0%,#0f2418 38%,#166534 72%,#22c55e 100%)" class="k8s-title-slide">
+  <div class="k8s-title-card">
+    <div class="k8s-helm">🔀</div>
+    <h1 class="k8s-title-h1">GitOps · оркестрация · прод</h1>
+    <p class="k8s-title-sub">От Compose до Kubernetes</p>
+    <p class="k8s-title-meta fragment">Лекция · 45 слайдов · высоконагруженные системы</p>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#0d1117" class="k8s-slide">
+  <h2>Слайд 0. GitOps, оркестрация и прод: от ноутбука до кластера</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Вводная лекция по Kubernetes уже дала <strong>скелет</strong>: Pod, Deployment, Service.</li>
+<li class="fragment fade-in-then-semi-out">Сегодня — <strong>карта</strong>: доставка в прод, <strong>Compose</strong> vs <strong>k8s</strong>, зачем <strong>GitOps</strong>, <strong>k3s</strong> на одной <strong>VPS</strong> vs <strong>managed Kubernetes</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Цель пары:</strong> ориентир в терминах для собеседования и первых рабочих задач (без гонки за «сертификатом админа»).</li>
+</ul>
+<p class="fragment"><strong class="k8s-lead">План по ТЗ (6 блоков):</strong></p>
+<ol class="k8s-ol">
+<li class="fragment"><strong>GitOps</strong> — введение: истина в Git, агент, дрифт, pull vs push.</li>
+<li class="fragment"><strong>Эволюция оркестрации:</strong> Podman → Docker → Compose → Nomad → k3s → Kubernetes.</li>
+<li class="fragment"><strong>GitOps и Kubernetes:</strong> почему сочетаются, Argo CD, Flux, среды, секреты.</li>
+<li class="fragment"><strong>CI/CD и Kubernetes:</strong> сборка образа, promotion, push-CD vs GitOps.</li>
+<li class="fragment"><strong>Прод на одной VPS:</strong> k3s, kubeconfig, цепочка деплоя, ограничения, Ingress.</li>
+<li class="fragment"><strong>Прод «полного» k8s:</strong> HA, managed, LoadBalancer/Ingress, сравнение с k3s на VPS.</li>
+</ol>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>После пары:</strong> сможете <strong>своими словами</strong> объяснить разницу между «у нас CI» и GitOps; назвать, <strong>когда Compose достаточно</strong>, а когда уместны <strong>k3s/k8s</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Формат:</strong> 45 слайдов (<strong>0, 0a — глоссарий, 0b — DevOps и GitOps, 1–8, 8a, 9–11, 11a, 12–13, 13a, 14–38, 39</strong>); слайды — только контент, схемы, таблицы.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="fade" data-background-color="#111821" class="k8s-slide">
+  <h2>Слайд 0a. Глоссарий: слова, которые встретятся в лекции</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Дальше будут <strong>аббревиатуры</strong> и термины. Ниже — <strong>одним экраном</strong>, «что имели в виду»; к документации и прошлым лекциям по k8s можно вернуться позже.</li>
+</ul>
+<table class="k8s-table fragment">
+<tr>
+<th>Слово</th>
+<th>Как говорят / сленг</th>
+<th>Простыми словами</th>
+</tr>
+<tr>
+<td><strong>SPOF</strong></td>
+<td><strong>Эс-пи-о-эф</strong>; в чатах часто пишут <strong>«сингл поинт оф фейл»</strong>, говорят <strong>«узкое горлышко»</strong>, <strong>«одна точка — и всё легло»</strong>.</td>
+<td><strong>Одна</strong> точка, от которой всё рухнуло: один сервер, один человек с доступом. Пример: <strong>одна VPS</strong> — если она легла, всё легло.</td>
+</tr>
+<tr>
+<td><strong>HPA</strong></td>
+<td><strong>Эйч-пи-эй</strong> (или коротко <strong>«аш-па»</strong>); сленг: <strong>«автоскейл реплик»</strong>, <strong>«подкрутить реплики по CPU/очереди»</strong>.</td>
+<td>Автоматически <strong>добавить или убрать копии</strong> приложения (реплики) по нагрузке. <strong>Не</strong> делает из маленького сервера большой по памяти.</td>
+</tr>
+<tr>
+<td><strong>PVC</strong></td>
+<td><strong>Пи-ви-си</strong>; сленг: <strong>«заявка на том»</strong>, <strong>«перзистент»</strong> (от *persistent volume*), <strong>«диск из стореджа»</strong>.</td>
+<td>Заявка приложению: «дай <strong>постоянный диск</strong> такого размера». Сами данные на диске <strong>не спасаются волшебством</strong> — нужны <strong>бэкапы</strong>.</td>
+</tr>
+<tr>
+<td><strong>Helm chart</strong></td>
+<td><strong>Хелм</strong> + <strong>чарт</strong> (как *chart*); сленг: <strong>«пакет ямлов»</strong>, <strong>«шаблоны с values»</strong>, <strong>«поставить приложение одной командой»</strong>.</td>
+<td><strong>Пакет шаблонов</strong> для Kubernetes: подставили значения — получили готовые YAML. Удобно ставить одно и то же приложение в разные среды.</td>
+</tr>
+<tr>
+<td><strong>Kustomize overlay</strong></td>
+<td><strong>Кастомайз</strong> (от названия инструмента); <strong>оверлей</strong> — почти всегда так и говорят; сленг: <strong>«база + патчи под среду»</strong>, <strong>«без копипасты всех файлов»</strong>.</td>
+<td><strong>Слой правок</strong> поверх общей папки с манифестами: для <strong>dev</strong> одни цифры, для <strong>prod</strong> другие — <strong>без</strong> дублирования всех файлов.</td>
+</tr>
+<tr>
+<td><strong>IAM</strong></td>
+<td><strong>Ай-ай-эм</strong>; сленг: <strong>«права в облаке»</strong>, <strong>«кто куда лезет»</strong>, <strong>«сервисный аккаунт + роли»</strong> (в духе AWS/GCP).</td>
+<td>В облаке: <strong>кто</strong> (человек или сервис) <strong>что</strong> может. Pod в кластере может работать от <strong>роли облака</strong>, чтобы <strong>не</strong> хранить долгоживущий ключ в Secret.</td>
+</tr>
+<tr>
+<td><strong>LB</strong> (*load balancer*)</td>
+<td><strong>Эл-би</strong> или <strong>«лоад-балансер»</strong>; сленг: <strong>«балансир»</strong>, <strong>«внешка перед кластером»</strong> (vs <strong>Ingress</strong> — <strong>«роутинг внутри по HTTP»</strong>).</td>
+<td><strong>Снаружи</strong> кластера: принять трафик и <strong>разделить</strong> по нескольким целям. <strong>Ingress</strong> — уже <strong>внутри</strong>, по <strong>HTTP(S)</strong> направляет на нужный сервис по адресу и пути.</td>
+</tr>
+</table>
+  </div>
+</section>
+
+<section data-transition="convex" data-background-color="#0f1f17" class="k8s-slide">
+  <h2>Слайд 0b. DevOps и GitOps: как это связано</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>DevOps</strong> — <strong>широко:</strong> культура и практики (<strong>dev</strong> + <strong>ops</strong> вместе): автоматизация, <strong>CI/CD</strong>, мониторинг, общая ответственность за продукт, быстрая обратная связь. Это <strong>не</strong> один инструмент и <strong>не</strong> обязательно Kubernetes.</li>
+<li class="fragment fade-in-then-semi-out"><strong>GitOps</strong> — <strong>узко и конкретно:</strong> <strong>как</strong> держать <strong>желаемое состояние</strong> кластера/приложений в <strong>Git</strong> и <strong>подтягивать</strong> его агентом (<strong>pull</strong>), чтобы прод <strong>совпадал</strong> с репозиторием (ревью, откат, аудит — как у кода).</li>
+<li class="fragment fade-in-then-semi-out"><strong>Связь:</strong> GitOps — <strong>один из способов</strong> реализовать идеи DevOps вокруг <strong>доставки и конфигурации</strong> в cloud-native мире; <strong>DevOps без GitOps</strong> — норма (например, <strong>push</strong> из CI: <code class="k8s-code">kubectl apply</code> из пайплайна, Ansible, другие модели).</li>
+<li class="fragment fade-in-then-semi-out"><strong>Запомнить на собесе:</strong> DevOps отвечает на <strong>«как мы вообще работаем и автоматизируем»</strong>; GitOps — на <strong>«где истина для кластера и кто её применяет»</strong>.</li>
+</ul>
+<table class="k8s-table fragment">
+<tr>
+<th></th>
+<th><strong>DevOps</strong></th>
+<th><strong>GitOps</strong></th>
+</tr>
+<tr>
+<td><strong>Уровень</strong></td>
+<td>Подход, процессы, культура</td>
+<td>Паттерн управления состоянием (часто k8s)</td>
+</tr>
+<tr>
+<td><strong>Типичный фокус</strong></td>
+<td>Скорость, качество, надёжность цикла разработки</td>
+<td>Git = источник правды, синхронизация с кластером</td>
+</tr>
+<tr>
+<td><strong>Обязательно друг друга?</strong></td>
+<td>GitOps <strong>не</strong> заменяет весь DevOps</td>
+<td>Можно не делать GitOps и всё равно «в DevOps»</td>
+</tr>
+</table>
+  </div>
+</section>
+
+<section data-transition="zoom" data-background-color="#132a1e" class="k8s-slide">
+  <h2>Слайд 1. С чего боль всего в проде</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Дежурный ночью чинит прод <strong>в обход Git</strong>: <code class="k8s-code">kubectl edit</code> или правка YAML <strong>на сервере</strong>. В <strong>Git</strong> одна версия манифестов, в <strong>кластере</strong> уже другая — расхождение никто не закоммитил.</li>
+<li class="fragment fade-in-then-semi-out">Утром в <strong>корпоративном чате</strong> (в компаниях часто <strong>Slack</strong>, <strong>Microsoft Teams</strong>, <strong>Mattermost</strong> — канал, куда пишут дежурным) нельзя дать привычный ответ: «вот <strong>merge request</strong>, вот <strong>diff</strong> — построчное сравнение „было / стало“ в Git или в интерфейсе ревью, вот как откатить». Изменения <strong>не в истории репозитория</strong> → их <strong>не воспроизвести</strong> и <strong>не аудировать</strong>. Сервис может быть <strong>жив</strong> — но сломан <strong>процесс</strong> учёта; это <strong>инцидент процесса</strong> (не обязательно даунтайм).</li>
+<li class="fragment fade-in-then-semi-out"><strong>Configuration drift:</strong> на стенде один <code class="k8s-code">replicas</code>, на проде другой; в Wiki третья версия — классика <strong>технического долга</strong> операционки.</li>
+<li class="fragment fade-in-then-semi-out">Новый разработчик спрашивает: «Где <strong>истина</strong>?» Если ответ «спроси Васю» — нет <strong>инженерной системы</strong>, есть <strong>героизм</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Связка:</strong> GitOps делает истину <strong>адресуемой</strong> — репозиторий, а не голова и не чат.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#0c2e24" class="k8s-slide">
+  <h2>Слайд 2. Git как источник истины (single source of truth)</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Желаемое состояние</strong> — не «как сейчас в голове у дежурного», а <strong>то, что записано в репозитории</strong>: манифесты Kubernetes (какие <strong>Deployment</strong>, сколько <strong>реплик</strong>, какие <strong>Service</strong>/лимиты и т.д.). После <code class="k8s-code">apply</code>/sync кластер <strong>должен</strong> к этому состоянию <strong>сойтись</strong>; Git — <strong>каноническая копия</strong> этого описания.</li>
+<li class="fragment fade-in-then-semi-out">Такие описания в Git кладут в разных <strong>форматах</strong>: <strong>«голый» YAML</strong> — обычные файлы <code class="k8s-code">.yaml</code>, как во вводной лекции по k8s, без шаблонов; <strong>Helm</strong> — <strong>чарт</strong> (шаблоны + <code class="k8s-code">values.yaml</code>, на выходе всё равно манифесты); <strong>Kustomize</strong> — <strong>база</strong> + <strong>оверлеи</strong> (патчи под dev/prod без копирования всего дерева файлов). Суть одна: <strong>источник правды</strong> — коммиты в Git.</li>
+<li class="fragment fade-in-then-semi-out">Изменение = <strong>MR/PR</strong>: ревью, обсуждение, <strong>blame</strong> по строкам — привычный процесс из разработки ПО.</li>
+<li class="fragment fade-in-then-semi-out">Откат релиза инфраструктуры: <code class="k8s-code">git revert</code> или откат тега — предсказуемее, чем «Вася помнит, что откатить».</li>
+<li class="fragment fade-in-then-semi-out"><strong>Оговорка:</strong> Git хранит <strong>желаемое</strong>; <strong>секреты</strong> в открытом виде туда не кладут — отдельные механизмы (см. слайд про секреты).</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#14532d" class="k8s-slide">
+  <h2>Слайд 3. Агент синхронизации (сердце GitOps)</h2>
+  <div class="k8s-slide-inner">
+<pre class="k8s-pre fragment"><code class="hljs language-plaintext">  Git (ветка / тег)     агент в кластере      Kubernetes API
+        |                      |                    |
+        +---- clone / watch ---+---- apply/sync ----+</code></pre>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Агент</strong> (Argo CD, Flux и др.) работает <strong>внутри</strong> кластера (или с доверенным доступом) и <strong>непрерывно или по событию</strong> подтягивает манифесты из Git.</li>
+<li class="fragment fade-in-then-semi-out">Нормальный поток: вы <strong>мержите</strong> в ветку → агент <strong>видит</strong> новый коммит → <strong>синхронизирует</strong> объекты Kubernetes.</li>
+<li class="fragment fade-in-then-semi-out">Культура: «я не <strong>накатываю</strong> с ноута» — я <strong>меняю Git</strong>, кластер <strong>следует</strong> заявленному состоянию.</li>
+<li class="fragment fade-in-then-semi-out">Технически агент использует <strong>тот же Kubernetes API</strong>, что и <code class="k8s-code">kubectl</code>; меняется <strong>кто</strong> инициирует и <strong>откуда</strong> берётся намерение.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="fade" data-background-color="#0d1117" class="k8s-slide">
+  <h2>Слайд 4. Дрифт: когда «в кластере» и «в Git» разошлись</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Ручной <code class="k8s-code">kubectl scale</code> или смена образа: факт кластера <strong>разошёлся</strong> с Git — классический <strong>дрифт</strong>.</li>
+<li class="fragment fade-in-then-semi-out">После sync GitOps либо <strong>подтянет</strong> кластер к Git (<strong>перезапишет</strong> ручные правки), либо только <strong>покажет рассинхрон</strong> (OutOfSync) и будет ждать человека — сценарий задают <strong>настройки агента</strong> и <strong>договорённости команды</strong> (например, на проде запретить авто-исправление без явного «ОК»).</li>
+<li class="fragment fade-in-then-semi-out">В <strong>Argo CD</strong> часто настраивают: <strong><code class="k8s-code">prune</code></strong> — при синхронизации <strong>удалять</strong> из кластера объекты, которых <strong>уже нет</strong> в Git (чтобы не копились «осиротевшие» ресурсы); <strong><code class="k8s-code">selfHeal</code></strong> — при дрифте <strong>сам</strong> снова применить манифесты из Git (откатить ручной <code class="k8s-code">kubectl scale</code> и т.п.). В <strong>Flux</strong> те же идеи — <strong>другими полями в YAML</strong>, смысл похожий.</li>
+<li class="fragment fade-in-then-semi-out">Hotfix ночью <strong>допустим</strong>, но завтра тот же фикс должен попасть <strong>в Git</strong>, иначе снова «истина только в проде».</li>
+<li class="fragment fade-in-then-semi-out"><strong>Метрика зрелости:</strong> за минуту ответить, <strong>совпадает</strong> ли прод с конкретным <strong>коммитом</strong> в репо манифестов.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="convex" data-background-color="#111821" class="k8s-slide">
+  <h2>Слайд 5. GitOps — это не то же самое, что «у нас есть CI»</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>CI</strong> отвечает за <strong>качество кода</strong> и <strong>сборку образа</strong>: тесты, линтеры, <code class="k8s-code">docker build</code>, push в <strong>registry</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>GitOps</strong> отвечает за <strong>согласование</strong> кластера с <strong>репозиторием манифестов</strong> — другой контур ответственности.</li>
+<li class="fragment fade-in-then-semi-out">Типичная связка: CI собрал образ <code class="k8s-code">myapp:&lt;git-sha&gt;</code>, затем либо <strong>обновила</strong> версию в Helm values и <strong>закоммитила</strong>, либо триггернула процесс → <strong>агент</strong> подтянул изменения.</li>
+<li class="fragment fade-in-then-semi-out">Если в конце только «CI делает <code class="k8s-code">kubectl apply</code>», это <strong>push-модель CD</strong>, не обязательно GitOps в строгом смысле (см. слайд про pull/push).</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="zoom" data-background-color="#0f1f17" class="k8s-slide">
+  <h2>Слайд 6. Pull-модель vs push-модель</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Push CD:</strong> пайплайн <strong>имеет</strong> kubeconfig/токен и <strong>толкает</strong> изменения в API. Проще начать; <strong>секреты CI</strong> — критичное звено; компрометация job — риск.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Pull GitOps:</strong> кластер <strong>сам забирает</strong> желаемое; CI <strong>не обязан</strong> держать ключи к прод-кластеру, если роли разделены.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Чеклист GitOps:</strong> (1) Git = истина; (2) агент в кластере; (3) видимость дрифта; (4) секреты не plaintext в публичном репо; (5) прод отделён от dev <strong>политикой</strong>, не только «договорились».</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#132a1e" class="k8s-slide">
+  <h2>Слайд 7. Зачем столько имён: контейнер ≠ оркестратор</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Контейнер</strong> (упрощённо): процесс в <strong>ограниченном</strong> окружении с образом ФС — удобно <strong>переносить</strong> между средами.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Оркестрация:</strong> планирование на ноды, <strong>перезапуск</strong> при падениях, <strong>service discovery</strong>, <strong>rolling</strong>-обновления, <strong>масштаб</strong> — то, что <strong>один Docker</strong> на одной машине <strong>не обещает</strong>.</li>
+<li class="fragment fade-in-then-semi-out">Типичная лестница: локально <strong>Podman/Docker</strong> → стенд <strong>Compose</strong> → прод малый <strong>k3s</strong> → организационный <strong>k8s</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Фраза для собеседования:</strong> «Понимаю, на каком <strong>уровне абстракции</strong> решается задача: упаковка, одна машина или кластер».</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#0c2e24" class="k8s-slide">
+  <h2>Слайд 8. Podman — контейнеры без обязательного демона</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Без обязательного dockerd</strong> (daemonless), удобный <strong>rootless</strong>; команды близки к Docker — образы те же (<strong>OCI</strong>).</li>
+<li class="fragment fade-in-then-semi-out">Для курса — <strong>локалка и сборка</strong>, как Docker; оркестратором кластера Podman реже (детали — слайд <strong>8a</strong>).</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="fade" data-background-color="#14532d" class="k8s-slide">
+  <h2>Слайд 8a. Podman: происхождение, архитектура, отличия от Docker</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Откуда взялся:</strong> развитие экосистемы <strong>Red Hat</strong> вокруг <strong>OCI</strong>-образов — проект <strong>libpod</strong> (ныне ядро Podman), рядом в том же мире <strong>Buildah</strong> (сборка образов), <strong>Skopeo</strong> (копирование образов между registry <strong>без</strong> демона). Идея — дать инструменты <strong>без обязательного центрального демона</strong> и с упором на <strong>rootless</strong> и политики Enterprise Linux; название <strong>Pod</strong>man отражает поддержку <strong>pod</strong>’ов в духе Kubernetes (несколько контейнеров с общими namespace).</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Архитектура (упрощённо):</strong> CLI <strong><code class="k8s-code">podman</code></strong> обращается к <strong>libpod</strong>; при запуске контейнера нет единого «вечного» <strong><code class="k8s-code">dockerd</code></strong> — процессы стартуют через <strong>conmon</strong> + <strong>runc</strong> или <strong>crun</strong> (OCI runtime). Образы и слои — <strong>совместимы</strong> с Docker Hub / обычным registry (формат <strong>OCI</strong>).</li>
+</ul>
+<pre class="k8s-pre fragment"><code class="hljs language-plaintext">  Docker (классика):  docker CLI → dockerd → containerd → runc
+  Podman:             podman CLI → libpod → conmon → runc / crun
+                      (нет одного обязательного демона на все run)</code></pre>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Отличия от Docker:</strong> нет <strong>обязательного</strong> демона; удобный <strong>rootless</strong>; на RHEL/Fedora часто <strong>по умолчанию</strong>; <code class="k8s-code">Dockerfile</code> и <strong><code class="k8s-code">podman build</code></strong> обычно <strong>совместимы</strong> с привычным workflow; сеть/тома могут отличаться в деталях — при переносе скриптов читают доки. <strong>Docker Compose</strong> ↔ <strong><code class="k8s-code">podman compose</code></strong> / <strong><code class="k8s-code">podman kube play</code></strong> — разные обёртки, смысл похожий.</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Где используется:</strong> рабочие станции и CI в <strong>Red Hat / OpenShift</strong>-стеке; среды, где важны <strong>rootless</strong> и <strong>аудит</strong> без root-демона; обучение и поставки, завязанные на <strong>RPM</strong>-стек. В «голом» Kubernetes на нодах обычно <strong>containerd/CRI-O</strong>, а не Podman как runtime — но <strong>образы</strong> те же.</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Перспективы:</strong> доля растёт в <strong>корпоративном</strong> Linux-мире и в <strong>Podman Desktop</strong>; <strong>Docker</strong> по-прежнему <strong>де-факто</strong> стандарт у разработчиков и в туториалах. Для карьеры полезно уметь <strong>оба</strong> CLI и понимать, что <strong>контейнер = OCI</strong>, а «докер» vs «подман» — в основном <strong>способ запуска и политика безопасности</strong>, а не другой формат образа.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="convex" data-background-color="#0d1117" class="k8s-slide">
+  <h2>Слайд 9. Docker — эталон «образ + run»</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><code class="k8s-code">docker build</code> → <strong>образ</strong>; <code class="k8s-code">docker run</code> → контейнер. Под капотом цепочка: <strong>dockerd → containerd → runc</strong> (образы и запуск делегируются <strong>containerd</strong>, не «один монолит»).</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">В <strong>Kubernetes</strong> на ноде <strong>kubelet</strong> говорит с runtime по <strong>CRI</strong>; чаще это <strong>containerd</strong> или <strong>CRI-O</strong>, а не <code class="k8s-code">docker</code> CLI. Имя <strong>containerd</strong> в логах — норма.</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">На пуле машин без оркестратора сами решаете, как пережить <strong>падение хоста</strong>; дальше — <strong>Compose</strong> на одной машине.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="zoom" data-background-color="#111821" class="k8s-slide">
+  <h2>Слайд 10. Docker Compose — оркестрация «одной команды»</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Один <code class="k8s-code">compose.yaml</code> — сервисы, сети, тома на <strong>одной</strong> машине; <code class="k8s-code">docker compose up</code> быстро поднимает стенд.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Не заменяет k8s</strong>, если нужны много нод, зоны HA и <strong>единые политики на весь кластер</strong>: в k8s это <strong>RBAC</strong> (кто что может в API) и <strong>Quota</strong> (потолки CPU/RAM/Pod на namespace) — через API <strong>принудительно</strong> для всех; в Compose — по сути один хост и лимиты вручную.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Compose на VPS — нормально</strong>; k8s на одной машине «для галочки» — часто лишняя боль.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#0f1f17" class="k8s-slide">
+  <h2>Слайд 11. HashiCorp Nomad — другой вид оркестратора</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Планировщик</strong> задач на агентов; <strong>Docker</strong> — один из <strong>драйверов</strong>, бывают и другие типы workload.</li>
+<li class="fragment fade-in-then-semi-out">Часто <strong>проще вход</strong> для части команд, чем полный zoo k8s; другая <strong>модель</strong> сети и сервисов.</li>
+<li class="fragment fade-in-then-semi-out">В резюме/собесе: «Nomad — <strong>альтернативный оркестратор</strong>, не путаю с Compose».</li>
+<li class="fragment fade-in-then-semi-out">Если стек <strong>Nomad-only</strong>, знания k8s <strong>концептуально переносимы</strong>: желаемое состояние, планирование, отказоустойчивость.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#132a1e" class="k8s-slide">
+  <h2>Слайд 11a. Nomad подробнее: где, зачем, когда</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Nomad</strong> — планировщик <strong>job</strong>’ов на пул машин (серверы + агенты); <strong>не</strong> «k8s под другим именем»; часто рядом <strong>Consul</strong> / <strong>Vault</strong>. Драйверы: не только <strong>Docker</strong>, но и <strong>exec</strong>, <strong>Java</strong> и др. — можно мешать контейнеры и <strong>legacy</strong> без полной упаковки в образ.</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Где:</strong> стек HashiCorp, edge, команды, которым <strong>тяжёлый вход в k8s</strong>; доля на рынке меньше, чем у k8s, но имя в резюме встречается. <strong>Когда k8s:</strong> нужен стандарт индустрии, Helm, managed в облаке.</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Лицензии</strong> HashiCorp (в т.ч. <strong>BSL</strong>) — сверять с актуальными условиями перед продом.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="fade" data-background-color="#0c2e24" class="k8s-slide">
+  <h2>Слайд 12. k3s — Kubernetes облегчённый</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Один бинарь</strong>, вшитые компоненты, меньше RAM/CPU — <strong>влезает</strong> на маленькую ВМ.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Совместимость</strong> с Kubernetes API: те же <strong>Deployment/Service/Ingress</strong> — навыки <strong>переносятся</strong> на managed k8s.</li>
+<li class="fragment fade-in-then-semi-out">Типичные кейсы: <strong>внутренние</strong> панели, <strong>боты</strong>, <strong>небольшие</strong> API, <strong>edge</strong>, <strong>homelab</strong>.</li>
+<li class="fragment fade-in-then-semi-out">Сравнение с «полным» k8s — не «хуже», а <strong>другой компромисс</strong> цены и операционки.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="convex" data-background-color="#14532d" class="k8s-slide">
+  <h2>Слайд 13. «Полный» Kubernetes (k8s)</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Ожидается <strong>масштаб</strong>: выделенный <strong>control plane</strong>, <strong>worker</strong>-пулы, <strong>CNI/CSI</strong>, <strong>RBAC</strong>, <strong>admission</strong>, интеграции с <strong>облаком</strong> (LB, диски, IAM).</li>
+<li class="fragment fade-in-then-semi-out">В проде «полный» k8s обычно приходят <strong>тремя</strong> путями: <strong>managed</strong>-сервис в облаке, <strong>свой</strong> кластер на <strong>арендованных ВМ</strong> (IaaS), <strong>bare metal</strong> (своё железо / colo) — <strong>детальный разбор</strong> на следующем слайде.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Фраза:</strong> «k8s — это <strong>платформа</strong>; приложение всё равно нужно проектировать».</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="zoom" data-background-color="#0d1117" class="k8s-slide">
+  <h2>Слайд 13a. Managed Kubernetes и «bare metal»: где граница ответственности</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Managed</strong> (EKS, GKE, AKS, Yandex Managed Kubernetes и др.): провайдер ведёт <strong>control plane</strong> (etcd, апгрейды, HA), вы подключаете <strong>ноды</strong>; облако даёт <strong>LB, диски, IAM</strong> — детали и цены разные, идея одна.</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>На вас</strong> почти всегда: <strong>манифесты</strong>, <strong>образы</strong>, <strong>Ingress</strong>, <strong>лимиты</strong>, <strong>данные и бэкапы</strong> — провайдер не «пишет» ваш сервис и не отвечает за безопасность <strong>вашего</strong> YAML.</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Bare metal</strong> — k8s на <strong>своём железе</strong>/colo: полный контроль и часто регуляторика; <strong>всё сами</strong>: сеть, хранилище, HA мастеров, etcd, патчи. <strong>Свой k8s на ВМ</strong> (kubeadm, kubespray…) — без строки managed CP, но с ночными рисками на мастерах.</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Грубо:</strong> нет платформенной команды → <strong>managed</strong>; жёсткая привязка к своей площадке → <strong>bare metal</strong> / private cloud; учёба → <strong>kind/k3d</strong>.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#111821" class="k8s-slide">
+  <h2>Слайд 14. Сравнение: одна машина → кластер</h2>
+  <div class="k8s-slide-inner">
+<pre class="k8s-pre fragment"><code class="hljs language-plaintext">  Compose              Nomad / k3s / k8s
+     |                        |
+  одна ВМ              несколько нод / HA
+  docker compose       kubectl / API
+  «поднял стенд»       «задекларировал кластеру»</code></pre>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Слева — <strong>быстро</strong> и <strong>дёшево</strong> в операционке; справа — <strong>цена входа</strong> выше, <strong>потолок</strong> по масштабу и стандартизации выше.</li>
+<li class="fragment fade-in-then-semi-out"><strong>YAML</strong> в обоих мирах, но <strong>семантика</strong> разная: Compose — <strong>docker-сервисы</strong>; Kubernetes — <strong>объекты API</strong> с контроллерами.</li>
+<li class="fragment fade-in-then-semi-out">Переход <strong>не обязан быть линейным по времени</strong>: можно долго жить на Compose и <strong>один день</strong> перейти на k3s при росте требований.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#0f1f17" class="k8s-slide">
+  <h2>Слайд 15. Таблица: чем дышит каждый инструмент</h2>
+  <div class="k8s-slide-inner">
+<table class="k8s-table fragment">
+<tr>
+<th>Инструмент</th>
+<th>Типичная цель</th>
+<th>Масштаб</th>
+<th>«Прод» часто</th>
+</tr>
+<tr>
+<td>Podman</td>
+<td>локально, CI, rootless</td>
+<td>1 хост</td>
+<td>реже как оркестратор</td>
+</tr>
+<tr>
+<td>Docker</td>
+<td>образы, run</td>
+<td>1 хост</td>
+<td>да (с обвязкой)</td>
+</tr>
+<tr>
+<td>Compose</td>
+<td>много контейнеров</td>
+<td>1 хост (обычно)</td>
+<td>стенды, малые сайты</td>
+</tr>
+<tr>
+<td>Nomad</td>
+<td>jobs, не только контейнеры</td>
+<td>пул машин</td>
+<td>да, нишево</td>
+</tr>
+<tr>
+<td>k3s</td>
+<td>совместимый k8s легче</td>
+<td>от 1 ноды</td>
+<td>да, VPS/edge</td>
+</tr>
+<tr>
+<td>k8s</td>
+<td>стандарт индустрии</td>
+<td>много нод</td>
+<td>да, managed/свой</td>
+</tr>
+</table>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Podman/Docker</strong> — чаще <strong>сборка и локалка</strong>; <strong>Compose</strong> — <strong>композиция</strong> на одной машине; <strong>Nomad/k3s/k8s</strong> — <strong>оркестрация</strong> на пуле/кластере.</li>
+<li class="fragment fade-in-then-semi-out">Для <strong>резюме:</strong> «Docker + Compose» и отдельно «k3s/kind, деплой через <code class="k8s-code">kubectl</code>/Helm» — разный <strong>вес</strong> на рынке.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="fade" data-background-color="#132a1e" class="k8s-slide">
+  <h2>Слайд 16. Что выбрать для пет-проекта</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Веб + БД</strong> на одной VPS: <strong>Compose</strong> — минимум трения; <strong>k3s</strong> — если нужно <strong>потрогать</strong> Ingress, Deployment, HPA с <strong>боевым</strong> API.</li>
+<li class="fragment fade-in-then-semi-out">Для строки «<strong>Kubernetes</strong>»: лучше <strong>k3s/k3d/kind</strong> + пара сервисов + <strong>Ingress</strong>, чем «поставил minikube и забыл».</li>
+<li class="fragment fade-in-then-semi-out"><strong>Полный</strong> k8s на одной машине без задачи — часто <strong>учебная боль</strong> без выхлопа; лучше <strong>маленький</strong> реальный сценарий на k3s.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Для размышления:</strong> ваш пет-проект — где он на оси «одна машина / кластер» и что мешает сдвинуться вправо?</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="convex" data-background-color="#0c2e24" class="k8s-slide">
+  <h2>Слайд 17. Почему Kubernetes «дружит» с GitOps</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">В Kubernetes вы не «крутите ручки в панели навсегда», а говорите: «хочу <strong>три</strong> таких пода, такой сервис, такой лимит памяти». Это описание — <strong>обычный текст</strong> (YAML). Текст <strong>удобно хранить в Git</strong>: как лабораторная или код — <strong>коммит</strong>, <strong>ветка</strong>, <strong>откат</strong>, «кто последний менял строку».</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Зачем Git, если есть API кластера?</strong> API — для машин и для <code class="k8s-code">kubectl</code>; <strong>Git</strong> — для <strong>людей</strong>: привычный <strong>merge request</strong>, коллега <strong>прочитал</strong> изменения, <strong>обсудили</strong>, потом смержили. То же самое дисциплина, что с <strong>исходниками приложения</strong>, только предмет — <strong>как должен выглядеть кластер</strong>.</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>GitOps</strong> в этой картинке — <strong>не новая магия</strong>, а связка: «желаемое состояние <strong>лежит</strong> в репозитории» + «<strong>агент</strong> в кластере подтягивает его и приводит кластер в соответствие». Kubernetes уже <strong>умеет</strong> применять YAML; GitOps добавляет <strong>привычный</strong> рабочий процесс вокруг этого YAML.</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Плохой компромисс (для понимания):</strong> выкладывать конфиги <strong>только</strong> в отдельное хранилище Helm-чартов, <strong>минуя</strong> привычные ветки и <strong>ревью в Git</strong> — лучше, чем хаос в чате, но слабее, чем <strong>полноценный</strong> процесс с merge request и историей, как у кода.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="zoom" data-background-color="#14532d" class="k8s-slide">
+  <h2>Слайд 18. Argo CD — роли компонентов (обзор)</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Argo CD</strong> — программа <strong>внутри кластера</strong>, которая смотрит на <strong>Git</strong> и говорит API Kubernetes: «сделай как в репозитории». Ниже — <strong>три привычных куска</strong> (имена можно не зубрить, важно <strong>смысл</strong>).</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Application</strong> (в терминах Argo) — одна <strong>запись-настройка</strong>: «возьми <strong>этот</strong> репозиторий, <strong>эту</strong> папку или ветку, <strong>эту</strong> ревизию (коммит/тег) и применяй в <strong>этот</strong> кластер / <strong>этот</strong> namespace». То есть <strong>одна карточка</strong> = один связанный деплой.</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Repo Server</strong> — как <strong>кладовщик</strong>: <strong>скачивает</strong> Git (и держит <strong>кэш</strong>), чтобы всегда можно было сравнить: «что <strong>в репо</strong>» vs «что <strong>уже в кластере</strong>».</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Application Controller</strong> — «<strong>мозг</strong>»: смотрит на разницу (<strong>дрифт</strong>), по правилам решает, <strong>подтянуть</strong> ли кластер к Git (<strong>sync</strong>) или только <strong>показать</strong> проблему. В веб-интерфейсе это видно как <strong>«не совпадает»</strong> (OutOfSync), <strong>diff</strong> и <strong>история</strong> — удобно не только «админам кластера», но и разработчикам и менеджерам: <strong>видно</strong>, что выкатилось.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#0d1117" class="k8s-slide">
+  <h2>Слайд 19. Flux — семейство контроллеров</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Flux</strong> — тоже GitOps-агент, но устроен <strong>набором маленьких контроллеров</strong> в Kubernetes, каждый делает <strong>свой</strong> шаг. Опять же: имена подмножеств можно не заучивать, важно <strong>цепочка</strong>.</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Сначала контроллеры <strong>Source</strong> (в манифестах это типа <strong>GitRepository</strong>, <strong>HelmRepository</strong>…) — <strong>подтянуть</strong> код или список Helm-чартов <strong>извне</strong>, «как <code class="k8s-code">git pull</code> / указатель на репозиторий», но <strong>автоматически</strong> и по расписанию или событию.</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Потом контроллеры <strong>Kustomize</strong> и <strong>Helm</strong> — <strong>собрать</strong> из этого готовые YAML (накладывают <strong>Kustomize</strong>-патчи или <strong>рендерят</strong> Helm-шаблоны) и <strong>положить</strong> в кластер так, как задумано в Flux.</li>
+</ul>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Идея Flux в одном предложении:</strong> настройки GitOps — <strong>сами</strong> обычные объекты Kubernetes (свои <strong>CRD</strong>); весь пайплайн можно описать <strong>одним набором YAML</strong> «в стиле кластера». <strong>Argo CD</strong> vs <strong>Flux</strong> — часто вопрос <strong>привычки команды</strong> и лицензий/поддержки, а не «кто правильнее»; на экзамене достаточно <strong>понять роль агента</strong> и отличие <strong>pull</strong>-модели от «CI жмёт <code class="k8s-code">kubectl</code>».</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#111821" class="k8s-slide">
+  <h2>Слайд 20. Namespace и несколько сред (dev/stage/prod)</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">В <strong>одном</strong> кластере: namespace <code class="k8s-code">dev</code>, <code class="k8s-code">stage</code>, <code class="k8s-code">prod</code> + <strong>квоты</strong> и <strong>RBAC</strong>.</li>
+<li class="fragment fade-in-then-semi-out">В <strong>разных</strong> кластерах: выше <strong>изоляция</strong> и цена <strong>операционки</strong>.</li>
+<li class="fragment fade-in-then-semi-out">GitOps: отдельные <strong>Application</strong> на ветку/путь или <strong>отдельные</strong> репозитории; важно <strong>запретить</strong> случайный cross-sync.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Практика:</strong> прод-манифесты в <strong>отдельной</strong> ветке или репо с <strong>жёстким</strong> ревью.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="fade" data-background-color="#0f1f17" class="k8s-slide">
+  <h2>Слайд 21. Паттерн: образ из CI, версия в Git</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">CI публикует образ <code class="k8s-code">myapp:&lt;git-sha&gt;</code> в registry.</li>
+<li class="fragment fade-in-then-semi-out">Версия в манифестах обновляется <strong>коммитом</strong> (вручную, скриптом CI, ботом вроде Renovate).</li>
+<li class="fragment fade-in-then-semi-out">При <strong>sync</strong> Kubernetes тянет новый образ, если <code class="k8s-code">imagePullPolicy</code> и кэш ноды позволяют (типичный вопрос: «почему не обновилось»).</li>
+<li class="fragment fade-in-then-semi-out"><strong>Правило:</strong> прод <strong>всегда</strong> на <strong>конкретном</strong> теге, не на «плавающем» <code class="k8s-code">latest</code>.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="convex" data-background-color="#132a1e" class="k8s-slide">
+  <h2>Слайд 22. CI: build, test, artifact</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Линт и тесты</strong> до сборки образа экономят <strong>время</strong> и <strong>стоимость</strong> registry.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Артефакт</strong> — <strong>immutable</strong> образ; тег = <strong>ссылка</strong> на конкретную сборку.</li>
+<li class="fragment fade-in-then-semi-out">Популярные registry: <strong>GHCR</strong>, <strong>GitLab</strong>, <strong>Docker Hub</strong>, облачные <strong>ECR/GCR/YC</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>SBOM / сканирование</strong> уязвимостей — следующий слой зрелости (одна фраза в резюме уже плюс).</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="zoom" data-background-color="#0c2e24" class="k8s-slide">
+  <h2>Слайд 23. CD без GitOps: push из пайплайна</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Job получает <strong>kubeconfig</strong> или <strong>токен</strong> и выполняет <code class="k8s-code">kubectl apply</code> / <code class="k8s-code">helm upgrade</code>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Плюс:</strong> быстрый старт, меньше компонентов в кластере.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Минус:</strong> <strong>каждый</strong> раннер/репо с ключом — <strong>поверхность атаки</strong>; сложнее ответить «<strong>кто</strong> менял прод в 3:12».</li>
+<li class="fragment fade-in-then-semi-out"><strong>Гибрид:</strong> CI обновляет <strong>Git</strong>, дальше GitOps — часто <strong>золотая середина</strong>.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#14532d" class="k8s-slide">
+  <h2>Слайд 24. CD с GitOps: promotion</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Dev-ветка смержена → агент обновил <strong>dev-кластер</strong> автоматически.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Prod</strong> — отдельный <strong>MR</strong> или <strong>release tag</strong> с <strong>апрувом</strong> владельца сервиса.</li>
+<li class="fragment fade-in-then-semi-out">Снижается риск класса ошибок «случайно apply с <strong>prod</strong> credentials на <strong>dev</strong> кластер» (другие ошибки всё ещё возможны).</li>
+<li class="fragment fade-in-then-semi-out"><strong>Культура:</strong> релиз <strong>виден</strong> в истории Git — <strong>артефакт</strong> для аудита.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#0d1117" class="k8s-slide">
+  <h2>Слайд 25. Секреты: не класть пароли в открытый Git</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Sealed Secrets:</strong> в Git — <strong>зашифрованный</strong> манифест, расшифровка <strong>только</strong> в целевом кластере.</li>
+<li class="fragment fade-in-then-semi-out"><strong>External Secrets Operator:</strong> в Git <strong>ссылки</strong>, значения приезжают из <strong>Vault</strong>, <strong>AWS Secrets Manager</strong> и т.д.</li>
+<li class="fragment fade-in-then-semi-out"><strong>SOPS</strong> + age/PGP — распространённый вариант в командах.</li>
+<li class="fragment fade-in-then-semi-out">На курсовом: <strong>не коммитить</strong> реальные пароли даже в приватный репо «на время».</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="fade" data-background-color="#111821" class="k8s-slide">
+  <h2>Слайд 26. Антипаттерн: один человек с kubeconfig</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Если только <strong>один человек</strong> знает, как откатить прод — <strong>SPOF по людям</strong>.</li>
+<li class="fragment fade-in-then-semi-out">GitOps: <strong>права</strong> на merge в прод-репо = <strong>контролируемый</strong> круг лиц.</li>
+<li class="fragment fade-in-then-semi-out"><strong>RBAC</strong> в кластере ограничивает, кто может <strong>что</strong> менять через API даже при утечке токена с узким scope.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Цель:</strong> дежурный может <strong>следовать runbook</strong>, а не «звонить единственному знающему».</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="convex" data-background-color="#0f1f17" class="k8s-slide">
+  <h2>Слайд 27. k3s на одной VPS: зачем</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Одна VPS</strong> — дёшево; <strong>реальный</strong> цикл: образ → Deployment → Service → Ingress.</li>
+<li class="fragment fade-in-then-semi-out">Подходит <strong>внутренним</strong> сервисам, лендингам, ботам, где <strong>SLA</strong> не контрактный 99.99%.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Рост:</strong> упёрлись в машину — <strong>больше железа</strong>, <strong>managed</strong> k8s или вынести часть в serverless.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Честность:</strong> одна VPS с k3s <strong>не заменяет</strong> HA-кластер в банке.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="zoom" data-background-color="#132a1e" class="k8s-slide">
+  <h2>Слайд 28. Установка k3s (идея, не копипаста на экзамене)</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Обычно — <strong>официальный</strong> скрипт или пакет дистрибутива; в методичке курса могут быть <strong>свои</strong> пины версий.</li>
+<li class="fragment fade-in-then-semi-out"><strong>kubeconfig</strong> с сервера копируют себе <strong>безопасно</strong> (scp, ssh), настраивают <strong>контекст</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Ingress-контроллер</strong> — отдельное решение или встроенное; сверяться с <strong>документацией</strong> вашей сборки k3s.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Безопасность:</strong> API <strong>не</strong> вывешивать в интернет без <strong>TLS</strong> и <strong>ACL</strong>/VPN.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#0c2e24" class="k8s-slide">
+  <h2>Слайд 29. kubeconfig и доступ</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Файл <code class="k8s-code">~/.kube/config</code>: секции <strong>clusters</strong>, <strong>users</strong>, <strong>contexts</strong>; текущий контекст — поле <code class="k8s-code">current-context</code>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Контекст</strong> = какой кластер + какими учётными данными + (иногда) namespace по умолчанию.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Ротация</strong> сертификатов/токенов — операционная рутина; при «внезапно отвалилось» смотрят <strong>срок</strong> и <strong>правильный</strong> контекст.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Связка с GitOps:</strong> для рутины деплоя kubeconfig <strong>менее критичен</strong>, если всё через Git; для <strong>дебага</strong> — ограниченный доступ всё равно нужен.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#14532d" class="k8s-slide">
+  <h2>Слайд 30. Цепочка деплоя на VPS с GitOps</h2>
+  <div class="k8s-slide-inner">
+<pre class="k8s-pre fragment"><code class="hljs language-plaintext">  Git (main)
+      |
+      v
+  Argo CD / Flux  (Pod в k3s на той же VPS или отдельно)
+      |
+      v
+  Kubernetes API  (apply / sync)
+      |
+      v
+  Deployment / Service / Ingress</code></pre>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Агент <strong>имеет</strong> service account с правами <strong>в этом</strong> кластере — ключевая <strong>доверенная</strong> связка.</li>
+<li class="fragment fade-in-then-semi-out">Разработчик <strong>не пушит</strong> напрямую в API; он <strong>пушит</strong> в Git.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Аудит:</strong> «какой коммит сейчас в проде» — вопрос к <strong>Git</strong> и к <strong>Argo/Flux</strong>.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="fade" data-background-color="#0d1117" class="k8s-slide">
+  <h2>Слайд 31. Если GitOps «ещё рано»: ручной apply с ноутбука</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><code class="k8s-code">kubectl apply -f</code> после <code class="k8s-code">git pull</code> — рабочий способ для <strong>учебы</strong> и микрокоманд.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Правило гигиены:</strong> применили руками — <strong>сразу</strong> закоммитьте тот же YAML в Git, иначе <strong>дрифт</strong>.</li>
+<li class="fragment fade-in-then-semi-out">GitOps добавляется, когда <strong>болит</strong> масштаб команды или <strong>аудит</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Переходный</strong> этап: CI кладёт артефакты, человек <strong>мержит</strong> манифесты — лучше, чем «знает только один человек».</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="convex" data-background-color="#111821" class="k8s-slide">
+  <h2>Слайд 32. Ограничения одной VPS</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>SPOF:</strong> упал хостинг — сервис недоступен; <strong>резервирование</strong> — второй сервер или облако.</li>
+<li class="fragment fade-in-then-semi-out"><strong>HPA</strong> не создаст CPU/RAM на ноде: если <strong>нет места</strong>, поды в <strong>Pending</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Вертикаль</strong> VPS упирается в потолок; <strong>горизонталь</strong> на <strong>одной</strong> машине ограничена.</li>
+<li class="fragment fade-in-then-semi-out"><strong>План роста:</strong> БД в <strong>managed</strong>, статика в <strong>CDN</strong>, кластер в <strong>managed k8s</strong>.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="zoom" data-background-color="#0f1f17" class="k8s-slide">
+  <h2>Слайд 33. Бэкапы (напоминание)</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>PVC</strong> с данными приложения требуют <strong>политики</strong> снапшотов или <strong>dump</strong> БД.</li>
+<li class="fragment fade-in-then-semi-out">Для k3s — <strong>официальные</strong> рекомендации по состоянию control plane; не копировать <code class="k8s-code">/var</code> «на глаз» без гайда.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Восстановление</strong> прогнать <strong>учебным</strong> прогоном хотя бы раз — иначе это не бэкап, а <strong>надежда</strong>.</li>
+<li class="fragment fade-in-then-semi-out">Кратко: правило <strong>3-2-1</strong> (три копии, два носителя, одна off-site).</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#132a1e" class="k8s-slide">
+  <h2>Слайд 34. Ingress на маленьком k3s</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Один Ingress</strong> с несколькими <strong>rules</strong> экономит <strong>порты</strong> и сертификаты.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Let&#x27;s Encrypt</strong> через <strong>cert-manager</strong> — типичный путь; нужны <strong>корректный</strong> DNS и <strong>80</strong> для HTTP-01 (или DNS-01).</li>
+<li class="fragment fade-in-then-semi-out">«502» — цепочка: <strong>Service</strong> endpoints → <strong>Ingress</strong> backend → <strong>логи</strong> контроллера.</li>
+<li class="fragment fade-in-then-semi-out">Для учебы: начать с <strong>HTTP</strong>, затем <strong>TLS</strong>.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#0c2e24" class="k8s-slide">
+  <h2>Слайд 35. «Полный» k8s в проде: картина</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Несколько</strong> узлов control plane или <strong>managed</strong> control plane — <strong>отказоустойчивость</strong> «пульта».</li>
+<li class="fragment fade-in-then-semi-out"><strong>Worker pools:</strong> отдельные пулы под <strong>GPU</strong>, memory-optimized, <strong>spot</strong> и т.д.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Продуктовые</strong> команды чаще отдают <strong>Helm chart</strong> или <strong>Kustomize overlay</strong>; платформа держит <strong>политики</strong> и <strong>кластеры</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Связь с VPS:</strong> там вы <strong>все роли сразу</strong>; здесь — <strong>разделение труда</strong>.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="fade" data-background-color="#14532d" class="k8s-slide">
+  <h2>Слайд 36. Managed Kubernetes (операционный взгляд)</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Провайдер держит <strong>control plane</strong>; в <strong>биллинге</strong> обычно ноды, диски, LB, трафик, registry — сверяйтесь с <strong>калькулятором</strong> облака.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Плюс managed:</strong> LB, диски и <strong>IAM</strong> для Pod’ов «из коробки»; на bare metal то же чаще <strong>собирать самим</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Ваш слой</strong> (манифесты, лимиты, Ingress, GitOps, образы) — см. <strong>13a</strong>. <strong>Lock-in:</strong> API k8s переносим, облачные LB/аддоны — привязка; часто managed <strong>дешевле по людям</strong>, чем круглосуточная платформа на железе.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="convex" data-background-color="#0d1117" class="k8s-slide">
+  <h2>Слайд 37. LoadBalancer и Ingress в облаке</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Service LoadBalancer</strong> просит облако выдать <strong>внешний</strong> адрес (если <strong>cloud controller</strong> настроен).</li>
+<li class="fragment fade-in-then-semi-out"><strong>Ingress</strong> + контроллер принимает <strong>HTTP(S)</strong> и режет по <strong>host/path</strong> на <strong>внутренние</strong> сервисы.</li>
+<li class="fragment fade-in-then-semi-out">Типичная цепочка: <strong>DNS</strong> → <strong>LB</strong> → <strong>Ingress controller</strong> → <strong>Service</strong> → <strong>Pod</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Путаница:</strong> Ingress «сам по себе» не откроет порт без <strong>контроллера</strong> и <strong>правил</strong>.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="zoom" data-background-color="#111821" class="k8s-slide">
+  <h2>Слайд 38. Чем прод k3s на VPS отличается от облачного k8s</h2>
+  <div class="k8s-slide-inner">
+<table class="k8s-table fragment">
+<tr>
+<th>Аспект</th>
+<th>k3s на VPS</th>
+<th>Managed / свой большой кластер</th>
+</tr>
+<tr>
+<td>Отказоустойчивость</td>
+<td>одна машина</td>
+<td>HA, зоны</td>
+</tr>
+<tr>
+<td>Операционка</td>
+<td>вы сами</td>
+<td>частично провайдер</td>
+</tr>
+<tr>
+<td>Стоимость входа</td>
+<td>низкая</td>
+<td>выше / сложнее биллинг</td>
+</tr>
+<tr>
+<td>Обучение k8s</td>
+<td>отлично</td>
+<td>отлично</td>
+</tr>
+</table>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Один</strong> сервер прощает ошибки <strong>дешевле</strong>, но <strong>цена</strong> простоя растёт с выручкой.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Облако</strong> добавляет <strong>счёт</strong> за трафик, LB, диски — зато <strong>предсказуемые</strong> паттерны масштаба.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Оба</strong> пути <strong>валидны</strong> в разных фазах жизни продукта.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#0f1f17" class="k8s-slide">
+  <h2>Слайд 39. Итог и мини-задание</h2>
+  <div class="k8s-slide-inner">
+<p class="fragment"><strong class="k8s-lead">Сводка тем:</strong></p>
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">GitOps: истина в Git, агент, дрифт, pull vs push.</li>
+<li class="fragment fade-in-then-semi-out">Лестница <strong>Podman → Docker → Compose → Nomad → k3s → k8s</strong>.</li>
+<li class="fragment fade-in-then-semi-out">Связка <strong>GitOps + Kubernetes</strong>; <strong>CI</strong> vs <strong>CD</strong>; promotion.</li>
+<li class="fragment fade-in-then-semi-out">Прод: <strong>k3s на одной VPS</strong> и <strong>облачный / «большой» k8s</strong>.</li>
+</ul>
+<p class="fragment"><strong class="k8s-lead">Мини-задание (на выбор):</strong></p>
+<ol class="k8s-ol">
+<li class="fragment">Таблица: <strong>три отличия</strong> push CD от GitOps pull — <strong>своими примерами</strong>, не из Википедии.</li>
+<li class="fragment">Один абзац: когда <strong>Compose на VPS достаточно</strong>, а когда <strong>осмыслен k3s</strong> — с <strong>одним</strong> предложением про риски.</li>
+<li class="fragment">Схема стрелками: от <strong>merge в main</strong> до <strong>новых подов</strong> — <strong>два</strong> варианта: (а) CI делает <code class="k8s-code">kubectl</code>, (б) GitOps-агент.</li>
+</ol>
+  </div>
+</section>
+
+</div></div>
+<script src="../../../SEMESTR-1/15-16/js/reveal.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/notes.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/markdown.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'dark',
+    securityLevel: 'loose',
+    fontFamily: 'trebuchet ms, verdana, sans-serif'
+  });
+
+  Reveal.initialize({
+    hash: true,
+    transition: 'slide',
+    transitionSpeed: 'default',
+    backgroundTransition: 'fade',
+    controls: true,
+    progress: true,
+    slideNumber: 'c/t',
+    center: true,
+    margin: 0.04,
+    fragments: true,
+    plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+  });
+
+  async function runMermaidOnSlide(slide) {
+    if (!slide) return;
+    var nodes = slide.querySelectorAll('.mermaid:not([data-processed])');
+    for (var i = 0; i < nodes.length; i++) {
+      try {
+        await mermaid.run({ nodes: [nodes[i]] });
+        nodes[i].setAttribute('data-processed', 'true');
+      } catch (e) { console.warn(e); }
+    }
+  }
+
+  Reveal.on('ready', function() {
+    runMermaidOnSlide(Reveal.getCurrentSlide());
+  });
+  Reveal.on('slidechanged', function(e) {
+    runMermaidOnSlide(e.currentSlide);
+  });
+</script>
+</body>
+</html>

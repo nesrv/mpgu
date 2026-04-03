@@ -118,7 +118,7 @@
 <li>GitHub Actions (CI/CD);</li>
 <li>Docker Hub (или GHCR) как registry;</li>
 <li>VPS (Ubuntu) с SSH-доступом;</li>
-<li><strong>[k3s](<a href="https://k3s.io/">https://k3s.io/</a>)</strong> — один узел, достаточно для учебы;</li>
+<li><strong><a href="https://k3s.io/">k3s</a></strong> — один узел, достаточно для учебы;</li>
 <li>приложение FastAPI в контейнере; деплой через манифесты <code>k8s/</code>.</li>
 </ul>
 <p><strong>CI:</strong> сборка и push образа.</p>
@@ -206,7 +206,7 @@ ls -la</code></div>
 <p>Должны быть <code>deployment.yaml</code> и <code>service.yaml</code>.</p>
 <ul>
 <li><strong>Публичный</strong> репозиторий — достаточно HTTPS, как выше.</li>
-<li><strong>Приватный</strong> — удобнее SSH: <code>git clone git@github.com:ВАШ_АККАУНТ/ИМЯ_РЕПО.git</code> (ключ на VPS добавлен в GitHub), либо HTTPS с [Personal Access Token](<a href="https://github.com/settings/tokens">https://github.com/settings/tokens</a>) вместо пароля.</li>
+<li><strong>Приватный</strong> — удобнее SSH: <code>git clone git@github.com:ВАШ_АККАУНТ/ИМЯ_РЕПО.git</code> (ключ на VPS добавлен в GitHub), либо HTTPS с <a href="https://github.com/settings/tokens">Personal Access Token</a> вместо пароля.</li>
 </ul>
 <p>Проверьте в <code>deployment.yaml</code> поле <code><strong>image:</code></strong> — образ в Docker Hub, например <code>DOCKERHUB_USERNAME/lab1-api:latest</code> (<code>nano deployment.yaml</code> при необходимости).</p>
 <p>Для доступа из браузера в <code>service.yaml</code> нужны тип <strong>NodePort</strong> и <code><strong>nodePort</code></strong> (например <code>30080</code>). Если в репозитории <code>ClusterIP</code>, замените <code>spec</code> сервиса на пример из варианта B.</p>

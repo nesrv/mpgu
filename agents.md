@@ -1,9 +1,58 @@
+
+на основе laba_ci_cd_gitops.md
+сделай веб-методичку 
+
+референс
+
+laba_k8s-1.html
+
+используй 
+_build_k8s_docker_desktop_html.py
+
+сделай креативную html-презентацию со всеми слайдами 
+
+референс lect_k8s.html
+
+используй build_lect_k8s_reveal.py
+
+Пересборка GitOps-лекции (MD → HTML, тема `--gitops`): каталог `32-Kuber/lect-2`, команда  
+`python build_lect_k8s_reveal.py lect_gitops_orchestration_k8s.md lect_gitops_orchestration_k8s.html --gitops`
+
+создай 40 слайдов лекции в формате md с интересным объяснением на пальцах по тематике:
+
+1) введение в GitOps
+
+2) Эволюция оркестрации и сравнение:
+
+Podman
+Docker 
+Docker Compose
+Nomad
+k3s
+k8s
+
+3) GitOps и Kubernetes
+
+4) CI/CD и Kubernetes
+
+5) Деплой и продакт для k3s (на примере 1 vps)
+6) Деплой и продакт для k8s
+
+
+
 слайд 22 и 27 тоже самое
 
 
 
 Веб-методичка CI/CD: `32-Kuber/laba/laba_ci_cd_vps.html` (из `laba_ci_cd_vps.md`).
 Пересборка: `python _build_k8s_docker_desktop_html.py laba_ci_cd_vps.md` (каталог `laba/`), стиль как `laba_k8s_docker_desktop.html`.
+
+Веб-методичка CI/CD + GitOps: `32-Kuber/laba-2/laba_ci_cd_gitops.html` (из `laba_ci_cd_gitops.md`, тот же шаблон, что `laba_k8s-1.html`).
+Пересборка из каталога `32-Kuber/laba/`: `python _build_k8s_docker_desktop_html.py ../laba-2/laba_ci_cd_gitops.md ../laba-2/laba_ci_cd_gitops.html`.
+
+Лекция 2 (только MD): `32-Kuber/lect/lect_k8s_net_gitops.md` — сеть, Ingress, HPA, PersistentVolume, GitOps/CI/CD (50 слайдов 0–49); HTML не собирается из этого файла по умолчанию.
+
+Лекция: `32-Kuber/lect-2/lect_gitops_orchestration_k8s.md` — GitOps, эволюция оркестрации (Podman…k8s), GitOps/CI с Kubernetes, прод k3s на VPS и обзор «полного» k8s (45 слайдов: 0, 0a — глоссарий, 0b — DevOps и GitOps, 1–8, 8a, 9–11, 11a, 12–13, 13a, 14–38, 39). HTML: `lect_gitops_orchestration_k8s.html` (Reveal, см. команду пересборки выше). Текст лектора (простой, ориентир 3–4 мин на слайд): `lect_gitops_orchestration_k8s_speaker.md`.
 
 на основе lect_k8s.md
 сделай креативную html-презентацию со всеми слайдами 
