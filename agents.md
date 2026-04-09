@@ -1,10 +1,7 @@
 ✅ Веб-методичка `laba_ci_cd_gitops-2` — `40 PG-backup/laba_ci_cd_gitops-2.html` (см. блок ниже).
 
-сделай креативную html-презентацию со всеми слайдами 
-
-референс lect_k8s.html
-
-используй build_lect_k8s_reveal.py
+✅ Презентация PostgreSQL (Reveal): `40 PG-backup/lect/lect_pg_intro_slides.html` из `lect_pg_intro_slides.md` (тема **theme-pg** в `build_lect_k8s_reveal.py`, стиль как `lect_k8s.html`). Пересборка из `32-Kuber/lect-2`:  
+`python build_lect_k8s_reveal.py "../../40 PG-backup/lect/lect_pg_intro_slides.md" "../../40 PG-backup/lect/lect_pg_intro_slides.html"`
 
 Пересборка GitOps-лекции (MD → HTML, тема `--gitops`): каталог `32-Kuber/lect-2`, команда  
 `python build_lect_k8s_reveal.py lect_gitops_orchestration_k8s.md lect_gitops_orchestration_k8s.html --gitops`
@@ -86,9 +83,10 @@ lect_rq.html
 но, я хочу темно-серый фон с зелеными визуальными компонентами
 
 lect-arch-mq.md
+
 сделай текст для лектора в отдельном файле
-максимально просто и "на пальцах"
-3-4 мин на слайд
+максимально просто "на пальцах" и с примерами для рф
+2-3 мин на слайд
 
 отдельном файле
 сделай интересный текст к этой презентации, с сочетанием академического стиля и  неформального сленга разработчиков

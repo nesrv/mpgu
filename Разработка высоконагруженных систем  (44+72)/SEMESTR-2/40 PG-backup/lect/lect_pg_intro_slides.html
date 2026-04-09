@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PostgreSQL: оркестрация БД и HA</title>
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/reveal.min.css">
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/black.min.css">
+  <link rel="stylesheet" href="../../../SEMESTR-1/15-16/css/monokai.min.css">
+  <style>
+    @keyframes k8s-glow {
+      0%, 100% { text-shadow: 0 0 20px rgba(50,108,229,0.5), 0 0 40px rgba(50,108,229,0.2); }
+      50% { text-shadow: 0 0 30px rgba(50,108,229,0.8), 0 0 60px rgba(0,212,170,0.25); }
+    }
+    @keyframes k8s-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    html, body, .reveal-viewport, .reveal, .reveal .slides, .reveal .slide-background-content {
+      overflow: hidden !important;
+      scrollbar-width: none !important;
+    }
+    /* Reveal по умолчанию центрирует .slides через translate(-50%, -50%); не убирать Y — иначе контент «падает» вниз */
+    .reveal .slides section.k8s-slide {
+      overflow-y: auto !important;
+      justify-content: center !important;
+      padding-top: 12px !important;
+      padding-bottom: 12px !important;
+    }
+    .reveal .slides {
+      width: 82% !important;
+      height: 92% !important;
+      left: 50% !important;
+      top: 50% !important;
+      transform: translate(-50%, -50%) scale(1.12) !important;
+      transform-origin: center center !important;
+    }
+    .reveal .slides section {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 20px 28px !important;
+      font-size: 0.88em !important;
+      max-width: 100% !important;
+      text-align: center !important;
+      line-height: 1.48 !important;
+    }
+    .reveal h1 {
+      font-size: 1.85em !important;
+      color: #fff !important;
+      animation: k8s-glow 4s ease-in-out infinite !important;
+    }
+    .reveal h2 {
+      font-size: 1.05em !important;
+      color: #7eb8ff !important;
+      border-bottom: 2px solid rgba(50,108,229,0.55) !important;
+      padding-bottom: 0.35em !important;
+      margin-bottom: 0.45em !important;
+      width: 100% !important;
+      text-transform: none !important;
+    }
+    .k8s-title-slide .k8s-title-h1 {
+      font-size: 2.2em !important;
+      background: linear-gradient(90deg, #fff, #7eb8ff, #00d4aa);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent !important;
+      animation: k8s-glow 3s ease-in-out infinite !important;
+    }
+    .k8s-title-card {
+      background: rgba(13,17,23,0.75);
+      border: 2px solid rgba(50,108,229,0.6);
+      border-radius: 16px;
+      padding: 36px 48px;
+      max-width: 92%;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .k8s-helm {
+      font-size: 3.5rem;
+      line-height: 1;
+      margin-bottom: 0.2em;
+      animation: k8s-float 3.5s ease-in-out infinite;
+      filter: drop-shadow(0 0 12px rgba(50,108,229,0.7));
+    }
+    .k8s-title-sub {
+      font-size: 1.15em !important;
+      color: #c9d1d9 !important;
+      margin-top: 0.5em !important;
+    }
+    .k8s-title-meta {
+      color: #8b949e !important;
+      font-size: 0.9em !important;
+      margin-top: 1em !important;
+    }
+    .k8s-slide-inner {
+      width: 100%;
+      max-width: 100%;
+      text-align: left;
+    }
+    .k8s-slide-inner p {
+      margin: 0.35em 0;
+      text-align: left;
+    }
+    .k8s-ul, .k8s-ol {
+      margin: 0.4em auto !important;
+      max-width: 95%;
+      text-align: left !important;
+    }
+    .k8s-ul li {
+      margin-bottom: 0.45em !important;
+      list-style: none !important;
+      position: relative !important;
+      padding-left: 1.1em !important;
+    }
+    .k8s-ul li::before {
+      content: "▸";
+      position: absolute;
+      left: 0;
+      color: #326CE5;
+      font-weight: bold;
+    }
+    .k8s-ol {
+      list-style: decimal !important;
+      padding-left: 1.6em !important;
+      margin-left: 0.5em !important;
+    }
+    .k8s-ol li {
+      margin-bottom: 0.45em !important;
+      padding-left: 0.15em !important;
+    }
+    .k8s-code {
+      color: #79c0ff !important;
+      background: rgba(110,118,129,0.2) !important;
+      padding: 0.12em 0.35em !important;
+      border-radius: 4px !important;
+      font-size: 0.92em !important;
+    }
+    .k8s-pre {
+      max-width: 100% !important;
+      margin: 10px auto !important;
+      border-radius: 10px !important;
+      border: 1px solid rgba(50,108,229,0.45) !important;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.35) !important;
+      text-align: left !important;
+      font-size: 0.62em !important;
+    }
+    .k8s-pre code {
+      padding: 12px 14px !important;
+      line-height: 1.35 !important;
+      white-space: pre-wrap !important;
+      word-break: break-word !important;
+      max-height: 52vh;
+      overflow-y: auto;
+      display: block;
+    }
+    .mermaid-wrap {
+      max-width: 100%;
+      margin: 8px auto;
+    }
+    .mermaid-wrap--large {
+      max-width: 100%;
+      margin: 12px auto 4px;
+    }
+    .mermaid {
+      background: rgba(22,27,34,0.9) !important;
+      border-radius: 10px !important;
+      padding: 12px !important;
+      border: 1px solid rgba(0,212,170,0.35) !important;
+      text-align: center !important;
+      font-size: 0.55em !important;
+    }
+    .mermaid-wrap--large .mermaid {
+      font-size: 0.92em !important;
+      padding: 18px 14px !important;
+      min-height: 280px;
+    }
+    .mermaid-wrap--large .mermaid svg {
+      max-width: 100% !important;
+      height: auto !important;
+    }
+    .k8s-cluster-wrap {
+      max-width: 100%;
+      margin: 10px auto 6px;
+      overflow: visible !important;
+    }
+    .k8s-cluster-diagram {
+      font-size: clamp(15px, 2.5vmin, 20px) !important;
+      line-height: 1.35 !important;
+      color: #e6edf3 !important;
+      text-align: left !important;
+    }
+    .k8s-cluster-grid {
+      display: grid;
+      grid-template-columns: minmax(200px, 1.15fr) minmax(56px, 0.2fr) minmax(168px, 0.95fr);
+      grid-template-rows: 1fr 1fr;
+      gap: 10px 8px;
+      align-items: stretch;
+    }
+    .k8s-cluster-cp {
+      grid-column: 1;
+      grid-row: 1 / span 2;
+      align-self: center;
+    }
+    .k8s-cluster-bridge {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      align-items: center;
+      padding: 6px 0;
+      min-width: 52px;
+    }
+    .k8s-cluster-bridge-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      color: #7ee0c5;
+    }
+    .k8s-cluster-bridge-arrows {
+      font-size: 1.35em;
+      line-height: 1;
+    }
+    .k8s-cluster-bridge-cap {
+      font-size: 0.72em !important;
+      text-align: center;
+      line-height: 1.25;
+      max-width: 4.5em;
+      color: #a8f5e0;
+    }
+    .k8s-cluster-workers {
+      grid-column: 3;
+      grid-row: 1 / span 2;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      justify-content: center;
+    }
+    .k8s-cluster-panel {
+      background: rgba(22,27,34,0.95) !important;
+      border: 2px solid rgba(0,212,170,0.45) !important;
+      border-radius: 12px !important;
+      padding: 12px 14px !important;
+    }
+    .k8s-cluster-panel-title {
+      font-size: 0.78em !important;
+      font-weight: 700 !important;
+      color: #00d4aa !important;
+      margin: 0 0 10px 0 !important;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+    .k8s-cluster-vstack {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .k8s-cluster-block {
+      background: rgba(50,108,229,0.28) !important;
+      border: 1px solid rgba(50,108,229,0.55) !important;
+      border-radius: 8px !important;
+      padding: 10px 12px !important;
+      text-align: center !important;
+      word-break: break-word;
+      hyphens: auto;
+    }
+    .k8s-cluster-block-accent {
+      background: rgba(50,108,229,0.45) !important;
+      border-color: rgba(126,184,255,0.65) !important;
+      font-weight: 600;
+    }
+    .k8s-cluster-etcd {
+      border-style: dashed !important;
+      border-color: rgba(0,212,170,0.5) !important;
+    }
+    .k8s-cluster-sub {
+      display: block;
+      font-size: 0.82em !important;
+      font-weight: 400 !important;
+      color: #8b949e !important;
+      margin-top: 4px;
+    }
+    .k8s-cluster-arr {
+      text-align: center;
+      color: #7eb8ff;
+      font-size: 0.95em;
+      line-height: 1;
+      padding: 2px 0;
+    }
+    .k8s-cluster-hrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .k8s-cluster-arrh {
+      color: #7eb8ff;
+      font-size: 1.1em;
+      flex-shrink: 0;
+    }
+    .k8s-cluster-hrow .k8s-cluster-block {
+      flex: 1;
+    }
+    .k8s-cluster-worker .k8s-cluster-vstack .k8s-cluster-block {
+      padding: 8px 10px !important;
+    }
+    @media (max-width: 900px) {
+      .k8s-cluster-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+      }
+      .k8s-cluster-cp { grid-row: auto; grid-column: 1; }
+      .k8s-cluster-bridge {
+        grid-row: auto;
+        grid-column: 1;
+        flex-direction: row;
+        justify-content: center;
+        gap: 24px;
+      }
+      .k8s-cluster-workers { grid-row: auto; grid-column: 1; }
+    }
+    .k8s-table {
+      font-size: 0.72em !important;
+      margin: 10px auto !important;
+      border-collapse: collapse !important;
+      max-width: 98% !important;
+    }
+    .k8s-table th, .k8s-table td {
+      border: 1px solid rgba(255,255,255,0.2) !important;
+      padding: 8px 10px !important;
+    }
+    .k8s-table th {
+      background: rgba(50,108,229,0.25) !important;
+      color: #7eb8ff !important;
+    }
+    .k8s-quote {
+      background: linear-gradient(90deg, rgba(50,108,229,0.15), transparent);
+      border-left: 4px solid #326CE5;
+      padding: 10px 16px;
+      margin: 8px 0;
+      border-radius: 0 8px 8px 0;
+      text-align: left !important;
+      font-style: italic;
+      color: #e6edf3 !important;
+    }
+    .k8s-lead { color: #00d4aa !important; }
+    .fragment.visible {
+      animation: fragmentFadeIn 0.55s ease-out;
+    }
+    @keyframes fragmentFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pg-glow {
+      0%, 100% { text-shadow: 0 0 22px rgba(74,155,199,0.5), 0 0 44px rgba(51,103,145,0.2); }
+      50% { text-shadow: 0 0 32px rgba(124,196,232,0.65), 0 0 56px rgba(51,103,145,0.28); }
+    }
+    .theme-pg .reveal h2 {
+      color: #7cc4e8 !important;
+      border-bottom-color: rgba(74,155,199,0.55) !important;
+    }
+    .theme-pg .k8s-ul li::before { color: #4a9bc7 !important; }
+    .theme-pg .k8s-table th {
+      background: rgba(51,103,145,0.28) !important;
+      color: #b8e4ff !important;
+    }
+    .theme-pg .k8s-pre {
+      border-color: rgba(74,155,199,0.5) !important;
+      box-shadow: 0 6px 28px rgba(0,0,0,0.4), 0 0 0 1px rgba(51,103,145,0.15) inset !important;
+    }
+    .theme-pg .k8s-quote {
+      border-left-color: #336791 !important;
+      background: linear-gradient(90deg, rgba(51,103,145,0.14), transparent) !important;
+    }
+    .theme-pg .k8s-lead { color: #5ec8e0 !important; }
+    .theme-pg .k8s-title-card {
+      border-color: rgba(74,155,199,0.55) !important;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.5), 0 0 36px rgba(51,103,145,0.12), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+    }
+    .theme-pg .k8s-title-h1 {
+      background: linear-gradient(92deg, #f0f9ff, #7cc4e8, #336791) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      color: transparent !important;
+      animation: pg-glow 3.4s ease-in-out infinite !important;
+    }
+    .theme-pg .k8s-helm {
+      filter: drop-shadow(0 0 14px rgba(74,155,199,0.7)) !important;
+    }
+    .theme-pg .mermaid {
+      border-color: rgba(74,155,199,0.4) !important;
+    }
+
+  </style>
+</head>
+<body class="theme-pg">
+<div class="reveal"><div class="slides">
+
+<section data-transition="zoom" data-background-gradient="linear-gradient(135deg,#0a1018 0%,#153049 38%,#336791 68%,#4a9bc7 100%)" class="k8s-title-slide">
+  <div class="k8s-title-card">
+    <div class="k8s-helm">🐘</div>
+    <h1 class="k8s-title-h1">PostgreSQL в проде</h1>
+    <p class="k8s-title-sub">Оркестрация БД · HA · репликация · Patroni</p>
+    <p class="k8s-title-meta fragment">Вводная лекция · 15 слайдов · высоконагруженные системы</p>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#0d1117" class="k8s-slide">
+  <h2>Слайд 1. С чего начинается оркестрация баз данных</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Тема пары:</strong> не «как написать SQL», а <strong>как держать PostgreSQL живым</strong> при сбоях, обновлениях и росте нагрузки.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Оркестрация БД</strong> — это правила и инструменты: <strong>кто мастер</strong>, <strong>кто копия</strong>, <strong>как переключиться</strong>, <strong>как не потерять данные</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>План:</strong> сначала — почему «просто в Kubernetes» не ответ; потом — <strong>доступность</strong> и <strong>девятки</strong>; затем <strong>физическая и логическая репликация</strong>; в конце — <strong>кластерные менеджеры</strong> и <strong>Patroni</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Ориентир:</strong> ~2–3 мин на слайд; вопросы в конце блоков.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="fade" data-background-color="#0f1b24" class="k8s-slide">
+  <h2>Слайд 2. Почему Kubernetes сам по себе «не лечит» PostgreSQL</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Kubernetes хорошо оркестрирует <strong>поды</strong> (запуск, рестарт, масштаб <strong>stateless</strong>). <strong>База — stateful:</strong> данные на диске, один «главный» писатель, аккуратный порядок записи.</li>
+<li class="fragment fade-in-then-semi-out">Если <strong>просто</strong> перезапустить под с БД как веб — риск <strong>потери контекста</strong> диска, <strong>не того</strong> инстанса в роли мастера, <strong>двух пишущих</strong> (split-brain) без внешней дисциплины.</li>
+<li class="fragment fade-in-then-semi-out">Нужны <strong>диспетчер</strong> (кто primary), <strong>репликация</strong>, <strong>согласованное</strong> переключение при падении (<strong>failover</strong>), <strong>бэкапы</strong> и политика <strong>RTO/RPO</strong> — это уже слой <strong>над</strong> или <strong>рядом</strong> с K8s.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Вывод:</strong> K8s может <strong>хостить</strong> Postgres, но <strong>мозг</strong> кластера БД — отдельная история (например <strong>Patroni</strong> + хранилище + операторы). Не путать «поднял контейнер» и «высокодоступный кластер БД».</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="convex" data-background-color="#122a38" class="k8s-slide">
+  <h2>Слайд 3. Patroni — «что за фрукт» простыми словами</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Patroni</strong> — это <strong>присмотрщик</strong> за несколькими инстансами PostgreSQL: следит, кто <strong>лидер (primary)</strong>, кто <strong>реплики</strong>, и <strong>организует переключение</strong>, если лидер умер.</li>
+<li class="fragment fade-in-then-semi-out">Решения о роли хранит не «магия внутри Postgres», а <strong>внешнее хранилище согласования</strong> — часто <strong>etcd</strong>, <strong>Consul</strong>, <strong>ZooKeeper</strong> (консенсус: кто сейчас мастер).</li>
+<li class="fragment fade-in-then-semi-out"><strong>Шаблон конфигурации:</strong> Patroni подставляет в Postgres роль <strong>primary</strong> или <strong>replica</strong> в зависимости от выбранного лидера — меньше ручных ошибок при failover.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Аналогия на пальцах:</strong> выбор старосты в классе по <strong>доске объявлений</strong>, куда все смотрят; если староста заболел — выбирают нового по правилам, а не «кто первый к доске добежал».</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="zoom" data-background-color="#153045" class="k8s-slide">
+  <h2>Слайд 4. Высокая доступность (HA) — что имеют в виду</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>HA</strong> — стремление к <strong>минимальному простою</strong>: и при <strong>авариях</strong>, и при <strong>плановых работах</strong> (обновление ОС, миграция, патч БД).</li>
+<li class="fragment fade-in-then-semi-out">Идеал на схемах: система <strong>почти всегда</strong> отвечает пользователям; провалы допустимы, но <strong>короткие</strong> и <strong>предсказуемые</strong> по политике.</li>
+<li class="fragment fade-in-then-semi-out">На практике HA = сочетание: <strong>репликация</strong>, <strong>мониторинг</strong>, <strong>автоматический или полуавтоматический failover</strong>, <strong>бэкапы</strong>, <strong>документация</strong> и <strong>учения</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Важно:</strong> 100 % аптайма без оговорок в жизни редко бывает; говорят о <strong>целевых</strong> показателях и <strong>компромиссах</strong> (деньги, сложность, лаг данных).</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#0c2a3a" class="k8s-slide">
+  <h2>Слайд 5. Показатели: аптайм, MTBF, RTO, RPO</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Аптайм (доля времени работы):</strong> отношение времени «всё ок» к общему времени; на слайдах часто к <strong>100 %</strong> стремятся, но меряют реалистично.</li>
+<li class="fragment fade-in-then-semi-out"><strong>MTBF</strong> (mean time between failures) — <strong>среднее время между отказами</strong>; чем больше в идеале «надёжное железо/ПО», тем <strong>реже</strong> падает. На экзамене — «чем выше, тем лучше», без формульной зубрёжки.</li>
+<li class="fragment fade-in-then-semi-out"><strong>RTO</strong> (recovery time objective) — <strong>сколько максимум можно быть недоступны</strong> после сбоя (например «не больше 5 минут»).</li>
+<li class="fragment fade-in-then-semi-out"><strong>RPO</strong> (recovery point objective) — <strong>сколько данных максимум можно потерять</strong> (например «не больше 1 минуты записей») — завязано на репликацию и бэкапы.</li>
+<li class="fragment fade-in-then-semi-out">Есть и другие метрики (MTTR и т.д.) — по мере углубления; для вводной хватит <strong>RTO/RPO</strong> как языка заказчика и инженера.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#1a3344" class="k8s-slide">
+  <h2>Слайд 6. «Девятки» доступности — на пальцах</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Говорят в процентах <strong>годового</strong> аптайма; чем больше <strong>девяток</strong> после запятой, тем <strong>меньше допустимый простой</strong> за год.</li>
+<li class="fragment fade-in-then-semi-out"><strong>«Одна девятка» ~90 %</strong> — до <strong>~36,5 дней</strong> простоя в год (учебный якорь: «почти месяц+»).</li>
+<li class="fragment fade-in-then-semi-out"><strong>Две девятки ~99 %</strong> — до <strong>~3,65 дней</strong> в год.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Три девятки ~99,9 %</strong> — до <strong>~8,76 часов</strong> в год.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Четыре девятки ~99,99 %</strong> — до <strong>~52,6 минут</strong> в год.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Пять девяток ~99,999 %</strong> — <strong>~5,26 минут</strong> в год — уже очень дорого и сложно; для многих продуктов избыточно.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Смысл слайда:</strong> каждая следующая девятка — не «чуть-чуть лучше», а <strong>кратно</strong> жёстче требования к инфраструктуре и процессам.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="fade" data-background-color="#0d1117" class="k8s-slide">
+  <h2>Слайд 7. Зачем изучать: логическое и физическое резервирование</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Резервирование</strong> — запасной путь: когда основной узел <strong>ломается</strong>, есть <strong>копия</strong> или <strong>восстановление</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Физическое (блочное):</strong> копируется поток изменений на уровне <strong>файлов/WAL</strong> — типично <strong>streaming replication</strong> в Postgres. Быстро, близко к «зеркалу» инстанса.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Логическое:</strong> передаются <strong>изменения на уровне строк/таблиц</strong> (логическая репликация, иногда логический декод) — гибче для <strong>выборочных</strong> данных и <strong>разных версий</strong> схемы (с оговорками).</li>
+<li class="fragment fade-in-then-semi-out"><strong>Зачем оба:</strong> физика — для <strong>HA и быстрого failover</strong>; логика — для <strong>миграций</strong>, <strong>шардирования по кускам</strong>, <strong>интеграций</strong>, иногда <strong>апгрейдов</strong> между мажорами (сценарии зависят от версии и дизайна).</li>
+<li class="fragment fade-in-then-semi-out"><strong>Памятка:</strong> «логическое» ≠ «логические бэкапы SQL» в быту разработчика — термины пересекаются, в курсе держим <strong>репликацию</strong>.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="convex" data-background-color="#0f1b24" class="k8s-slide">
+  <h2>Слайд 8. Физическая репликация — основа: поток WAL</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">PostgreSQL пишет изменения сначала в <strong>WAL</strong> (журнал опережающей записи), потом в файлы данных — так быстрее и надёжнее восстанавливаться.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Физическая репликация:</strong> <strong>реплика</strong> получает <strong>тот же WAL</strong> и <strong>накатывает</strong> его — получается <strong>бит-в-бит</strong> совместимая копия <strong>кластера</strong> (в пределах модели).</li>
+<li class="fragment fade-in-then-semi-out"><strong>Primary</strong> принимает запись от приложений; <strong>standby</strong> читает поток и остаётся в режиме <strong>только чтение</strong> (hot standby — чтение с реплики, знакомая фича).</li>
+<li class="fragment fade-in-then-semi-out"><strong>Наглядно:</strong> мастер ведёт <strong>дневник</strong> (WAL), реплика <strong>переписывает дневник</strong> и остаётся в том же «сюжете», что и мастер.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="zoom" data-background-color="#122a38" class="k8s-slide">
+  <h2>Слайд 9. Физическая репликация — синхронная vs асинхронная, лаг</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Асинхронная репликация:</strong> транзакция на primary <strong>подтверждается</strong>, не дожидаясь записи на реплику. <strong>Быстрее</strong> для пользователя; при падении primary возможна <strong>потеря последних</strong> записей → влияет на <strong>RPO</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Синхронная (или quorum):</strong> подтверждение только когда <strong>копия</strong> (или кворум копий) <strong>догнала</strong> WAL. <strong>Меньше потерь</strong> данных; <strong>выше задержка</strong> и требования к сети/железу.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Репликационный лаг</strong> — насколько реплика <strong>отстаёт</strong> от мастера; мониторят <strong>байты/WAL</strong>, <strong>время</strong>. Большой лаг — рискован при failover.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Практика:</strong> политика синхронности выбирается под <strong>RPO/RTO</strong> и реальность сети, не «всегда синхронно».</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#153045" class="k8s-slide">
+  <h2>Слайд 10. Логическая репликация — идея</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Вместо потока «как на диске» передаются <strong>логические изменения</strong> (строки, операции) на уровне <strong>публикаций и подписок</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Публикация (publication)</strong> на источнике — <strong>какие таблицы/фильтры</strong> отдаём наружу; <strong>подписка (subscription)</strong> на подписчике — <strong>откуда</strong> тянем.</li>
+<li class="fragment fade-in-then-semi-out">Удобно для <strong>частичной</strong> репликации (не весь кластер), для <strong>цепочек</strong> и <strong>интеграций</strong> между базами.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Оговорка:</strong> не всё в мире логической репликации совпадает с физической по <strong>скорости</strong>, <strong>DDL</strong> и <strong>ограничениям</strong> — проектируют с чтением доки к версии Postgres.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#0c2a3a" class="k8s-slide">
+  <h2>Слайд 11. Логическая vs физическая — когда что (шпаргалка)</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Физическая:</strong> <strong>быстрый</strong> DR и <strong>failover</strong> «как второй такой же инстанс»; типичный каркас <strong>HA</strong> для одной логической базы на кластере PG.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Логическая:</strong> <strong>гибкость</strong> (подмножество таблиц, другая топология), сценарии <strong>миграций</strong> и <strong>федерации</strong>; иногда <strong>апгрейд</strong> через логический канал (зависит от плана).</li>
+<li class="fragment fade-in-then-semi-out"><strong>Не смешивать цели:</strong> «хочу пять девяток и мгновенный failover» — обычно упор в <strong>физику + Patroni</strong> (или аналог) и диски; «хочу только витрину в другую БД» — чаще <strong>логика</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Бэкапы</strong> всё равно нужны: репликация — не замена <strong>PITR</strong> и <strong>теста восстановления</strong>.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="fade" data-background-color="#1a3344" class="k8s-slide">
+  <h2>Слайд 12. Кластерные технологии — зачем слой над Postgres</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">Одной строкой <code class="k8s-code">primary</code> / <code class="k8s-code">replica</code> в конфиге мало: нужен <strong>согласованный выбор лидера</strong>, <strong>фencing</strong> (чтобы старый мастер не ожил вредоносно), <strong>health-checks</strong>, <strong>интеграция</strong> с балансировщиком и K8s.</li>
+<li class="fragment fade-in-then-semi-out">Примеры экосистемы: <strong>Patroni</strong>, <strong>repmgr</strong>, облачные <strong>RDS</strong>/управляемые сервисы со своей моделью HA.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Общая идея:</strong> <strong>автоматизация</strong> рутины, которую иначе делают runbook&#x27;и и ночные дежурства — меньше человеческой ошибки при стрессе.</li>
+<li class="fragment fade-in-then-semi-out">На вводной не обязаны уметь ставить всё руками; важно <strong>понимать роли компонентов</strong> и вопросы к вендору.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="convex" data-background-color="#0d1117" class="k8s-slide">
+  <h2>Слайд 13. Кластер — кворум и «двое главных» (split-brain)</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out">При сетевом разрыве возможна ситуация: <strong>две части</strong> инфраструктуры считают себя <strong>главными</strong> → <strong>двойная запись</strong>, порча данных.</li>
+<li class="fragment fade-in-then-semi-out">Противоядие: <strong>кворум</strong> (большинство узлов/DCS согласны, кто primary), <strong>fencing</strong> (отключить старый мастер от сети/диска), строгие <strong>таймауты</strong>.</li>
+<li class="fragment fade-in-then-semi-out"><strong>etcd/Consul</strong> и т.п. дают <strong>одну согласованную правду</strong> о роли, если настроены правильно.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Мораль:</strong> HA — это не только «вторая копия», но и <strong>правила голосования</strong>; иначе «лечим простой» и <strong>ломаем целостность</strong>.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="zoom" data-background-color="#0f1b24" class="k8s-slide">
+  <h2>Слайд 14. Patroni чуть глубже: компоненты и failover</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Patroni</strong> держит <strong>шаблоны</strong> <code class="k8s-code">postgresql.conf</code> / <code class="k8s-code">recovery.conf</code> / patroni.yml и <strong>переключает</strong> роли при выборах лидера.</li>
+<li class="fragment fade-in-then-semi-out"><strong>DCS</strong> (distributed configuration store) хранит <strong>ключ лидера</strong> и метаданные; без DCS Patroni <strong>не может</strong> честно договориться между узлами.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Failover:</strong> при падении primary Patroni <strong>продвигает</strong> реплику, <strong>переназначает</strong> виртуальный IP или интегрируется с <strong>HAProxy</strong>/оператором K8s — зависит от схемы.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Практика:</strong> тестировать failover на <strong>стенде</strong>; измерять <strong>RTO</strong> и <strong>RPO</strong> не на словах, а <strong>таймером</strong>.</li>
+</ul>
+  </div>
+</section>
+
+<section data-transition="slide" data-background-color="#122a38" class="k8s-slide">
+  <h2>Слайд 15. Итог и мостик к следующим темам</h2>
+  <div class="k8s-slide-inner">
+<ul class="k8s-ul">
+<li class="fragment fade-in-then-semi-out"><strong>Запомнить:</strong> K8s <strong>не заменяет</strong> модель HA Postgres; нужны <strong>репликация</strong>, <strong>политики RTO/RPO</strong>, часто <strong>кластерный менеджер</strong> (Patroni и аналоги).</li>
+<li class="fragment fade-in-then-semi-out"><strong>Физическая репликация</strong> — костяк <strong>быстрого</strong> восстановления и типичного <strong>streaming</strong> HA; <strong>логическая</strong> — <strong>гибкость</strong> и отдельные сценарии.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Девятки</strong> — язык <strong>SLA</strong>; каждая ступень <strong>дороже</strong> предыдущей.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Домашнее размышление (по желанию):</strong> для вашего учебного проекта какие <strong>RTO/RPO</strong> разумны и хватит ли <strong>одной реплики</strong> + бэкапов?</li>
+<li class="fragment fade-in-then-semi-out"><strong>Дальше:</strong> лабораторные по <strong>бэкапам</strong>, <strong>репликации</strong>, разбор <strong>Patroni</strong>/операторов под ваш стек.</li>
+<li class="fragment fade-in-then-semi-out"><strong>Ориентир времени:</strong> 15 слайдов · <strong>2–3 минуты</strong> на слайд — с примерами и вопросами к аудитории.</li>
+</ul>
+  </div>
+</section>
+
+</div></div>
+<script src="../../../SEMESTR-1/15-16/js/reveal.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/notes.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/markdown.min.js"></script>
+<script src="../../../SEMESTR-1/15-16/js/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'dark',
+    securityLevel: 'loose',
+    fontFamily: 'trebuchet ms, verdana, sans-serif'
+  });
+
+  Reveal.initialize({
+    hash: true,
+    transition: 'slide',
+    transitionSpeed: 'default',
+    backgroundTransition: 'fade',
+    controls: true,
+    progress: true,
+    slideNumber: 'c/t',
+    center: true,
+    margin: 0.04,
+    fragments: true,
+    plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+  });
+
+  async function runMermaidOnSlide(slide) {
+    if (!slide) return;
+    var nodes = slide.querySelectorAll('.mermaid:not([data-processed])');
+    for (var i = 0; i < nodes.length; i++) {
+      try {
+        await mermaid.run({ nodes: [nodes[i]] });
+        nodes[i].setAttribute('data-processed', 'true');
+      } catch (e) { console.warn(e); }
+    }
+  }
+
+  Reveal.on('ready', function() {
+    runMermaidOnSlide(Reveal.getCurrentSlide());
+  });
+  Reveal.on('slidechanged', function(e) {
+    runMermaidOnSlide(e.currentSlide);
+  });
+</script>
+</body>
+</html>

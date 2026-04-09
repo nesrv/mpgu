@@ -7,6 +7,9 @@
 Сборка другой лекции (тот же движок):
   python build_lect_k8s_reveal.py lect_gitops_orchestration_k8s.md lect_gitops_orchestration_k8s.html --gitops
 Флаг --gitops задаёт зелёно-серую «креативную» тему (GitOps); без флага — классическая сине-кибернетическая как lect_k8s.html.
+
+Если имя входного .md содержит pg или postgres (например lect_pg_intro_slides.md), включается тема PostgreSQL: титул «🐘», сине-бирюзовые акценты.
+  python build_lect_k8s_reveal.py ../../40 PG-backup/lect/lect_pg_intro_slides.md ../../40 PG-backup/lect/lect_pg_intro_slides.html
 """
 import argparse
 import html
@@ -221,6 +224,50 @@ def split_slides(md: str) -> list[tuple[str, str]]:
     return slides
 
 
+# Титульный слайд и фоны для лекций про PostgreSQL (авто по stem .md)
+PG_BG = ("#0d1117", "#0f1b24", "#122a38", "#153045", "#0c2a3a", "#1a3344")
+PG_EXTRA_CSS = """
+    @keyframes pg-glow {
+      0%, 100% { text-shadow: 0 0 22px rgba(74,155,199,0.5), 0 0 44px rgba(51,103,145,0.2); }
+      50% { text-shadow: 0 0 32px rgba(124,196,232,0.65), 0 0 56px rgba(51,103,145,0.28); }
+    }
+    .theme-pg .reveal h2 {
+      color: #7cc4e8 !important;
+      border-bottom-color: rgba(74,155,199,0.55) !important;
+    }
+    .theme-pg .k8s-ul li::before { color: #4a9bc7 !important; }
+    .theme-pg .k8s-table th {
+      background: rgba(51,103,145,0.28) !important;
+      color: #b8e4ff !important;
+    }
+    .theme-pg .k8s-pre {
+      border-color: rgba(74,155,199,0.5) !important;
+      box-shadow: 0 6px 28px rgba(0,0,0,0.4), 0 0 0 1px rgba(51,103,145,0.15) inset !important;
+    }
+    .theme-pg .k8s-quote {
+      border-left-color: #336791 !important;
+      background: linear-gradient(90deg, rgba(51,103,145,0.14), transparent) !important;
+    }
+    .theme-pg .k8s-lead { color: #5ec8e0 !important; }
+    .theme-pg .k8s-title-card {
+      border-color: rgba(74,155,199,0.55) !important;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.5), 0 0 36px rgba(51,103,145,0.12), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+    }
+    .theme-pg .k8s-title-h1 {
+      background: linear-gradient(92deg, #f0f9ff, #7cc4e8, #336791) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      color: transparent !important;
+      animation: pg-glow 3.4s ease-in-out infinite !important;
+    }
+    .theme-pg .k8s-helm {
+      filter: drop-shadow(0 0 14px rgba(74,155,199,0.7)) !important;
+    }
+    .theme-pg .mermaid {
+      border-color: rgba(74,155,199,0.4) !important;
+    }
+"""
+
 GITOPS_BG = ("#0d1117", "#111821", "#0f1f17", "#132a1e", "#0c2e24", "#14532d")
 GITOPS_EXTRA_CSS = """
     @keyframes gitops-glow {
@@ -294,9 +341,22 @@ def main():
         out_file = HERE / out_file
 
     gitops_theme = args.gitops or ("gitops" in out_file.name.lower())
-    body_class = "theme-gitops" if gitops_theme else ""
-    bg_palette = GITOPS_BG if gitops_theme else BG_COLORS
-    extra_css = GITOPS_EXTRA_CSS if gitops_theme else ""
+    stem_l = md_file.stem.lower()
+    pg_theme = (not gitops_theme) and (
+        "pg" in stem_l or "postgres" in stem_l
+    )
+    if gitops_theme:
+        body_class = "theme-gitops"
+        bg_palette = GITOPS_BG
+        extra_css = GITOPS_EXTRA_CSS
+    elif pg_theme:
+        body_class = "theme-pg"
+        bg_palette = PG_BG
+        extra_css = PG_EXTRA_CSS
+    else:
+        body_class = ""
+        bg_palette = BG_COLORS
+        extra_css = ""
 
     raw = md_file.read_text(encoding="utf-8")
     slides = split_slides(raw)
@@ -329,6 +389,12 @@ def main():
         title_h1 = "GitOps · оркестрация · прод"
         title_sub = "От Compose до Kubernetes"
         title_meta = f"Лекция · {len(sections)} слайдов · высоконагруженные системы"
+    elif pg_theme:
+        title_bg = "linear-gradient(135deg,#0a1018 0%,#153049 38%,#336791 68%,#4a9bc7 100%)"
+        title_icon = "🐘"
+        title_h1 = "PostgreSQL в проде"
+        title_sub = "Оркестрация БД · HA · репликация · Patroni"
+        title_meta = f"Вводная лекция · {len(sections)} слайдов · высоконагруженные системы"
     else:
         title_bg = "linear-gradient(135deg,#0d1117 0%,#1e3a5f 40%,#326CE5 100%)"
         title_icon = "☸"
@@ -346,7 +412,12 @@ def main():
 </section>"""
 
     sections_html = "\n\n".join([title_slide] + sections)
-    doc_title = title_h1 if not gitops_theme else "GitOps, оркестрация и прод"
+    if gitops_theme:
+        doc_title = "GitOps, оркестрация и прод"
+    elif pg_theme:
+        doc_title = "PostgreSQL: оркестрация БД и HA"
+    else:
+        doc_title = title_h1
 
     html_doc = f"""<!DOCTYPE html>
 <html lang="ru">
