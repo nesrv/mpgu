@@ -1,13 +1,4 @@
-
-на основе laba_ci_cd_gitops.md
-сделай веб-методичку 
-
-референс
-
-laba_k8s-1.html
-
-используй 
-_build_k8s_docker_desktop_html.py
+✅ Веб-методичка `laba_ci_cd_gitops-2` — `40 PG-backup/laba_ci_cd_gitops-2.html` (см. блок ниже).
 
 сделай креативную html-презентацию со всеми слайдами 
 
@@ -49,6 +40,9 @@ k8s
 
 Веб-методичка CI/CD + GitOps: `32-Kuber/laba-2/laba_ci_cd_gitops.html` (из `laba_ci_cd_gitops.md`, тот же шаблон, что `laba_k8s-1.html`).
 Пересборка из каталога `32-Kuber/laba/`: `python _build_k8s_docker_desktop_html.py ../laba-2/laba_ci_cd_gitops.md ../laba-2/laba_ci_cd_gitops.html`.
+
+Веб-методичка CI/CD + GitOps (вариант 2): `40 PG-backup/laba_ci_cd_gitops-2.html` (из `laba_ci_cd_gitops-2.md`, стиль как `laba_ci_cd_gitops.html`).
+Пересборка из каталога `32-Kuber/laba/`: `python _build_k8s_docker_desktop_html.py "../../40 PG-backup/laba_ci_cd_gitops-2.md" "../../40 PG-backup/laba_ci_cd_gitops-2.html"`.
 
 Лекция 2 (только MD): `32-Kuber/lect/lect_k8s_net_gitops.md` — сеть, Ingress, HPA, PersistentVolume, GitOps/CI/CD (50 слайдов 0–49); HTML не собирается из этого файла по умолчанию.
 

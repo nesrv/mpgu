@@ -10,6 +10,9 @@
 
   python _build_k8s_docker_desktop_html.py ../laba-2/laba_ci_cd_gitops.md ../laba-2/laba_ci_cd_gitops.html
       → методичка CI/CD + GitOps (каталог запуска — laba/).
+
+  python _build_k8s_docker_desktop_html.py "../../40 PG-backup/laba_ci_cd_gitops-2.md" "../../40 PG-backup/laba_ci_cd_gitops-2.html"
+      → вариант методички в каталоге SEMESTR-2/40 PG-backup (пути относительно laba/).
 """
 import argparse
 import html
@@ -347,6 +350,7 @@ def main(argv: list[str] | None = None) -> None:
         "laba_k8s_docker_desktop": "Локальный кластер • kubectl • Deployment • Service • port-forward",
         "laba_ci_cd_vps": "GitHub Actions • Docker Hub • k3s • kubectl • VPS",
         "laba_ci_cd_gitops": "GitHub Actions • Docker Hub • k3s • kubectl • VPS • GitOps (Argo CD, опционально)",
+        "laba_ci_cd_gitops-2": "GitHub Actions • Docker Hub • k3s • kubectl • VPS • GitOps (Argo CD, опционально)",
     }
     header_tags = stem_tags.get(md_path.stem)
     if not header_tags:

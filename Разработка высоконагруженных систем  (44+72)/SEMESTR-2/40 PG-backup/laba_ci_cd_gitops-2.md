@@ -130,7 +130,11 @@ docker push ВАШ_LOGIN/lab1-api:v1
 image: DOCKERHUB_USERNAME/lab1-api:latest
 ```
 
-При необходимости задайте `imagePullPolicy: Always`, чтобы при теге `latest` на узле подтягивалась свежая сборка.
+**Важно:** Для тега `latest` рекомендуется установить `imagePullPolicy: Always`, чтобы k3s всегда подтягивал свежую версию образа из registry. Это особенно важно при автоматических обновлениях через CI/CD.
+
+```yaml
+imagePullPolicy: Always
+```
 
 ---
 
@@ -173,6 +177,8 @@ sudo systemctl status k3s
 
 Файл `/etc/rancher/k3s/k3s.yaml` создаётся k3s и обычно **читается только root**; от обычного пользователя его не открывают — иначе `permission denied` и предупреждение про `--write-kubeconfig-mode`.
 
+##### Шаг 2.1: Копирование kubeconfig
+
 Скопируйте конфиг в домашний каталог:
 
 ```bash
@@ -182,6 +188,8 @@ sudo chown "$USER:$USER" ~/.kube/config
 chmod 600 ~/.kube/config
 ```
 
+##### Шаг 2.2: Настройка переменной KUBECONFIG (ВАЖНО!)
+
 **Важно:** после установки k3s команда `kubectl` часто является **ссылкой на `k3s`** (`/usr/local/bin/kubectl` → `k3s`), а не отдельным бинарником.
 
 Такой `kubectl` **не подхватывает** `~/.kube/config`, если переменная **`KUBECONFIG` не задана**, и снова пытается читать `/etc/rancher/k3s/k3s.yaml`. Задайте явно:
@@ -190,7 +198,27 @@ chmod 600 ~/.kube/config
 export KUBECONFIG="$HOME/.kube/config"
 ```
 
-Чтобы не вводить при каждом входе по SSH, добавьте эту строку в `~/.bashrc` (или `~/.profile`). Проверка: `echo "$KUBECONFIG"` должен показывать путь к вашему `config`.
+Чтобы не вводить при каждом входе по SSH, добавьте эту строку в `~/.bashrc` (или `~/.profile`):
+
+```bash
+echo 'export KUBECONFIG="$HOME/.kube/config"' >> ~/.bashrc
+```
+
+##### Шаг 2.3: Проверка настройки
+
+Проверьте, что всё настроено правильно:
+
+```bash
+echo "$KUBECONFIG"  # должен показать путь к вашему config
+kubectl get nodes   # должен показать узлы кластера
+```
+
+Если команда `kubectl get nodes` всё ещё показывает ошибку `permission denied`, попробуйте:
+
+```bash
+source ~/.bashrc
+kubectl get nodes
+```
 
 **Альтернатива без `export`:** каждый раз указывать файл:
 
@@ -200,6 +228,8 @@ k3s kubectl --kubeconfig "$HOME/.kube/config" get nodes
 
 (или `kubectl --kubeconfig "$HOME/.kube/config" …`, если `kubectl` — это k3s.)
 
+##### Шаг 2.4: Для доступа с другого компьютера
+
 Если `kubectl` вызываете **с другого компьютера**, в копии `~/.kube/config` замените адрес API `127.0.0.1` на **публичный IP VPS** (например `81.90.182.174`). Если работаете только на самом VPS, менять не обязательно.
 
 ---
@@ -207,10 +237,12 @@ k3s kubectl --kubeconfig "$HOME/.kube/config" get nodes
 #### 3. Проверьте, что кластер отвечает
 
 ```bash
-kubectl get svc lab1-api
+kubectl get nodes
 ```
 
 У узла в колонке `STATUS` должно быть `Ready`.
+
+**Примечание:** Эта команда проверяет узлы кластера. Сервисы (`svc`) мы будем проверять позже, после деплоя приложения.
 
 ---
 
@@ -255,6 +287,8 @@ kubectl get svc lab1-api
 ```
 
 У подов в колонке `STATUS` должно быть **`Running`**, в **`READY`** — **`1/1`**. Если не настроили `KUBECONFIG` и копию `~/.kube/config` (п. 2), используйте **`sudo kubectl`** вместо `kubectl`.
+
+**Примечание:** По умолчанию эти команды ищут в namespace `default`. Если вы используете другой namespace, добавьте флаг `-n ИМЯ_NAMESPACE`.
 
 Для сервиса типа **NodePort** в `PORT(S)` должен быть вид **`80:30080/TCP`** (внешний порт узла **30080** совпадает с `nodePort` в `service.yaml`).
 
@@ -379,7 +413,7 @@ kubectl describe pod -l app=lab1-api | sed -n '/Events:/,$p'
 | Сообщение в Events                                  | Что делать                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **`not found`** / `failed to resolve reference`     | Образа с таким именем/тегом**нет** в registry. Соберите, запушьте, проверьте теги на Docker Hub; в `deployment.yaml` то же `image:`.                                                                                                                                                                                                            |
-| **`unauthorized`** / **`pull access denied`** | Часто**приватный** репозиторий. Создайте секрет: `kubectl create secret docker-registry regcred --docker-server=https://index.docker.io/v1/ --docker-username=… --docker-password=… --docker-email=…` и в `deployment.yaml` в `spec.template.spec` добавьте `imagePullSecrets: [{ name: regcred }]`, затем `kubectl apply -f deployment.yaml`. |
+| **`unauthorized`** / **`pull access denied`** | Часто**приватный** репозиторий. Создайте секрет: `sudo kubectl create secret docker-registry regcred --docker-server=https://index.docker.io/v1/ --docker-username=… --docker-password=… --docker-email=…` и в `deployment.yaml` в `spec.template.spec` добавьте `imagePullSecrets: [{ name: regcred }]`, затем `sudo kubectl apply -f deployment.yaml`. **Важно:** Используйте `sudo kubectl`, если не настроен `KUBECONFIG` (см. п. 2). |
 | **`toomanyrequests`**                                 | Лимит анонимных pull с Docker Hub; войдите в Hub через**`imagePullSecrets`** (как выше).                                                                                                                                                                                                                                                                                      |
 
 Проверка pull с узла (диагностика):
