@@ -13,6 +13,9 @@
 
   python _build_k8s_docker_desktop_html.py "../../40 PG-backup/laba_ci_cd_gitops-2.md" "../../40 PG-backup/laba_ci_cd_gitops-2.html"
       → вариант методички в каталоге SEMESTR-2/40 PG-backup (пути относительно laba/).
+
+  python _build_k8s_docker_desktop_html.py "../../44-physic-Replica/laba/laba_replica.md" "../../44-physic-Replica/laba/laba_replica.html"
+      → каскадная логическая репликация PostgreSQL (разделы из ###; пути от каталога 32-Kuber/laba/).
 """
 import argparse
 import html
@@ -31,6 +34,8 @@ LANG_MAP = {
     "sh": "bash",
     "python": "python",
     "yaml": "yaml",
+    "yml": "yaml",
+    "sql": "sql",
     "dockerfile": "dockerfile",
     "text": "text",
     "json": "json",
@@ -96,7 +101,7 @@ def is_table_sep(cells: list) -> bool:
     return True
 
 
-def _body_with_sections(md: str) -> str:
+def _body_with_sections(md: str, major_level: int = 2) -> str:
     lines = md.splitlines()
     out: list[str] = []
     i = 0
@@ -190,17 +195,23 @@ def _body_with_sections(md: str) -> str:
                 out.append("</table>")
             continue
 
-        m = re.match(r"^(#{2,4})\s+(.+)$", raw)
+        m = re.match(r"^(#{2,5})\s+(.+)$", raw)
         if m:
             flush_p()
             close_lists()
             level = len(m.group(1))
             title = m.group(2).strip()
-            if level == 2:
+            if level == major_level:
                 aid = open_section(title)
                 toc_collect.append((title, aid))
-            elif level == 3:
+            elif major_level == 3 and level == 2:
+                out.append(
+                    f'<div class="section-intro"><h2>{inline_fmt(title)}</h2></div>'
+                )
+            elif level == major_level + 1:
                 out.append(f"<h3>{inline_fmt(title)}</h3>")
+            elif level == major_level + 2:
+                out.append(f"<h4>{inline_fmt(title)}</h4>")
             else:
                 out.append(f"<h4>{inline_fmt(title)}</h4>")
             i += 1
@@ -313,6 +324,13 @@ def main(argv: list[str] | None = None) -> None:
         default=None,
         help="Выходной .html (по умолчанию: имя .md с расширением .html)",
     )
+    parser.add_argument(
+        "--major-level",
+        type=int,
+        choices=(2, 3),
+        default=None,
+        help="Уровень заголовка для секций и оглавления: 2 = ## (по умолчанию), 3 = ### (для laba_replica и похожих)",
+    )
     args = parser.parse_args(argv)
 
     md_path = resolve_path(HERE, args.input_md)
@@ -338,7 +356,10 @@ def main(argv: list[str] | None = None) -> None:
                 break
     md_body = "\n".join(md_lines[start:])
 
-    body = _body_with_sections(md_body)
+    major_level = args.major_level
+    if major_level is None:
+        major_level = 3 if md_path.stem == "laba_replica" else 2
+    body = _body_with_sections(md_body, major_level=major_level)
     chk_prefix = "chk-" + re.sub(r"[^\w\-]+", "-", md_path.stem.lower()).strip("-")[:40]
     body = checklist_to_checkbox_items(body, chk_prefix=chk_prefix)
     toc = _LAST_TOC
@@ -351,6 +372,7 @@ def main(argv: list[str] | None = None) -> None:
         "laba_ci_cd_vps": "GitHub Actions • Docker Hub • k3s • kubectl • VPS",
         "laba_ci_cd_gitops": "GitHub Actions • Docker Hub • k3s • kubectl • VPS • GitOps (Argo CD, опционально)",
         "laba_ci_cd_gitops-2": "GitHub Actions • Docker Hub • k3s • kubectl • VPS • GitOps (Argo CD, опционально)",
+        "laba_replica": "PostgreSQL • логическая репликация • Docker Compose • каскад",
     }
     header_tags = stem_tags.get(md_path.stem)
     if not header_tags:
@@ -376,7 +398,7 @@ def main(argv: list[str] | None = None) -> None:
 <title>__PAGE_TITLE__</title>
 <style media="print">body{font-family:Arial,sans-serif;font-size:12px}.container{box-shadow:none;background:white}.header{background:white!important;color:black!important}.save-btn{display:none!important}.section{page-break-inside:avoid}</style>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;line-height:1.6;color:#333;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh}.container{max-width:1200px;margin:20px auto;padding:20px;background:white;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}.header{text-align:center;padding:30px;background:linear-gradient(135deg,#005EB8,#003D82);color:white;border-radius:10px;margin-bottom:30px}.header h1{font-size:2.2em;margin-bottom:10px}.header p{opacity:.95;margin-top:8px}.student-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:30px;padding:20px;background:#f8f9fa;border-radius:10px}.form-group{margin-bottom:20px}.form-group label{display:block;margin-bottom:5px;font-weight:bold;color:#003D82}.form-group input,.form-group textarea{width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px;font-size:16px}.section{margin-bottom:40px;padding:25px;background:#fff;border-left:5px solid #005EB8;border-radius:0 10px 10px 0;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.section h2{color:#003D82;margin-bottom:20px;font-size:1.65em}.section h3{color:#005EB8;margin:20px 0 10px;font-size:1.25em}.section h4{color:#1565c0;margin:16px 0 8px;font-size:1.1em}.code-block{background:#282c34;color:#e2e8f0;padding:20px;border-radius:8px;margin:15px 0;font-family:Consolas,'Courier New',monospace;overflow-x:auto;white-space:pre-wrap;font-size:13px;word-break:break-word}ul{list-style:none;padding-left:0}ul li{padding:8px 0 8px 30px;position:relative}ul li::before{content:'\\25b8';position:absolute;left:0;color:#005EB8;font-size:18px}ol{margin:10px 0 10px 24px}ol li{margin:8px 0;padding-left:6px}table{width:100%;border-collapse:collapse;margin:15px 0}table th,table td{border:1px solid #ddd;padding:12px;text-align:left;vertical-align:top}table th{background:#005EB8;color:white}table tr:nth-child(even){background:#f8f9fa}.checkbox-item{margin:15px 0;padding:15px 20px;background:linear-gradient(135deg,#005EB8,#003D82);border-radius:10px;display:flex;align-items:center}.checkbox-item input[type="checkbox"]{appearance:none;width:26px;height:26px;border:3px solid white;border-radius:6px;margin-right:15px;cursor:pointer;background:transparent;flex-shrink:0}.checkbox-item input[type="checkbox"]:checked{background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23005EB8"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>') center/18px no-repeat;border-color:#fff}.checkbox-item label{color:white;font-weight:500;cursor:pointer}.save-btn{background:linear-gradient(135deg,#005EB8,#003D82);color:white;border:none;padding:15px 30px;font-size:18px;border-radius:10px;cursor:pointer;display:block;margin:30px auto}code{background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:0.9em}.section .code-block code{background:transparent;padding:0}.note{background:#e3f2fd;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #2196f3}.toc{margin:20px 0;padding:20px;background:#f5f5f5;border-radius:8px}.toc a{color:#005EB8;text-decoration:none}.toc a:hover{text-decoration:underline}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;line-height:1.6;color:#333;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh}.container{max-width:1200px;margin:20px auto;padding:20px;background:white;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}.header{text-align:center;padding:30px;background:linear-gradient(135deg,#005EB8,#003D82);color:white;border-radius:10px;margin-bottom:30px}.header h1{font-size:2.2em;margin-bottom:10px}.header p{opacity:.95;margin-top:8px}.student-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:30px;padding:20px;background:#f8f9fa;border-radius:10px}.form-group{margin-bottom:20px}.form-group label{display:block;margin-bottom:5px;font-weight:bold;color:#003D82}.form-group input,.form-group textarea{width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px;font-size:16px}.section{margin-bottom:40px;padding:25px;background:#fff;border-left:5px solid #005EB8;border-radius:0 10px 10px 0;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.section h2{color:#003D82;margin-bottom:20px;font-size:1.65em}.section h3{color:#005EB8;margin:20px 0 10px;font-size:1.25em}.section h4{color:#1565c0;margin:16px 0 8px;font-size:1.1em}.code-block{background:#282c34;color:#e2e8f0;padding:20px;border-radius:8px;margin:15px 0;font-family:Consolas,'Courier New',monospace;overflow-x:auto;white-space:pre-wrap;font-size:13px;word-break:break-word}ul{list-style:none;padding-left:0}ul li{padding:8px 0 8px 30px;position:relative}ul li::before{content:'\\25b8';position:absolute;left:0;color:#005EB8;font-size:18px}ol{margin:10px 0 10px 24px}ol li{margin:8px 0;padding-left:6px}table{width:100%;border-collapse:collapse;margin:15px 0}table th,table td{border:1px solid #ddd;padding:12px;text-align:left;vertical-align:top}table th{background:#005EB8;color:white}table tr:nth-child(even){background:#f8f9fa}.checkbox-item{margin:15px 0;padding:15px 20px;background:linear-gradient(135deg,#005EB8,#003D82);border-radius:10px;display:flex;align-items:center}.checkbox-item input[type="checkbox"]{appearance:none;width:26px;height:26px;border:3px solid white;border-radius:6px;margin-right:15px;cursor:pointer;background:transparent;flex-shrink:0}.checkbox-item input[type="checkbox"]:checked{background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23005EB8"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>') center/18px no-repeat;border-color:#fff}.checkbox-item label{color:white;font-weight:500;cursor:pointer}.save-btn{background:linear-gradient(135deg,#005EB8,#003D82);color:white;border:none;padding:15px 30px;font-size:18px;border-radius:10px;cursor:pointer;display:block;margin:30px auto}code{background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:0.9em}.section .code-block code{background:transparent;padding:0}.note{background:#e3f2fd;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #2196f3}.section-intro{margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #e1e5e9}.section-intro h2{color:#003D82;font-size:1.45em;margin:0}.toc{margin:20px 0;padding:20px;background:#f5f5f5;border-radius:8px}.toc a{color:#005EB8;text-decoration:none}.toc a:hover{text-decoration:underline}
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 <style>
@@ -439,6 +461,7 @@ def main(argv: list[str] | None = None) -> None:
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/dockerfile.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
 </head>
 <body>
 <div class="container">
@@ -483,7 +506,12 @@ document.addEventListener('DOMContentLoaded',function(){
 </body>
 </html>
 """
-    emoji = "🐳" if "docker" in md_path.stem.lower() and "desktop" in md_path.stem.lower() else "🚀"
+    if md_path.stem == "laba_replica":
+        emoji = "🐘"
+    elif "docker" in md_path.stem.lower() and "desktop" in md_path.stem.lower():
+        emoji = "🐳"
+    else:
+        emoji = "🚀"
     header_h1_html = f"{emoji} {html.escape(header_h1)}"
 
     template = (

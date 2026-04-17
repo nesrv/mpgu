@@ -1,3 +1,8 @@
+на основе laba_replica.md создай веб-методичку
+референс laba_ci_cd_gitops-2.html
+
+можно использовать  _build_k8s_docker_desktop_html.py
+
 ✅ Веб-методичка `laba_ci_cd_gitops-2` — `40 PG-backup/laba_ci_cd_gitops-2.html` (см. блок ниже).
 
 ✅ Презентация PostgreSQL (Reveal): `40 PG-backup/lect/lect_pg_intro_slides.html` из `lect_pg_intro_slides.md` (тема **theme-pg** в `build_lect_k8s_reveal.py`, стиль как `lect_k8s.html`). Пересборка из `32-Kuber/lect-2`:  

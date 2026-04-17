@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Лабораторная работа: Изучение каскадной репликации PostgreSQL</title>
+<style media="print">body{font-family:Arial,sans-serif;font-size:12px}.container{box-shadow:none;background:white}.header{background:white!important;color:black!important}.save-btn{display:none!important}.section{page-break-inside:avoid}</style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;line-height:1.6;color:#333;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh}.container{max-width:1200px;margin:20px auto;padding:20px;background:white;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}.header{text-align:center;padding:30px;background:linear-gradient(135deg,#005EB8,#003D82);color:white;border-radius:10px;margin-bottom:30px}.header h1{font-size:2.2em;margin-bottom:10px}.header p{opacity:.95;margin-top:8px}.student-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:30px;padding:20px;background:#f8f9fa;border-radius:10px}.form-group{margin-bottom:20px}.form-group label{display:block;margin-bottom:5px;font-weight:bold;color:#003D82}.form-group input,.form-group textarea{width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px;font-size:16px}.section{margin-bottom:40px;padding:25px;background:#fff;border-left:5px solid #005EB8;border-radius:0 10px 10px 0;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.section h2{color:#003D82;margin-bottom:20px;font-size:1.65em}.section h3{color:#005EB8;margin:20px 0 10px;font-size:1.25em}.section h4{color:#1565c0;margin:16px 0 8px;font-size:1.1em}.code-block{background:#282c34;color:#e2e8f0;padding:20px;border-radius:8px;margin:15px 0;font-family:Consolas,'Courier New',monospace;overflow-x:auto;white-space:pre-wrap;font-size:13px;word-break:break-word}ul{list-style:none;padding-left:0}ul li{padding:8px 0 8px 30px;position:relative}ul li::before{content:'\25b8';position:absolute;left:0;color:#005EB8;font-size:18px}ol{margin:10px 0 10px 24px}ol li{margin:8px 0;padding-left:6px}table{width:100%;border-collapse:collapse;margin:15px 0}table th,table td{border:1px solid #ddd;padding:12px;text-align:left;vertical-align:top}table th{background:#005EB8;color:white}table tr:nth-child(even){background:#f8f9fa}.checkbox-item{margin:15px 0;padding:15px 20px;background:linear-gradient(135deg,#005EB8,#003D82);border-radius:10px;display:flex;align-items:center}.checkbox-item input[type="checkbox"]{appearance:none;width:26px;height:26px;border:3px solid white;border-radius:6px;margin-right:15px;cursor:pointer;background:transparent;flex-shrink:0}.checkbox-item input[type="checkbox"]:checked{background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23005EB8"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>') center/18px no-repeat;border-color:#fff}.checkbox-item label{color:white;font-weight:500;cursor:pointer}.save-btn{background:linear-gradient(135deg,#005EB8,#003D82);color:white;border:none;padding:15px 30px;font-size:18px;border-radius:10px;cursor:pointer;display:block;margin:30px auto}code{background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:0.9em}.section .code-block code{background:transparent;padding:0}.note{background:#e3f2fd;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #2196f3}.section-intro{margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #e1e5e9}.section-intro h2{color:#003D82;font-size:1.45em;margin:0}.toc{margin:20px 0;padding:20px;background:#f5f5f5;border-radius:8px}.toc a{color:#005EB8;text-decoration:none}.toc a:hover{text-decoration:underline}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<style>
+/* Глобальный `code { background:#f0f0f0 }` ломает hljs: светлый текст на светлом фоне */
+.section .code-block > code.hljs,
+.section .code-block > code {
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+/* PowerShell / Bash: светлый текст на тёмном фоне .code-block (#282c34) */
+.section .code-block code.language-powershell.hljs,
+.section .code-block code.language-powershell *:not(.hljs-comment),
+.section .code-block code.language-bash.hljs,
+.section .code-block code.language-bash *:not(.hljs-comment) {
+  color: #7eb8ff !important;
+}
+.section .code-block code.language-powershell .hljs-comment,
+.section .code-block code.language-bash .hljs-comment {
+  color: #9aa7b8 !important;
+}
+/* Чеклист: у label цвет белый — <code> наследует его на светлом фоне → «kubectl» не видно */
+.checkbox-item label code {
+  background: #ffffff !important;
+  color: #005EB8 !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 0.95em !important;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+}
+@media print {
+  .code-block {
+    background: #eef2f7 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .section .code-block code.language-powershell.hljs,
+  .section .code-block code.language-powershell *,
+  .section .code-block code.language-bash.hljs,
+  .section .code-block code.language-bash * {
+    color: #003D82 !important;
+    background: transparent !important;
+  }
+  .section .code-block code.language-powershell .hljs-comment,
+  .section .code-block code.language-bash .hljs-comment {
+    color: #004d40 !important;
+  }
+  .checkbox-item label code {
+    color: #003D82 !important;
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+  }
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/powershell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/dockerfile.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>🐘 Лабораторная работа</h1>
+<p><strong>Изучение каскадной репликации PostgreSQL</strong></p>
+<p>PostgreSQL • логическая репликация • Docker Compose • каскад</p>
+</div>
+<div class="student-info">
+<div class="form-group"><label>ФИО:</label><input type="text" id="student-name"></div>
+<div class="form-group"><label>Группа:</label><input type="text" id="group"></div>
+<div class="form-group"><label>Дата:</label><input type="date" id="date"></div>
+</div>
+
+<div class="section" id="toc-top">
+<h2>📑 Содержание</h2>
+<div class="toc">
+<ol>
+  <li><a href="#цель-работы">Цель работы</a></li>
+  <li><a href="#используемая-схема">Используемая схема</a></li>
+  <li><a href="#стенд">Стенд</a></li>
+  <li><a href="#подготовка-окружения">Подготовка окружения</a></li>
+  <li><a href="#настройка-каскадной-репликации">Настройка каскадной репликации</a></li>
+  <li><a href="#проверка-работы">Проверка работы</a></li>
+  <li><a href="#мониторинг">Мониторинг</a></li>
+  <li><a href="#переключение-на-реплику">Переключение на реплику</a></li>
+  <li><a href="#конфликтующие-записи-в-логической-репликации">Конфликтующие записи в логической репликации</a></li>
+  <li><a href="#возможные-ошибки">Возможные ошибки</a></li>
+  <li><a href="#вывод">Вывод</a></li>
+  <li><a href="#обоснование-перехода-к-docker-compose-prodyml">Обоснование перехода к `docker-compose-prod.yml`</a></li>
+  <li><a href="#заключение">Заключение</a></li>
+</ol>
+
+</div>
+</div>
+
+<div class="section-intro"><h2>Изучение каскадной репликации PostgreSQL</h2></div>
+<div class="section" id="цель-работы">
+<h2>Цель работы</h2>
+<p>Изучить каскадную репликацию в PostgreSQL и проверить, как изменения проходят по цепочке <code>publisher -&gt; subscriber -&gt; subscriber2</code>.</p>
+</div>
+<div class="section" id="используемая-схема">
+<h2>Используемая схема</h2>
+<ol>
+<li><code>publisher</code> - первичный сервер.</li>
+<li><code>subscriber</code> - первая реплика, которая одновременно выступает источником для следующего узла.</li>
+<li><code>subscriber2</code> - вторая реплика, получающая изменения через <code>subscriber</code>.</li>
+</ol>
+</div>
+<div class="section" id="стенд">
+<h2>Стенд</h2>
+<div class="code-block"><code class="language-yaml">services:
+  publisher:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: source_db
+    ports:
+      - &quot;5433:5432&quot;
+    volumes:
+      - publisher_data:/var/lib/postgresql/data
+
+  subscriber:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: target_db
+    ports:
+      - &quot;5434:5432&quot;
+    volumes:
+      - subscriber_data:/var/lib/postgresql/data
+    depends_on:
+      - publisher
+
+  subscriber2:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: replica_db
+    ports:
+      - &quot;5435:5432&quot;
+    volumes:
+      - subscriber2_data:/var/lib/postgresql/data
+    depends_on:
+      - subscriber
+
+volumes:
+  publisher_data:
+  subscriber_data:
+  subscriber2_data:</code></div>
+</div>
+<div class="section" id="подготовка-окружения">
+<h2>Подготовка окружения</h2>
+<p>Перед началом работы нужно:</p>
+<ol>
+<li>Убедиться, что установлен Docker и Docker Compose.</li>
+<li>Запустить контейнеры командой:</li>
+</ol>
+<div class="code-block"><code class="language-bash">docker compose up -d</code></div>
+<ol>
+<li>Проверить, что все три контейнера запущены:</li>
+</ol>
+<div class="code-block"><code class="language-bash">docker ps</code></div>
+</div>
+<div class="section" id="настройка-каскадной-репликации">
+<h2>Настройка каскадной репликации</h2>
+<h3>1. Настроить <code>publisher</code></h3>
+<p>На первичном сервере нужно включить параметры репликации. Это можно сделать несколькими способами:</p>
+<ol>
+<li>Через <code>psql</code> с командой <code>ALTER SYSTEM</code>.</li>
+</ol>
+<p>- Удобно, если настройки нужно изменить уже внутри работающего контейнера. - После изменения требуется перезапуск PostgreSQL.</p>
+<ol>
+<li>Через <code>postgresql.conf</code>.</li>
+</ol>
+<p>- Подходит, если ты хочешь хранить настройки в отдельном конфигурационном файле. - Это самый наглядный вариант для ручной настройки.</p>
+<ol>
+<li>Через параметры запуска <code>postgres -c</code>.</li>
+</ol>
+<p>- Удобно для Docker и временных учебных стендов. - Все параметры видны прямо в команде запуска контейнера.</p>
+<p>В этом примере используется вариант через <code>psql</code>, потому что он позволяет показать изменение параметров прямо в базе:</p>
+<div class="code-block"><code class="language-bash">docker exec -it physic_replica-publisher-1 psql -U admin -d source_db</code></div>
+<div class="code-block"><code class="language-sql">ALTER SYSTEM SET wal_level = &#x27;logical&#x27;;
+ALTER SYSTEM SET max_wal_senders = 10;
+ALTER SYSTEM SET max_replication_slots = 10;
+ALTER SYSTEM SET listen_addresses = &#x27;*&#x27;;</code></div>
+<p>После этого перезапустить <code>publisher</code>.</p>
+<div class="code-block"><code class="language-bash">docker compose restart publisher
+# или
+docker restart physic_replica-publisher-1</code></div>
+<p>Проверь</p>
+<div class="code-block"><code class="language-sql">SELECT name, setting FROM pg_settings
+WHERE name in (&#x27;wal_level&#x27;,&#x27;max_wal_senders&#x27;);
+</code></div>
+<h3>2. Создать пользователя для репликации</h3>
+<p>На <code>publisher</code> создать пользователя <code>replicator</code>, который нужен только для репликации. Это безопаснее, чем использовать администратора базы данных:</p>
+<div class="code-block"><code class="language-sql">CREATE ROLE replicator WITH LOGIN PASSWORD &#x27;replicator&#x27;;
+ALTER ROLE replicator WITH REPLICATION;</code></div>
+<h3>3. Создать публикацию на <code>publisher</code></h3>
+<div class="code-block"><code class="language-sql">CREATE PUBLICATION pub_all FOR ALL TABLES;</code></div>
+<h3>4. Настроить <code>subscriber</code></h3>
+<p>На <code>subscriber</code> создать подписку на <code>publisher</code>:</p>
+<div class="code-block"><code class="language-sql">CREATE SUBSCRIPTION sub_from_publisher
+CONNECTION &#x27;host=publisher port=5432 dbname=source_db user=replicator password=replicator&#x27;
+PUBLICATION pub_all;</code></div>
+<h3>5. Настроить <code>subscriber2</code></h3>
+<p>На <code>subscriber2</code> создать публикацию и подписку от <code>subscriber</code>:</p>
+<div class="code-block"><code class="language-sql">CREATE PUBLICATION pub_from_subscriber FOR ALL TABLES;</code></div>
+<p>Затем подключить <code>subscriber2</code> к <code>subscriber</code>:</p>
+<div class="code-block"><code class="language-sql">CREATE SUBSCRIPTION sub_from_subscriber
+CONNECTION &#x27;host=subscriber port=5432 dbname=target_db user=replicator password=replicator&#x27;
+PUBLICATION pub_from_subscriber;</code></div>
+<h3>6. Подготовить <code>subscriber</code> для каскадной репликации</h3>
+<p>Так как <code>subscriber</code> сам становится источником для <code>subscriber2</code>, на нём тоже нужно включить параметры репликации и создать пользователя <code>replicator</code>:</p>
+<div class="code-block"><code class="language-sql">CREATE ROLE replicator WITH LOGIN PASSWORD &#x27;replicator&#x27;;
+ALTER ROLE replicator WITH REPLICATION;
+
+ALTER SYSTEM SET wal_level = &#x27;logical&#x27;;
+ALTER SYSTEM SET max_wal_senders = 10;
+ALTER SYSTEM SET max_replication_slots = 10;
+ALTER SYSTEM SET listen_addresses = &#x27;*&#x27;;</code></div>
+<p>После этого перезапустить <code>subscriber</code>:</p>
+<div class="code-block"><code class="language-bash">docker compose restart subscriber</code></div>
+<p>Или:</p>
+<div class="code-block"><code class="language-bash">docker restart physic_replica-subscriber-1</code></div>
+<p>После перезапуска проверить:</p>
+<div class="code-block"><code class="language-sql">SHOW wal_level;</code></div>
+<p>Должно быть:</p>
+<div class="code-block"><code class="language-text">logical</code></div>
+</div>
+<div class="section" id="проверка-работы">
+<h2>Проверка работы</h2>
+<ol>
+<li>Создать таблицу на <code>publisher</code>:</li>
+</ol>
+<div class="code-block"><code class="language-sql">CREATE TABLE test_replica (
+    id serial PRIMARY KEY,
+    name text
+);</code></div>
+<ol>
+<li>Вставить данные на <code>publisher</code>:</li>
+</ol>
+<div class="code-block"><code class="language-sql">INSERT INTO test_replica(name) VALUES (&#x27;row 30&#x27;), (&#x27;row 40&#x27;);</code></div>
+<p>Важно: таблицы на <code>subscriber</code> и <code>subscriber2</code> нужно создать <strong>до</strong> создания подписок. Если таблица появилась уже после подписки, старые строки могут не примениться. В этом случае достаточно:</p>
+<ol>
+<li>создать таблицу на всех репликах;</li>
+<li>выполнить новую вставку на <code>publisher</code>;</li>
+<li>либо пересоздать подписку, если нужно заново подтянуть данные.</li>
+</ol>
+<ol>
+<li>Проверить данные на <code>subscriber</code>:</li>
+</ol>
+<div class="code-block"><code class="language-sql">SELECT * FROM test_replica;</code></div>
+<ol>
+<li>Проверить данные на <code>subscriber2</code>:</li>
+</ol>
+<div class="code-block"><code class="language-sql">SELECT * FROM test_replica;</code></div>
+<p>Если каскадная репликация настроена правильно, данные должны появиться на обоих узлах-репликах.</p>
+</div>
+<div class="section" id="мониторинг">
+<h2>Мониторинг</h2>
+<p>Для проверки состояния репликации использовать:</p>
+<div class="code-block"><code class="language-sql">-- На publisher
+SELECT * FROM pg_stat_replication;
+
+-- На subscriber и subscriber2
+SELECT * FROM pg_stat_subscription;</code></div>
+<p>Для просмотра логов:</p>
+<div class="code-block"><code class="language-bash">docker logs postgres_publisher
+docker logs postgres_subscriber
+docker logs postgres_subscriber2</code></div>
+</div>
+<div class="section" id="переключение-на-реплику">
+<h2>Переключение на реплику</h2>
+<p>Переключение на реплику нужно, когда требуется временно или постоянно перенести работу на другой узел. В этой лабораторной сценарий выполняется вручную.</p>
+<h3>Плановое переключение</h3>
+<p>Плановое переключение выполняют заранее, когда основной сервер нужно остановить для технических работ без прерывания обслуживания.</p>
+<h4>1. Сымитировать выход из строя мастера</h4>
+<p>Остановить основной сервер <code>publisher</code>:</p>
+<div class="code-block"><code class="language-bash">docker stop physic_replica-publisher-1</code></div>
+<p>После этого приложение временно работает через реплику.</p>
+<h4>2. Перевести реплику из режима восстановления в обычный режим</h4>
+<p>Если <code>subscriber</code> должен стать новым основным сервером, отключить его от репликации и поднять как обычный сервер. В рамках лабораторной это можно сделать вручную через остановку подписки и повторный запуск контейнера:</p>
+<div class="code-block"><code class="language-sql">DROP SUBSCRIPTION sub_from_publisher;</code></div>
+<p>После этого перезапустить <code>subscriber</code>:</p>
+<div class="code-block"><code class="language-bash">docker restart physic_replica-subscriber-1</code></div>
+<p>Теперь <code>subscriber</code> работает как самостоятельный сервер.</p>
+<h3>Аварийное переключение</h3>
+<p>Аварийное переключение используют, если основной сервер вышел из строя и продолжать работу на нём невозможно.</p>
+<h4>3. Восстановить основной сервер и подключить его обратно в кластер</h4>
+<p>После восстановления <code>publisher</code> его можно вернуть в исходную схему:</p>
+<div class="code-block"><code class="language-bash">docker start physic_replica-publisher-1</code></div>
+<p>Затем заново настроить репликацию:</p>
+<ol>
+<li>вернуть <code>wal_level = logical</code> и параметры репликации, если они были сброшены;</li>
+<li>создать подписку на <code>publisher</code> заново;</li>
+<li>проверить, что репликация снова работает через <code>pg_stat_replication</code> и <code>pg_stat_subscription</code>.</li>
+</ol>
+<p>На практике такие сценарии часто автоматизируют с помощью дополнительного кластерного ПО, чтобы сократить время простоя и избежать ручных ошибок.</p>
+</div>
+<div class="section" id="конфликтующие-записи-в-логической-репликации">
+<h2>Конфликтующие записи в логической репликации</h2>
+<p>Этот раздел описывает поведение системы при возникновении конфликтов данных. В логической репликации, в отличие от физической, реплика доступна на запись, что может привести к расхождениям.</p>
+<p><strong>Важно:</strong> При возникновении конфликта (например, дублирование Primary Key) процесс репликации (apply worker) на реплике <strong>останавливается</strong> с ошибкой до ручного вмешательства.</p>
+<h3>Подготовка</h3>
+<ol>
+<li>Убедиться, что логическая репликация активна.</li>
+<li>Создать таблицу <code>conflict_test</code> на всех узлах (<code>publisher</code>, <code>subscriber</code>, <code>subscriber2</code>).</li>
+</ol>
+<p>Пример таблицы:</p>
+<div class="code-block"><code class="language-sql">CREATE TABLE conflict_test (
+    id integer PRIMARY KEY,
+    name text
+);</code></div>
+<h3>Задание 1. Конфликтующая вставка</h3>
+<ol>
+<li>На реплике (<code>subscriber</code>) вставить строку вручную:</li>
+</ol>
+<div class="code-block"><code class="language-sql">INSERT INTO conflict_test VALUES (1, &#x27;replica row&#x27;);</code></div>
+<ol>
+<li>На основном сервере (<code>publisher</code>) вставить строку с тем же <code>id</code>:</li>
+</ol>
+<div class="code-block"><code class="language-sql">INSERT INTO conflict_test VALUES (1, &#x27;master row&#x27;);</code></div>
+<ol>
+<li>Ожидаемый результат:</li>
+</ol>
+<p>- Данные на реплику не придут. - В логах реплики (<code>docker logs physic_replica-subscriber-1</code>) появится ошибка: <code>ERROR: duplicate key value violates unique constraint &quot;conflict_test_pkey&quot;</code>. - Репликация для этой таблицы (или всей подписки) остановится.</p>
+<ol>
+<li>Решение конфликта:</li>
+</ol>
+<p>- Удалить конфликтующую строку на реплике или изменить её ID, чтобы worker смог продолжить работу.</p>
+<ol>
+<li>Вывод: Логическая репликация требует строгого контроля уникальности данных на всех узлах.</li>
+</ol>
+<h3>Задание 2. Конфликтующее обновление</h3>
+<ol>
+<li>На основном сервере (<code>publisher</code>) изменить строку, которая уже есть на всех узлах:</li>
+</ol>
+<div class="code-block"><code class="language-sql">UPDATE conflict_test SET name = &#x27;updated on master&#x27; WHERE id = 1;</code></div>
+<ol>
+<li>На реплике (<code>subscriber</code>) одновременно или заранее изменить ту же строку:</li>
+</ol>
+<div class="code-block"><code class="language-sql">UPDATE conflict_test SET name = &#x27;updated on replica&#x27; WHERE id = 1;</code></div>
+<ol>
+<li>Ожидаемый результат:</li>
+</ol>
+<p>- В логической репликации побеждает &quot;последнее пришедшее изменение&quot; (Last Update Wins), если нет конфликта по ключам. - Однако, если строка на реплике была удалена или её ID изменен, репликация остановится с ошибкой <code>tuple to be updated was already modified</code> или <code>relation not found</code>.</p>
+<ol>
+<li>Вывод: Логическая репликация чувствительна к состоянию данных на подписчике.</li>
+</ol>
+<h3>Задание 3. Конфликтующее удаление</h3>
+<ol>
+<li>На реплике (<code>subscriber</code>) удалить строку:</li>
+</ol>
+<div class="code-block"><code class="language-sql">DELETE FROM conflict_test WHERE id = 1;</code></div>
+<ol>
+<li>На мастере (<code>publisher</code>) попытаться обновить или удалить ту же строку:</li>
+</ol>
+<div class="code-block"><code class="language-sql">UPDATE conflict_test SET name = &#x27;master update&#x27; WHERE id = 1;</code></div>
+<ol>
+<li>Ожидаемый результат:</li>
+</ol>
+<p>- Репликация на подписчике упадет с ошибкой, так как worker не найдет строку для обновления (<code>tuple to be updated could not be found</code>).</p>
+<ol>
+<li>Вывод: Для стабильной работы логической репликации данные на репликах не должны изменяться вручную.</li>
+</ol>
+<h3>Что наблюдать</h3>
+<ol>
+<li>Остановку apply worker в <code>pg_stat_subscription</code>.</li>
+<li>Сообщения об ошибках в логах контейнера реплики.</li>
+<li>Расхождение данных (Data Drift) между узлами.</li>
+</ol>
+</div>
+<div class="section" id="возможные-ошибки">
+<h2>Возможные ошибки</h2>
+<ol>
+<li>Неверный <code>host</code>, <code>port</code> или пароль в строке подключения.</li>
+<li>Не включён <code>wal_level</code>.</li>
+<li>Не созданы публикация или подписка.</li>
+<li>Реплика не может подключиться к предыдущему узлу из-за сетевой ошибки или неправильного имени сервиса.</li>
+</ol>
+</div>
+<div class="section" id="вывод">
+<h2>Вывод</h2>
+<p>В ходе работы была изучена каскадная репликация PostgreSQL. Было показано, как изменения переходят от <code>publisher</code> к <code>subscriber</code>, а затем к <code>subscriber2</code> через промежуточную реплику.</p>
+</div>
+<div class="section" id="обоснование-перехода-к-docker-compose-prodyml">
+<h2>Обоснование перехода к <code>docker-compose-prod.yml</code></h2>
+<p>В процессе работы был сохранён отдельный вариант стенда в файле <code>docker-compose copy.yml</code>. Он нужен как промежуточная и более наглядная версия конфигурации перед упрощением.</p>
+<p>Причины использовать именно этот файл:</p>
+<ol>
+<li>В нём явно показаны все служебные элементы стенда: <code>container_name</code>, ручная сеть <code>replication_net</code>, отдельные конфиги и папка <code>data</code>.</li>
+<li>Такой вариант удобен для изучения базовой схемы и понимания, какие файлы и параметры участвуют в запуске каждого узла.</li>
+<li>На его основе проще объяснять, что именно было убрано при переходе к минимальному <code>docker-compose.yml</code>.</li>
+</ol>
+<p>Ниже приведено содержимое <code>docker-compose-prod.yml</code> с комментариями:</p>
+<div class="code-block"><code class="language-yaml">version: &#x27;3.8&#x27;
+
+services:
+  # Первичный сервер, с которого начинается репликация
+  publisher:
+    image: postgres:17
+    container_name: postgres_publisher
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: source_db
+    ports:
+      - &quot;5439:5432&quot;
+    volumes:
+      # Инициализация данных при первом запуске
+      - ./init-publisher.sql:/docker-entrypoint-initdb.d/init.sql
+      # Отдельный конфигурационный файл для publisher
+      - ./custom_postgresql.conf:/etc/postgresql/postgresql.conf
+      # Хранение данных на диске в папке проекта
+      - ./data/publisher:/var/lib/postgresql/data
+    command: [&quot;postgres&quot;, &quot;-c&quot;, &quot;config_file=/etc/postgresql/postgresql.conf&quot;]
+    networks:
+      - replication_net
+
+  # Первая реплика, которая получает данные от publisher
+  subscriber:
+    image: postgres:17
+    container_name: postgres_subscriber
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: target_db
+    ports:
+      - &quot;5437:5432&quot;
+    volumes:
+      # Хранилище данных для первой реплики
+      - ./data/subscriber:/var/lib/postgresql/data
+      # Конфигурация режима standby
+      - ./standby.conf:/etc/postgresql/standby.conf
+    command: [&quot;postgres&quot;, &quot;-c&quot;, &quot;config_file=/etc/postgresql/standby.conf&quot;]
+    depends_on:
+      - publisher
+    networks:
+      - replication_net
+
+  # Вторая реплика, которая подключается уже к subscriber
+  subscriber2:
+    image: postgres:17
+    container_name: postgres_subscriber2
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: replica_db
+    ports:
+      - &quot;5438:5432&quot;
+    volumes:
+      # Хранилище данных для второй реплики
+      - ./data/subscriber2:/var/lib/postgresql/data
+      # Конфигурация каскадной репликации
+      - ./subscriber2.conf:/etc/postgresql/standby2.conf
+      # Файл сигнала для запуска standby-режима
+      - ./subscriber2.signal:/var/lib/postgresql/data/standby.signal
+    command: [&quot;postgres&quot;, &quot;-c&quot;, &quot;config_file=/etc/postgresql/standby2.conf&quot;]
+    depends_on:
+      - subscriber
+    networks:
+      - replication_net
+
+networks:
+  replication_net:
+    driver: bridge</code></div>
+<p>Этот вариант удобен как исходная точка для разбора ручной настройки, потому что в нём видны все зависимости и можно поэтапно упростить стенд до минимальной версии.</p>
+</div>
+<div class="section" id="заключение">
+<h2>Заключение</h2>
+<p>В работе использовался исходный вариант стенда из <code>docker-compose copy.yml</code>, где данные хранились в папке <code>data</code>, а настройки задавались через отдельные конфигурационные файлы.</p>
+<p>После упрощения стенд был переведён на минимальный вариант <code>docker-compose.yml</code> с именованными томами и тремя узлами: <code>publisher</code>, <code>subscriber</code> и <code>subscriber2</code>. Это позволило сосредоточиться на ручной настройке каскадной репликации, проверке передачи данных, переключении на реплику и разборе конфликтующих записей.</p>
+<p>Таким образом, были изучены основные этапы работы с репликацией: подготовка стенда, создание публикаций и подписок, проверка синхронизации, сценарии переключения и поведение системы при ошибках и конфликтах.</p>
+</div>
+
+<div class="section" id="vyvody">
+<h2>📊 Выводы (для отчёта)</h2>
+<div class="form-group"><label>Что изучили:</label><textarea rows="3" id="ta0" style="width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px"></textarea></div>
+<div class="form-group"><label>Сложности:</label><textarea rows="3" id="ta1" style="width:100%;padding:12px;border:2px solid #e1e5e9;border-radius:8px"></textarea></div>
+</div>
+
+<button class="save-btn" type="button" onclick="window.print()">💾 Сохранить в PDF (печать)</button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.code-block code').forEach(function(el){try{hljs.highlightElement(el)}catch(e){}});
+  ['student-name','group','date'].forEach(function(id){var el=document.getElementById(id);if(!el)return;el.value=localStorage.getItem(id)||'';el.addEventListener('input',function(){localStorage.setItem(id,el.value)})});
+  var dateEl=document.getElementById('date');if(dateEl)dateEl.value=dateEl.value||new Date().toISOString().split('T')[0];
+  document.querySelectorAll('input[type="checkbox"]').forEach(function(cb){if(localStorage.getItem(cb.id)==='true')cb.checked=true;cb.addEventListener('change',function(){localStorage.setItem(cb.id,cb.checked)})});
+  ['ta0','ta1'].forEach(function(id){var el=document.getElementById(id);if(!el)return;el.value=localStorage.getItem(id)||'';el.addEventListener('input',function(){localStorage.setItem(id,el.value)})});
+});
+</script>
+</body>
+</html>
